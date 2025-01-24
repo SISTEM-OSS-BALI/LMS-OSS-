@@ -1,0 +1,311 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum Type {
+  ASSIGNMENT
+  MATERIAL
+}
+
+enum TypeAssigment {
+  MULTIPLE_CHOICE
+  ESSAY
+  PAIR
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum MethodType {
+  ONLINE
+  OFFLINE
+}
+
+model User {
+  user_id       String   @id @default(uuid())
+  username      String
+  email         String
+  password      String
+  no_phone      String?
+  program_id    String?
+  count_program Int?      @default(0)
+  joined_at     DateTime @default(now())
+  region        String?
+  role          Role     @default(STUDENT)
+
+  coursesTeaching        Course[]                 @relation("TeacherCourses")
+  scheduleTeacher        ScheduleTeacher[]        @relation("ScheduleTeacher")
+  coursesEnrolled        CourseEnrollment[]       @relation("StudentCourses")
+  materialCourseProgress CourseProgress[]         @relation("StudentMaterialCourseProgress")
+  materialProgress       MaterialProgress[]       @relation("StudentMaterialProgress")
+  assignmentProgress     AssignmentProgress[]     @relation("StudentAssignmentProgress")
+  studentAnswers         StudentAnswerAssigment[] @relation("StudentAnswers")
+  meetingTeacher         Meeting[]                @relation("MeetingTeacher")
+  meetingStudent         Meeting[]                @relation("MeetingStudent")
+  program                Program?                 @relation(fields: [program_id], references: [program_id], onDelete: Cascade)
+}
+
+model ScheduleTeacher {
+  schedule_id String        @id @default(uuid())
+  teacher     User          @relation("ScheduleTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  teacher_id  String
+  days        ScheduleDay[] @relation("TeacherScheduleDays") // Relasi ke hari-hari yang diatur
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model ScheduleDay {
+  day_id      String          @id @default(uuid())
+  teacher     ScheduleTeacher @relation("TeacherScheduleDays", fields: [schedule_id], references: [schedule_id], onDelete: Cascade)
+  schedule_id String
+  day         DayOfWeek
+  isAvailable Boolean         @default(false)
+  times       ScheduleTime[]  @relation("DayScheduleTimes") // Relasi ke waktu-waktu di hari tersebut
+}
+
+model ScheduleTime {
+  time_id   String      @id @default(uuid())
+  day       ScheduleDay @relation("DayScheduleTimes", fields: [day_id], references: [day_id], onDelete: Cascade)
+  day_id    String
+  startTime DateTime // Waktu mulai
+  endTime   DateTime // Waktu selesai
+}
+
+model Meeting {
+  meeting_id String      @id @default(uuid())
+  teacher    User        @relation("MeetingTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  student    User        @relation("MeetingStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
+  method     MethodType?
+  meetLink   String?
+  platform   String?
+  teacher_id String
+  student_id String
+  absent     Boolean?
+  module     Bytes?
+  dateTime   DateTime
+  createdAt  DateTime    @default(now())
+}
+
+model Course {
+  course_id   String @id @default(uuid())
+  name        String
+  teacher     User   @relation("TeacherCourses", fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  teacher_id  String
+  code_course String @unique
+
+  createdAt DateTime @default(now())
+
+  materialsAssigmentBase MaterialAssigmentBase[] @relation("CourseMaterials")
+  progressCourse         CourseProgress[]
+
+  students CourseEnrollment[] @relation("StudentCourses")
+}
+
+model CourseEnrollment {
+  id        String  @id @default(uuid())
+  user      User    @relation("StudentCourses", fields: [user_id], references: [user_id], onDelete: Cascade) // Cascade delete
+  user_id   String
+  course    Course  @relation("StudentCourses", fields: [course_id], references: [course_id], onDelete: Cascade) // Cascade delete
+  course_id String
+  completed Boolean @default(false)
+
+  enrolledAt DateTime @default(now())
+
+  @@unique([user_id, course_id])
+}
+
+model MaterialAssigmentBase {
+  base_id   String @id @default(uuid())
+  title     String
+  course    Course @relation("CourseMaterials", fields: [course_id], references: [course_id], onDelete: Cascade)
+  course_id String
+  type      Type?
+
+  progressMaterial   MaterialProgress[]
+  progressAssignment AssignmentProgress[]
+  materials          Material[]
+  assignments        Assignment[]
+  createdAt          DateTime             @default(now())
+}
+
+model Material {
+  material_id  String                @id @default(uuid())
+  materialBase MaterialAssigmentBase @relation(fields: [base_id], references: [base_id])
+  base_id      String
+  createdAt    DateTime              @default(now())
+
+  progress MaterialProgress[]
+  images   MaterialImage[]
+  urls     MaterialUrl[]
+  texts    MaterialText[]
+}
+
+model MaterialImage {
+  image_id    String   @id @default(uuid())
+  material    Material @relation(fields: [material_id], references: [material_id])
+  material_id String
+  imageUrl    String   @db.LongText
+  index       Int?
+}
+
+model MaterialUrl {
+  url_id      String   @id @default(uuid())
+  material    Material @relation(fields: [material_id], references: [material_id])
+  material_id String
+  contentUrl  String?
+  index       Int?
+}
+
+model MaterialText {
+  text_id     String   @id @default(uuid())
+  material    Material @relation(fields: [material_id], references: [material_id])
+  material_id String
+  contentText String?  @db.LongText
+  index       Int?
+}
+
+model CourseProgress {
+  progress_course_id             String   @id @default(uuid())
+  completed                      Boolean  @default(false)
+  progress                       Float    @default(0)
+  totalMaterialAssigement        Int      @default(0) // Jumlah assignment
+  user                           User     @relation("StudentMaterialCourseProgress", fields: [user_id], references: [user_id])
+  user_id                        String
+  currentMaterialAssigmentBaseId String?
+  course                         Course   @relation(fields: [course_id], references: [course_id])
+  course_id                      String
+  updatedAt                      DateTime @updatedAt
+  createdAt                      DateTime @default(now())
+
+  @@unique([user_id, course_id])
+}
+
+model MaterialProgress {
+  progress_id String                @id @default(uuid())
+  completed   Boolean               @default(false)
+  user        User                  @relation("StudentMaterialProgress", fields: [user_id], references: [user_id])
+  user_id     String
+  material    Material              @relation(fields: [material_id], references: [material_id])
+  material_id String
+  base        MaterialAssigmentBase @relation(fields: [base_id], references: [base_id]) // Relates to material base
+  base_id     String
+  updatedAt   DateTime              @updatedAt
+  createdAt   DateTime              @default(now())
+
+  @@unique([user_id, material_id])
+}
+
+model AssignmentProgress {
+  progress_id   String                @id @default(uuid())
+  completed     Boolean               @default(false)
+  score         Int?
+  user          User                  @relation("StudentAssignmentProgress", fields: [user_id], references: [user_id])
+  user_id       String
+  base          MaterialAssigmentBase @relation(fields: [base_id], references: [base_id]) // Relates to material base
+  base_id       String
+  updatedAt     DateTime              @updatedAt
+  createdAt     DateTime              @default(now())
+  Assignment    Assignment            @relation(fields: [assignment_id], references: [assignment_id])
+  assignment_id String
+
+  @@unique([user_id, base_id])
+}
+
+model Assignment {
+  assignment_id         String                @id @default(uuid())
+  description           String                @db.LongText
+  timeLimit             Int
+  materialAssigmentBase MaterialAssigmentBase @relation(fields: [base_id], references: [base_id])
+  base_id               String
+  type                  TypeAssigment
+  createdAt             DateTime              @default(now())
+
+  multipleChoices    MultipleChoice[]
+  progressAssignment AssignmentProgress[]
+  essay              Essay?
+  sentenceMatching   SentenceMatching?
+  studentAnswers     StudentAnswerAssigment[]
+}
+
+model MultipleChoice {
+  mcq_id        String     @id @default(uuid())
+  question      String     @db.LongText
+  options       Json
+  correctAnswer String
+  assignment    Assignment @relation(fields: [assignment_id], references: [assignment_id])
+  assignment_id String
+
+  studentAnswers StudentAnswerAssigment[] @relation("MCQAnswer")
+}
+
+model Essay {
+  essay_id      String     @id @default(uuid())
+  question      String
+  assignment    Assignment @relation(fields: [assignment_id], references: [assignment_id])
+  assignment_id String     @unique
+
+  studentAnswers StudentAnswerAssigment[] @relation("EssayAnswer")
+}
+
+model SentenceMatching {
+  matching_id   String     @id @default(uuid())
+  questions     Pair[]     @relation("MatchingPairs")
+  assignment    Assignment @relation(fields: [assignment_id], references: [assignment_id])
+  assignment_id String     @unique
+}
+
+model Pair {
+  pair_id          String           @id @default(uuid())
+  sentenceMatching SentenceMatching @relation("MatchingPairs", fields: [matching_id], references: [matching_id])
+  matching_id      String
+  question         String
+  correctAnswer    String
+
+  studentAnswers StudentAnswerAssigment[] @relation("PairAnswer")
+}
+
+model StudentAnswerAssigment {
+  answer_id      String          @id @default(uuid())
+  student        User            @relation("StudentAnswers", fields: [student_id], references: [user_id])
+  student_id     String
+  assignment     Assignment      @relation(fields: [assignment_id], references: [assignment_id])
+  assignment_id  String
+  multipleChoice MultipleChoice? @relation("MCQAnswer", fields: [mcq_id], references: [mcq_id])
+  mcq_id         String?
+  essay          Essay?          @relation("EssayAnswer", fields: [essay_id], references: [essay_id])
+  essay_id       String?
+  sentencePair   Pair?           @relation("PairAnswer", fields: [pair_id], references: [pair_id])
+  pair_id        String?
+
+  studentAnswer String   @db.LongText
+  isCorrect     Boolean?
+  score         Int
+  submittedAt   DateTime @default(now())
+}
+
+model Program {
+  program_id    String @id @default(uuid())
+  name          String
+  count_program Int
+  description   String
+  duration      Int
+  User          User[]
+}
