@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import prisma from "@/app/lib/prisma";
-import { get } from "http";
 
 export async function POST(request: NextRequest) {
   const user = authenticateRequest(request);
@@ -11,7 +10,6 @@ export async function POST(request: NextRequest) {
   }
 
   const { meeting_id, absent, student_id } = await request.json();
-  console.log(meeting_id, absent, student_id);
 
   try {
     const updateAbsent = await prisma.meeting.update({
@@ -28,7 +26,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (getCountProgram) {
-      const updatedCountProgram = getCountProgram.count_program! + 1;
+      let updatedCountProgram;
+
+      if (absent === true) {
+        updatedCountProgram = getCountProgram.count_program! + 1;
+      } else {
+        updatedCountProgram = getCountProgram.count_program! - 1;
+      }
 
       await prisma.user.update({
         where: {

@@ -7,16 +7,20 @@ import {
   AssignmentProgress,
 } from "./progress";
 
-import { Meeting } from "./schedule";
 import { StudentAnswerAssignment } from "./assigment";
+import { Meeting } from "./meeting";
 
 export interface User {
   user_id: string;
   username: string;
   email: string;
   password: string;
-  no_phone?: string;
+  program_id: string;
+  no_phone: string;
+  imageUrl: string;
   role: Role;
+  region: string;
+  count_program: number;
 
   coursesTeaching: Course[];
   scheduleTeacher: ScheduleTeacher[];

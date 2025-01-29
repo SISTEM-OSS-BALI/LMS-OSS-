@@ -24,6 +24,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { useCount, useUsername } from "@/app/lib/auth/useLogin";
+import { useMeetings } from "./useMeetingViewModel";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -94,8 +95,8 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   } = theme.useToken();
   const pathname = usePathname();
   const username = useUsername();
-  const count = useCount();
   const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
+  const { count_program } = useMeetings();
 
   const determineSelectedKeys = (pathname: string): string[] => {
     const exactMatch = Object.entries(menuMap).find(
@@ -310,7 +311,9 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
               <p style={{ fontSize: "16px", fontWeight: "bold" }}>
                 Total Pertemuan
               </p>
-              <p style={{ fontSize: "24px", color: "#1890ff" }}>{count || 0} Pertemuan</p>
+              <p style={{ fontSize: "24px", color: "#1890ff" }}>
+                {count_program}
+              </p>
             </div>
           </Modal>
         </Layout>

@@ -46,7 +46,8 @@ model User {
   password      String
   no_phone      String?
   program_id    String?
-  count_program Int?      @default(0)
+  imageUrl      String?  @db.LongText
+  count_program Int?     @default(0)
   joined_at     DateTime @default(now())
   region        String?
   role          Role     @default(STUDENT)
@@ -90,18 +91,21 @@ model ScheduleTime {
 }
 
 model Meeting {
-  meeting_id String      @id @default(uuid())
-  teacher    User        @relation("MeetingTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
-  student    User        @relation("MeetingStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
-  method     MethodType?
-  meetLink   String?
-  platform   String?
-  teacher_id String
-  student_id String
-  absent     Boolean?
-  module     Bytes?
-  dateTime   DateTime
-  createdAt  DateTime    @default(now())
+  meeting_id         String      @id @default(uuid())
+  teacher            User        @relation("MeetingTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  student            User        @relation("MeetingStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
+  method             MethodType?
+  meetLink           String?
+  platform           String?
+  teacher_id         String
+  student_id         String
+  absent             Boolean?
+  module             Bytes?
+  progress_student   String?     @db.LongText
+  abilityScale       String?     @db.LongText
+  studentPerformance String?     @db.LongText
+  dateTime           DateTime
+  createdAt          DateTime    @default(now())
 }
 
 model Course {

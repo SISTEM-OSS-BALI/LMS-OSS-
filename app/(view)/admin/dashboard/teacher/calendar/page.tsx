@@ -14,17 +14,18 @@ import { useCalendarViewModel } from "./useCalendarViewModel";
 dayjs.extend(utc);
 
 export default function Calendar() {
-  const { events, isLoading, color, showScheduleTeacherAll, dataTeacher } =
+  const { events, isLoading, regionColorMapping, showScheduleTeacherAll, dataTeacher } =
     useCalendarViewModel();
 
+
   const renderEventContent = (eventInfo: any) => {
-    const { teacherName, startTime, endTime } = eventInfo.event.extendedProps;
-    const randomColor = color[Math.floor(Math.random() * color.length)];
+  const { teacherName, startTime, endTime, region } = eventInfo.event.extendedProps;
+  const regionColor = regionColorMapping[region as keyof typeof regionColorMapping];
 
     return (
       <div
         style={{
-          backgroundColor: randomColor,
+          backgroundColor: regionColor,
           color: "#fff",
           padding: "4px",
           textAlign: "center",

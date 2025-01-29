@@ -13,25 +13,30 @@ export async function GET(request: NextRequest) {
   const date = url.searchParams.get("date");
 
   const formattedDate = date
-      ? dayjs.utc(date).format("YYYY-MM-DD")
-      : dayjs().utc().format("YYYY-MM-DD");
+    ? dayjs.utc(date).format("YYYY-MM-DD")
+    : dayjs().utc().format("YYYY-MM-DD");
 
-      const startOfDay = dayjs.utc(formattedDate).startOf("day").toDate();
-        const endOfDay = dayjs.utc(formattedDate).endOf("day").toDate();
+  const startOfDay = dayjs.utc(formattedDate).startOf("day").toDate();
+  const endOfDay = dayjs.utc(formattedDate).endOf("day").toDate();
 
   if (user instanceof NextResponse) {
     return user;
   }
 
   try {
-    const getMeeting = await getData("meeting", {
-      where: {
+    const getMeeting = await getData(
+      "meeting",
+      {
+        where: {
+          student_id: user.user_id,
           dateTime: {
-              gte: startOfDay,
-              lte: endOfDay
-          }
-      }
-    }, "findMany");
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        },
+      },
+      "findMany"
+    );
 
     return NextResponse.json({ status: 200, error: false, data: getMeeting });
   } catch (error) {

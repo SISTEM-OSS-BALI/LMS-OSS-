@@ -64,6 +64,11 @@ interface UseCalendarViewModelReturn {
   filteredData: User[] | undefined;
   handleEdit: (id: string) => void;
   DAYS: string[];
+  handleFinish: (values: any) => Promise<void>;
+  handleCancel: () => void;
+  isModalVisible: boolean;
+  setIsModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  handleDelete: (user_id: string) => Promise<void>;
 }
 
 export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
@@ -79,7 +84,7 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
     isLoading: isLoadingSchedule,
   } = useSWR(
     selectedTeacher
-      ? `/api/admin/schedule/${selectedTeacher.user_id}/showSchedule`
+      ? `/api/admin/schedule/${selectedTeacher.user_id}/showScheduleAdmin`
       : null,
     fetcher
   );
@@ -119,6 +124,7 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
   const [loadingCheck, setLoadingCheck] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [form] = Form.useForm();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleCheckboxChange = async (
     day: string,
@@ -267,6 +273,7 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
       notification.success({ message: "Jadwal berhasil disimpan." });
       setIsDrawerVisible(false);
       mutateShowScheduleTeacher();
+      setSelectedTeacher(null);
     } catch (error) {
       console.error("Error:", error);
       notification.error({
@@ -281,8 +288,73 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
     teacher.username.toLowerCase().includes(searchKeyword.toLowerCase())
   );
 
-  const handleEdit = (id: string) => {
-    console.log("Edit teacher with ID:", id);
+  const handleFinish = async (values: any) => {
+    setLoading(true);
+    const payload = {
+      username: values.username,
+      email: values.email,
+      password: values.password,
+      no_phone: values.no_phone,
+      region: values.region,
+    };
+
+    try {
+      if (selectedTeacher) {
+        await crudService.put(
+          `/api/admin/teacher/${selectedTeacher.user_id}/update`,
+          payload
+        );
+        notification.success({ message: "Guru berhasil diperbarui." });
+      } else {
+        // Create new teacher
+        await crudService.post("/api/admin/teacher/create", payload);
+        notification.success({ message: "Guru berhasil disimpan." });
+      }
+      setIsModalVisible(false);
+      await mutateDataTeacher();
+      setSelectedTeacher(null);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+    setSelectedTeacher(null);
+  };
+
+  const handleDelete = async (user_id: string) => {
+    try {
+      await crudService.delete(`/api/admin/teacher/${user_id}/delete`, user_id);
+      notification.success({ message: "Guru berhasil dihapus." });
+      await mutateDataTeacher();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleEdit = (user_id: string) => {
+    try {
+      const selectedTeacher = dataTeacher?.data.find(
+        (teacher) => teacher.user_id === user_id
+      );
+
+      if (selectedTeacher) {
+        form.setFieldsValue({
+          username: selectedTeacher.username,
+          email: selectedTeacher.email,
+          no_phone: selectedTeacher.no_phone,
+          region: selectedTeacher.region,
+        });
+        setSelectedTeacher(selectedTeacher);
+        setIsModalVisible(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
   return {
     isLoading,
@@ -309,5 +381,10 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
     isLoadingSchedule,
     loadingCheck,
     loading,
+    handleFinish,
+    handleCancel,
+    isModalVisible,
+    setIsModalVisible,
+    handleDelete,
   };
 };

@@ -14,6 +14,7 @@ import {
   TimePicker,
   Space,
   Form,
+  Modal,
 } from "antd";
 import Title from "antd/es/typography/Title";
 import {
@@ -24,11 +25,14 @@ import {
 } from "@/app/components/Icon";
 import { ColumnsType } from "antd/es/table";
 import Loading from "@/app/components/Loading";
-import Icon from "@ant-design/icons";
+import Icon, { ExclamationCircleOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useCalendarViewModel } from "./useCalendarViewModel";
 import { User } from "@/app/model/user";
+import { use, useState } from "react";
+import { useForm } from "antd/es/form/Form";
+import { crudService } from "@/app/lib/services/crudServices";
 dayjs.extend(utc);
 
 export default function AdminDashboardTeacher() {
@@ -53,7 +57,25 @@ export default function AdminDashboardTeacher() {
     isLoadingSchedule,
     loadingCheck,
     loading,
+    handleCancel,
+    handleFinish,
+    isModalVisible,
+    setIsModalVisible,
+    form,
+    handleDelete,
   } = useCalendarViewModel();
+
+  const showDeleteConfirm = (user_id: string) => {
+    Modal.confirm({
+      title: "Yakin Menghapus Guru?",
+      icon: <ExclamationCircleOutlined />,
+      content: "Aksi ini tidak dapat dibalik.",
+      okText: "Ya",
+      okType: "danger",
+      cancelText: "Tidak",
+      onOk: () => handleDelete(user_id),
+    });
+  };
 
   const columns: ColumnsType<User> = [
     {
@@ -77,6 +99,21 @@ export default function AdminDashboardTeacher() {
       sortDirections: ["ascend", "descend"],
     },
     {
+      title: "No Telepon",
+      dataIndex: "no_phone",
+      key: "no_phone",
+      sorter: (a, b) => a.no_phone.localeCompare(b.no_phone),
+      sortDirections: ["ascend", "descend"],
+    },
+    {
+      title: "Tempat",
+      dataIndex: "region",
+      key: "region",
+      sorter: (a, b) => (a.region || "").localeCompare(b.region || ""),
+      sortDirections: ["ascend", "descend"],
+      render: (text) => text || "Tidak ada data",
+    },
+    {
       title: "Aksi",
       key: "actions",
       render: (_, record) => (
@@ -98,15 +135,9 @@ export default function AdminDashboardTeacher() {
             </Button>
           </Tooltip>
           <Tooltip title="Hapus">
-            <Popconfirm
-              title="Yakin ingin menghapus guru ini?"
-              okText="Ya"
-              cancelText="Tidak"
-            >
-              <Button danger>
-                <Icon component={DeleteIcon} />
-              </Button>
-            </Popconfirm>
+            <Button danger onClick={() => showDeleteConfirm(record.user_id)}>
+              <Icon component={DeleteIcon} />
+            </Button>
           </Tooltip>
         </Flex>
       ),
@@ -137,6 +168,16 @@ export default function AdminDashboardTeacher() {
         />
       </div>
       <Divider />
+      <Flex justify="end">
+        <Button
+          type="primary"
+          style={{ marginBottom: 20 }}
+          onClick={() => setIsModalVisible(true)}
+        >
+          <Icon component={AddIcon} />
+          Tambah Guru
+        </Button>
+      </Flex>
       <Table
         columns={columns}
         dataSource={filteredData || []}
@@ -145,7 +186,6 @@ export default function AdminDashboardTeacher() {
         bordered
         pagination={{ pageSize: 5 }}
       />
-      <FloatButton type="primary" icon={<AddIcon />} />
 
       <Drawer
         placement="right"
@@ -257,6 +297,61 @@ export default function AdminDashboardTeacher() {
           <Loading />
         )}
       </Drawer>
+
+      <Modal
+        open={isModalVisible}
+        onCancel={handleCancel}
+        title={selectedTeacher ? "Edit Guru" : "Tambah Guru"}
+        footer={null}
+      >
+        <Form form={form} onFinish={handleFinish}>
+          <Form.Item
+            name="username"
+            rules={[{ required: true, message: "Please input your username!" }]}
+          >
+            <Input placeholder="Username" />
+          </Form.Item>
+          {!selectedTeacher && (
+            <>
+              <Form.Item
+                name="email"
+                rules={[
+                  { required: true, message: "Please input your email!" },
+                ]}
+              >
+                <Input placeholder="Email" />
+              </Form.Item>
+              <Form.Item
+                name="password"
+                rules={[
+                  { required: true, message: "Please input your password!" },
+                ]}
+              >
+                <Input.Password placeholder="Password" />
+              </Form.Item>
+            </>
+          )}
+          <Form.Item
+            name="no_phone"
+            rules={[
+              { required: true, message: "Please input your phone number!" },
+            ]}
+          >
+            <Input placeholder="No Telpun" />
+          </Form.Item>
+          <Form.Item
+            name="region"
+            rules={[{ required: true, message: "Please input your region!" }]}
+          >
+            <Input placeholder="Tempat" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block loading={loading}>
+              Simpan
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

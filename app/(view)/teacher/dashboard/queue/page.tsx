@@ -1,28 +1,46 @@
 "use client";
 
-import { Badge, Button, DatePicker, Divider, Flex, Input, Space } from "antd";
-import Title from "antd/es/typography/Title";
+import {
+  Badge,
+  Button,
+  DatePicker,
+  Divider,
+  Form,
+  Input,
+  Modal,
+  Space,
+  Typography,
+  Grid,
+} from "antd";
 import { useQueueViewModel } from "./useQueueViewModel";
 import { Meeting } from "@/app/model/meeting";
 import Table, { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { useEffect } from "react";
+import TextArea from "antd/es/input/TextArea";
 dayjs.extend(utc);
 
+const { Title } = Typography;
+const { useBreakpoint } = Grid;
+
 export default function Queue() {
+  const screens = useBreakpoint();
   const {
     updateAbsentStatus,
     handleChangeDate,
     setSearchKeyword,
     searchKeyword,
     filteredData,
-    showTimes
+    showTimes,
+    handleAction,
+    setIsModalVisibleAddProgesStudent,
+    isModalVisibleAddProgesStudent,
+    handleCancel,
+    form,
+    handleGetIdMeeting,
+    handleAddProgresStudent,
+    loading,
   } = useQueueViewModel();
-
-  useEffect(() => {
-    console.log(showTimes);
-  }, [showTimes]);
 
   const cellRender = (currentDate: any) => {
     const formattedDate = dayjs(currentDate).format("YYYY-MM-DD");
@@ -46,8 +64,6 @@ export default function Queue() {
     );
   };
 
-
-
   const columns: ColumnsType<Meeting & { studentName?: string }> = [
     {
       title: "No",
@@ -63,7 +79,7 @@ export default function Queue() {
     },
     {
       title: "Waktu Selesai",
-      dataIndex: "dateTime", 
+      dataIndex: "dateTime",
       key: "dateTime",
       render: (dateTime: string) =>
         dayjs.utc(dateTime).add(1, "hour").format("HH:mm"),
@@ -133,27 +149,89 @@ export default function Queue() {
       key: "module",
       render: (module: any) => (module ? "Yes" : "No"),
     },
+    {
+      title: "Aksi",
+      key: "action",
+      render: (text, record) => (
+        <Space>
+          <Button
+            danger
+            onClick={async () => {
+              await handleAction(record.meeting_id);
+            }}
+          >
+            Tidak Bisa Mengajar
+          </Button>
+          <Button
+            type="primary"
+            onClick={() => handleGetIdMeeting(record.meeting_id)}
+          >
+            Tambah Progress Siswa
+          </Button>
+        </Space>
+      ),
+    },
   ];
 
   return (
     <div>
-      <Flex justify="space-between" gap={20}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: screens.md ? "row" : "column",
+          justifyContent: "space-between",
+          gap: 20,
+        }}
+      >
         <Title level={3}>Daftar Antrian Siswa</Title>
         <DatePicker
           placeholder="Pilih Tanggal"
-          style={{ width: "20%" }}
+          style={{ width: screens.md ? "20%" : "100%" }}
           onChange={handleChangeDate}
           cellRender={cellRender}
         />
         <Input
           placeholder="Cari nama siswa"
-          style={{ width: "50%" }}
+          style={{ width: screens.md ? "50%" : "100%" }}
           onChange={(e) => setSearchKeyword(e.target.value)}
           value={searchKeyword}
         />
-      </Flex>
+      </div>
       <Divider />
-      <Table columns={columns} dataSource={filteredData} />
+      <Table
+        columns={columns}
+        dataSource={filteredData}
+        scroll={{ x: screens.md ? undefined : 800 }}
+      />
+
+      <Modal
+        open={isModalVisibleAddProgesStudent}
+        title="Progress Pertemuan"
+        onCancel={handleCancel}
+        footer={null}
+      >
+        <Form form={form} onFinish={handleAddProgresStudent}>
+          <Form.Item name="ability_scale">
+            <TextArea placeholder="Masukan Skala Kemapuan Pertemuan Hari Ini" />
+          </Form.Item>
+          <Form.Item name="student_performance">
+            <TextArea placeholder="Masukan Kinerja Siswa Pertemuan Hari Ini" />
+          </Form.Item>
+          <Form.Item name="progress_student">
+            <TextArea placeholder="Masukan Inputan Pertemuan Hari Ini" />
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ width: "100%" }}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

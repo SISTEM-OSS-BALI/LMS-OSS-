@@ -18,7 +18,8 @@ import {
   Col,
   DatePicker,
   Alert,
-  Badge, Typography,
+  Badge,
+  Typography,
 } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
@@ -296,10 +297,10 @@ export default function MeetingCalendar() {
         <Form
           layout="vertical"
           onFinish={handleSubmitReschedule}
+          form={form}
           initialValues={{
             remember: true,
           }}
-          form={form}
         >
           {/* Input nama guru */}
           <Form.Item

@@ -20,11 +20,11 @@ export const useProgramViewModel = () => {
     isLoading,
   } = useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setSelectedId(null);
+    setSelectedProgram(null);
     form.resetFields();
   };
   const handleOk = async (values: any) => {
@@ -36,19 +36,21 @@ export const useProgramViewModel = () => {
       duration: values.duration,
     };
 
-    const url = selectedId
-      ? `/api/admin/program/${selectedId}/update`
+    const url = selectedProgram
+      ? `/api/admin/program/${selectedProgram.program_id}/update`
       : "/api/admin/program/create";
+    const method = selectedProgram ? "put" : "post";
+
     try {
-      await crudService.post(url, payload);
+      await crudService[method](url, payload);
       notification.success({
-        message: selectedId
+        message: selectedProgram
           ? "Program berhasil diperbarui"
           : "Program berhasil dibuat",
       });
       await programDataMutate();
       setIsModalVisible(false);
-      setSelectedId(null);
+      setSelectedProgram(null);
     } catch {
       notification.error({
         message: "Terjadi kesalahan saat menyimpan jadwal.",
@@ -59,7 +61,6 @@ export const useProgramViewModel = () => {
   };
 
   const handleEdit = (program_id: string) => {
-    setSelectedId(program_id);
     setIsModalVisible(true);
 
     const selectedProgram = programData?.data.find(
@@ -73,13 +74,20 @@ export const useProgramViewModel = () => {
         count_program: selectedProgram?.count_program,
         duration: selectedProgram?.duration,
       });
+      setSelectedProgram(selectedProgram);
     } else {
       form.resetFields();
     }
   };
 
   const handleDelete = (program_id: string) => {
-    console.log(program_id);
+    try {
+      crudService.delete(`/api/admin/program/${program_id}/delete`, program_id);
+      notification.success({ message: "Program berhasil dihapus." });
+      programDataMutate();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const filteredData = programData?.data.filter((program) =>
@@ -100,6 +108,6 @@ export const useProgramViewModel = () => {
     filteredData,
     setSearchKeyword,
     searchKeyword,
-    selectedId,
+    selectedProgram,
   };
 };

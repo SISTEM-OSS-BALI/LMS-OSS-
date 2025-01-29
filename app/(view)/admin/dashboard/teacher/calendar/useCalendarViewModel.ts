@@ -17,7 +17,6 @@ const {
   mutate: mutateDataTeacher,
 } = useSWR<TeacherResponse>("/api/admin/teacher/show", fetcher);
 
-// Fungsi untuk memetakan nama hari (MONDAY, TUESDAY, dst) ke index (0 = Sunday, 1 = Monday, dst)
 const dayToIndex = {
   SUNDAY: 0,
   MONDAY: 1,
@@ -28,13 +27,20 @@ const dayToIndex = {
   SATURDAY: 6,
 };
 
-const color = [
-  "rgb(229, 115, 115)",
-  "rgb(255, 182, 77)",
-  "rgb(78, 182, 171)",
-  "rgb(66, 133, 244)",
-  "rgb(102, 187, 106)",
-];
+// const color = [
+//   "rgb(229, 115, 115)",
+//   "rgb(255, 182, 77)",
+//   "rgb(78, 182, 171)",
+//   "rgb(66, 133, 244)",
+//   "rgb(102, 187, 106)",
+// ];
+
+ const regionColorMapping = {
+   Singaraja: "rgb(229, 115, 115)",
+   Denpasar: "rgb(255, 182, 77)",
+   Karangasem: "rgb(66, 133, 244)",
+   // Add more regions and colors as needed
+ };
 
 // Fungsi untuk memetakan data dari API ke format event FullCalendar
 const mapScheduleToEvents = (scheduleData: any) => {
@@ -59,6 +65,7 @@ const mapScheduleToEvents = (scheduleData: any) => {
             teacherName: filteredData?.username,
             startTime: startTime,
             endTime: endTime,
+            region: filteredData?.region,
           },
         };
       })
@@ -73,7 +80,7 @@ const events = mapScheduleToEvents(showScheduleTeacherAll);
     return {
         events,
         isLoading,
-        color,
+        regionColorMapping,
         showScheduleTeacherAll,
         dataTeacher
     }

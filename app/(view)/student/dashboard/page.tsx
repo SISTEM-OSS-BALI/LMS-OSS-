@@ -27,7 +27,6 @@ export default function HomeStudent() {
     events,
   } = useMeetings();
 
-  // Custom rendering for events
   const renderEventContent = (eventInfo: any) => {
     const { teacherName, time } = eventInfo.event.extendedProps;
 
@@ -64,9 +63,7 @@ export default function HomeStudent() {
       }}
     >
       <Card>
-        <Title level={3}>
-          Selamat Datang, {username || "Student"}!
-        </Title>
+        <Title level={3}>Selamat Datang, {username || "Student"}!</Title>
         <p>Jaga Selalu Kerahasian Akun Anda</p>
       </Card>
       <Card style={{ marginTop: "20px" }}>
@@ -102,10 +99,21 @@ export default function HomeStudent() {
               <Text strong>Metode:</Text> {selectedEvent.method}
             </p>
             <p>
-              <Text strong>Link:</Text>{" "}
-              <Link href={selectedEvent.meetLink} style={{ color: "#1890FF" }}>
-                {selectedEvent.meetLink}
-              </Link>
+              {selectedEvent.meetLink ? (
+                <p>
+                  <Text strong>Link:</Text>{" "}
+                  <Link
+                    href={selectedEvent.meetLink}
+                    style={{ color: "#1890FF" }}
+                  >
+                    {selectedEvent.meetLink}
+                  </Link>
+                </p>
+              ) : (
+                <p>
+                  <Text strong>Link:</Text> <span>Tidak ada link</span>
+                </p>
+              )}
             </p>
           </div>
         )}

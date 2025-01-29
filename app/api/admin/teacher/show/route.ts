@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
           user_id: true,
           username: true,
           email: true,
+          count_program: true,
+          region: true,
+          no_phone: true,
         },
       },
       "findMany"

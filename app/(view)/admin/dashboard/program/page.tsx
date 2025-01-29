@@ -7,7 +7,7 @@ import ReactQuill from "react-quill";
 import Loading from "@/app/components/Loading";
 import { Program } from "@/app/model/program";
 import Table, { ColumnsType } from "antd/es/table";
-import Icon from "@ant-design/icons";
+import Icon, { ExclamationCircleOutlined } from "@ant-design/icons";
 import { DeleteIcon, EditIcon } from "@/app/components/Icon";
 
 export default function ProgramPage() {
@@ -24,12 +24,24 @@ export default function ProgramPage() {
     filteredData,
     setSearchKeyword,
     searchKeyword,
-    selectedId,
+    selectedProgram,
   } = useProgramViewModel();
 
   if (isLoading) {
     return <Loading />;
   }
+
+  const showDeleteConfirm = (program_id: string) => {
+    Modal.confirm({
+      title: "Yakin Menghapus Program?",
+      icon: <ExclamationCircleOutlined />,
+      content: "Aksi ini tidak dapat dibalik.",
+      okText: "Ya",
+      okType: "danger",
+      cancelText: "Tidak",
+      onOk: () => handleDelete(program_id),
+    });
+  };
 
   const columns: ColumnsType<Program> = [
     {
@@ -74,7 +86,7 @@ export default function ProgramPage() {
             </Button>
           </Tooltip>
           <Tooltip title="Hapus">
-            <Button danger onClick={() => handleDelete(record.program_id)}>
+            <Button danger onClick={() => showDeleteConfirm(record.program_id)}>
               <Icon component={DeleteIcon} />
             </Button>
           </Tooltip>
@@ -102,7 +114,7 @@ export default function ProgramPage() {
       <Divider />
       <Table columns={columns} loading={isLoading} dataSource={filteredData} />
       <Modal
-        title={selectedId ? "Edit Data Program" : "Tambah Data Program"}
+        title={selectedProgram ? "Edit Data Program" : "Tambah Data Program"}
         open={isModalVisible}
         footer={null}
         onCancel={handleCancel}
@@ -121,7 +133,12 @@ export default function ProgramPage() {
             <Input placeholder="Masukan Durasi Program" />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              style={{ width: "100%" }}
+            >
               Submit
             </Button>
           </Form.Item>

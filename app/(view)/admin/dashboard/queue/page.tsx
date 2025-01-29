@@ -1,15 +1,17 @@
 "use client";
 
-import { Table, Divider, Spin, Tag, Flex, DatePicker } from "antd";
+import { Table, Divider, Spin, Tag, Flex, DatePicker, Badge } from "antd";
 import { useMemo } from "react";
 import { useQueueViewModel } from "./useQueueViewModel";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import Loading from "@/app/components/Loading";
+import CustomAlert from "@/app/components/CustomAlert";
 dayjs.extend(utc);
 
 export default function QueuePage() {
-  const { queueData, queueError, handleChangeDate } = useQueueViewModel();
+  const { queueData, queueError, handleChangeDate, showTimes } =
+    useQueueViewModel();
   const isLoading = !queueData && !queueError;
 
   const groupedData = useMemo(() => {
@@ -25,20 +27,31 @@ export default function QueuePage() {
   }, [queueData]);
 
   if (isLoading) {
-    return <Loading/>
+    return <Loading />;
   }
 
-  if (queueError) {
+  const cellRender = (currentDate: any) => {
+    const formattedDate = dayjs(currentDate).format("YYYY-MM-DD");
+    const isShowTime = showTimes.includes(formattedDate);
+    console.log(showTimes);
+
     return (
-      <p style={{ textAlign: "center", color: "red" }}>
-        Gagal memuat jadwal pertemuan. Silakan coba lagi.
-      </p>
+      <div className="ant-picker-cell-inner">
+        {currentDate.date()}
+        {isShowTime && (
+          <Badge
+            status="success"
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              transform: "translate(50%, -50%)",
+            }}
+          />
+        )}
+      </div>
     );
-  }
-
-  if (!queueData?.data?.length) {
-    return <p style={{ textAlign: "center" }}>Tidak ada jadwal pertemuan.</p>;
-  }
+  };
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
@@ -52,11 +65,12 @@ export default function QueuePage() {
           placeholder="Pilih Tanggal"
           style={{ width: "20%" }}
           onChange={handleChangeDate}
+          cellRender={cellRender}
         />
       </Flex>
       <Divider />
       {Object.keys(groupedData).length === 0 && (
-        <p style={{ textAlign: "center" }}>Tidak ada jadwal pertemuan.</p>
+        <CustomAlert type="info" message="Tidak ada jadwal untuk hari ini." />
       )}
       {Object.keys(groupedData).map((teacherName) => (
         <div

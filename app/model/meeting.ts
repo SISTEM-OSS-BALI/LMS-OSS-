@@ -10,8 +10,10 @@ export interface Meeting {
   teacher_id: string;
   student_id: string;
   absent?: boolean;
+  progress_student: string;
+  abilityScale: string;
+  studentPerformance: string;
   module?: Buffer;
   dateTime: Date;
-  platform: string
+  platform: string;
 }
-

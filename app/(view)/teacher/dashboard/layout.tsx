@@ -24,6 +24,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { useCount, useUsername } from "@/app/lib/auth/useLogin";
+import { useDashboardViewModel } from "../useDashboardViewModel";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -47,6 +48,7 @@ const menuMap: { [key: string]: string } = {
   "/teacher/dashboard": "/teacher/dashboard",
   "/teacher/dashboard/courses": "/teacher/dashboard/courses",
   "/teacher/dashboard/queue": "/teacher/dashboard/queue",
+  "/teacher/dashboard/student": "/teacher/dashboard/student",
 };
 
 const items: MenuItem[] = [
@@ -65,6 +67,11 @@ const items: MenuItem[] = [
     "/teacher/dashboard/queue",
     <TableOutlined />
   ),
+  getItem(
+    <Link href="/teacher/dashboard/student">Siswa</Link>,
+    "/teacher/dashboard/student",
+    <UserOutlined />
+  )
 ];
 
 const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
@@ -76,7 +83,7 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
   } = theme.useToken();
   const pathname = usePathname();
   const username: string = useUsername();
-  const count = useCount();
+  const { count_program } = useDashboardViewModel();
   const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
 
   const determineSelectedKeys = (pathname: string): string[] => {
@@ -95,6 +102,10 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
     if (pathname.startsWith("/teacher/dashboard/courses")) {
       return ["/teacher/dashboard/courses"];
     }
+
+   if (pathname.startsWith("/teacher/dashboard/student/detail/")) {
+     return ["/teacher/dashboard/student"];
+   }
 
     return matchedEntry ? [matchedEntry[1]] : [];
   };
@@ -246,8 +257,8 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
             <div
               style={{
                 padding: 24,
-                background: colorBgContainer,
-                borderRadius: borderRadiusLG,
+                // background: colorBgContainer,
+                // borderRadius: borderRadiusLG,
                 minHeight: "100vh",
               }}
             >
@@ -275,7 +286,9 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
             <p style={{ fontSize: "16px", fontWeight: "bold" }}>
               Total Pertemuan
             </p>
-            <p style={{ fontSize: "24px", color: "#1890ff" }}>{count || 0} Pertemuan</p>
+            <p style={{ fontSize: "24px", color: "#1890ff" }}>
+              {count_program || 0} Pertemuan
+            </p>
           </div>
         </Modal>
       </Layout>

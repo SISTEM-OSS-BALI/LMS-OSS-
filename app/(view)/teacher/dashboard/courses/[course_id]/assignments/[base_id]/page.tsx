@@ -85,7 +85,7 @@ export default function Assignment() {
     setContent,
     setAssignmentType,
     setDescription,
-    setTimeLimit
+    setTimeLimit,
   } = useAssignmentViewModel();
 
   const renderAssignment = () => {

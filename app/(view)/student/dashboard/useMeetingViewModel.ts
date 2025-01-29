@@ -11,7 +11,6 @@ interface UserResponse {
   data: User[];
 }
 
-
 export const useMeetings = () => {
   const { data: showMeetingById } = useSWR(
     "/api/student/meeting/showById",
@@ -22,6 +21,11 @@ export const useMeetings = () => {
     fetcher
   );
 
+  const { data: countPogramData } = useSWR(
+    "/api/student/countProduct",
+    fetcher
+  );
+
   const formatDateTimeToUTC = (dateTime: string) => {
     return dayjs.utc(dateTime).toISOString();
   };
@@ -29,39 +33,41 @@ export const useMeetings = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
-   const handleEventClick = (clickInfo: any) => {
-     setSelectedEvent(clickInfo.event.extendedProps);
-     setIsModalVisible(true);
-   };
+  const handleEventClick = (clickInfo: any) => {
+    setSelectedEvent(clickInfo.event.extendedProps);
+    setIsModalVisible(true);
+  };
 
-   const handleModalClose = () => {
-     setIsModalVisible(false);
-     setSelectedEvent(null);
-   };
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setSelectedEvent(null);
+  };
 
-   // Format events
-   const events =
-     showMeetingById?.data?.map((meeting: any) => {
-       const formatDateTimeToUTC = (dateTime: string) => {
-         return dayjs.utc(dateTime).toISOString();
-       };
+  // Format events
+  const events =
+    showMeetingById?.data?.map((meeting: any) => {
+      const formatDateTimeToUTC = (dateTime: string) => {
+        return dayjs.utc(dateTime).toISOString();
+      };
 
-       const filteredData = dataTeacher?.data.find(
-         (teacher) => teacher.user_id === meeting.teacher_id
-       );
+      const filteredData = dataTeacher?.data.find(
+        (teacher) => teacher.user_id === meeting.teacher_id
+      );
 
-       return {
-         title: `Meeting with ${filteredData?.username || "Teacher"}`,
-         start: formatDateTimeToUTC(meeting.dateTime),
-         extendedProps: {
-           teacherName: filteredData?.username || "Unknown",
-           time: dayjs.utc(meeting.dateTime).format("HH:mm"),
-           color: "blue", // Ant Design primary color
-           meetLink: meeting.meetLink,
-           method: meeting.method,
-         },
-       };
-     }) || [];
+      return {
+        title: `Meeting with ${filteredData?.username || "Teacher"}`,
+        start: formatDateTimeToUTC(meeting.dateTime),
+        extendedProps: {
+          teacherName: filteredData?.username || "Unknown",
+          time: dayjs.utc(meeting.dateTime).format("HH:mm"),
+          color: "blue",
+          meetLink: meeting.meetLink,
+          method: meeting.method,
+        },
+      };
+    }) || [];
+
+  const count_program = countPogramData?.data?.count_program || 0;
 
   return {
     formatDateTimeToUTC,
@@ -69,6 +75,7 @@ export const useMeetings = () => {
     selectedEvent,
     handleEventClick,
     handleModalClose,
-    events
+    events,
+    count_program,
   };
 };

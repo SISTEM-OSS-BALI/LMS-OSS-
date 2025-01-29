@@ -10,19 +10,25 @@ export async function GET(request: NextRequest) {
     return user;
   }
 
-  const user_id = user.user_id;
   try {
     const getDateMeeting = await getData(
       "meeting",
       {
+        where: {
+          teacher_id: user.user_id,
+        },
         select: {
-            dateTime: true,
-        }
+          dateTime: true,
+        },
       },
       "findMany"
     );
 
-    return NextResponse.json({ status: 200, error: false, data: getDateMeeting });
+    return NextResponse.json({
+      status: 200,
+      error: false,
+      data: getDateMeeting,
+    });
   } catch (error) {
     console.error("Error accessing database:", error);
     return new NextResponse(

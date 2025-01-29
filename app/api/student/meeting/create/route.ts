@@ -3,11 +3,14 @@ import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import prisma from "@/app/lib/prisma";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import twilio from "twilio";
 import { getData } from "@/app/lib/db/getData";
 import { google } from "googleapis";
 import crypto from "crypto";
 import axios from "axios";
+import schedule from "node-schedule";
+import "dayjs/locale/id";
+
+dayjs.locale("id");
 
 dayjs.extend(utc);
 
@@ -15,12 +18,11 @@ export async function POST(request: NextRequest) {
   const user = authenticateRequest(request);
 
   if (user instanceof NextResponse) {
-    return user; 
+    return user;
   }
 
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const client = twilio(accountSid, authToken);
+  const apiKey = process.env.API_KEY_WATZAP!;
+  const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
   try {
     const body = await request.json();
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     const [hours, minutes] = time.split(":").map(Number);
     const dateTime = dayjs
-      .utc(dayjsDate)
+      .utc(dayjsDate.add(1, "day"))
       .set("hour", hours)
       .set("minute", minutes);
 
@@ -125,24 +127,51 @@ export async function POST(request: NextRequest) {
     const formattedTeacherPhone = formatPhoneNumber(teacherData.no_phone);
     const formattedStudentPhone = formatPhoneNumber(studentData.no_phone);
 
-    await sendWhatsAppMessage(client, {
-      to: formattedTeacherPhone,
-      variables: {
-        date: dateTime.format("DD MMMM YYYY"),
-        time: dateTime.format("HH:mm"),
-        name: teacherData.username,
-      },
-    });
+    const studentName = studentData.username;
+    const teacherName = teacherData.username;
 
-    await sendWhatsAppMessage(client, {
-      to: formattedStudentPhone,
-      variables: {
-        date: dateTime.format("DD MMMM YYYY"),
-        time: dateTime.format("HH:mm"),
-        name: studentData.username,
-      },
-    });
+    await sendWhatsAppMessage(
+      apiKey,
+      numberKey,
+      formattedTeacherPhone,
+      `Meeting dengan siswa ${studentName} pada ${dayjs(dateTime).format(
+        "dddd, DD MMMM YYYY HH:mm"
+      )}`
+    );
+    await sendWhatsAppMessage(
+      apiKey,
+      numberKey,
+      formattedStudentPhone,
+      `Meeting dengan guru ${teacherName} pada ${dayjs(dateTime).format(
+        "dddd, DD MMMM YYYY HH:mm"
+      )}`
+    );
 
+    const now = dayjs().add(8, "hour");
+    const reminderTime = dateTime.subtract(1, "hour").toDate();
+
+    if (now.isBefore(reminderTime)) {
+      schedule.scheduleJob(reminderTime, async () => {
+        await sendWhatsAppMessage(
+          apiKey,
+          numberKey,
+          formattedTeacherPhone,
+          `Pengingat: Meeting dengan siswa ${studentName} akan dimulai dalam 1 jam pada ${dayjs(
+            dateTime
+          ).format("dddd, DD MMMM YYYY HH:mm")}`
+        );
+        await sendWhatsAppMessage(
+          apiKey,
+          numberKey,
+          formattedStudentPhone,
+          `Pengingat: Meeting dengan guru ${teacherName} akan dimulai dalam 1 jam pada ${dayjs(
+            dateTime
+          ).format("dddd, DD MMMM YYYY HH:mm")}`
+        );
+      });
+    } else {
+      console.warn("Waktu pengingat sudah lewat, tidak dapat dijadwalkan.");
+    }
     return NextResponse.json({
       status: 200,
       error: false,
@@ -288,35 +317,37 @@ const createGoogleMeetEvent = async (
   }
 };
 
-function formatPhoneNumber(phone: string): string {
-  if (!phone.startsWith("08")) {
-    throw new Error("Nomor telepon harus dimulai dengan 08.");
+async function sendWhatsAppMessage(
+  apiKey: string,
+  numberKey: string,
+  phoneNo: string,
+  message: string
+) {
+  const response = await fetch("https://api.watzap.id/v1/send_message", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      api_key: apiKey,
+      number_key: numberKey,
+      phone_no: phoneNo,
+      message: message,
+      wait_until_send: "1",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to send WhatsApp message: ${response.statusText}`);
   }
 
-  const formattedPhone = phone.replace(/^0/, "+62");
-  if (formattedPhone.length < 11 || formattedPhone.length > 15) {
-    throw new Error(
-      "Nomor telepon tidak valid. Panjang nomor harus antara 11 hingga 15 digit."
-    );
-  }
-
-  return formattedPhone;
+  const data = await response.json();
+  return data;
 }
 
-async function sendWhatsAppMessage(
-  client: any,
-  {
-    to,
-    variables,
-  }: {
-    to: string;
-    variables: { date: string; time: string; name: string };
+function formatPhoneNumber(phone: string): string {
+  if (phone.startsWith("0")) {
+    return "62" + phone.slice(1);
   }
-) {
-  await client.messages.create({
-    from: "whatsapp:+14155238886",
-    contentSid: process.env.TWILIO_CONTENT_SID,
-    contentVariables: JSON.stringify(variables),
-    to: `whatsapp:${to}`,
-  });
+  return phone;
 }

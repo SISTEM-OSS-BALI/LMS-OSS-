@@ -10,7 +10,7 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { name, description, count_program } = body;
+    const { name, description, count_program, duration } = body;
 
     const user = authenticateRequest(request);
 
@@ -18,7 +18,12 @@ export async function PUT(
       const updateProgram = await updateData(
         "program",
         { program_id: program_id },
-        { name, description, count_program }
+        {
+          name,
+          description,
+          count_program: Number(count_program),
+          duration: Number(duration),
+        }
       );
 
       return NextResponse.json({
