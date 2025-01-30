@@ -9,29 +9,30 @@ dayjs.extend(utc);
 
 export async function GET(request: NextRequest) {
   const user = authenticateRequest(request);
-  const url = new URL(request.url);
-  const date = url.searchParams.get("date");
+  // const url = new URL(request.url);
+  // const date = url.searchParams.get("date");
 
   if (user instanceof NextResponse) {
     return user;
   }
 
-  const formattedDate = date
-    ? dayjs.utc(date).format("YYYY-MM-DD")
-    : dayjs().utc().format("YYYY-MM-DD");
+  // const formattedDate = date
+  //   ? dayjs.utc(date).format("YYYY-MM-DD")
+  //   : dayjs().utc().format("YYYY-MM-DD");
 
-  const startOfDay = dayjs.utc(formattedDate).startOf("day").toDate();
-  const endOfDay = dayjs.utc(formattedDate).endOf("day").toDate();
+  // const startOfDay = dayjs.utc(formattedDate).startOf("day").toDate();
+  // const endOfDay = dayjs.utc(formattedDate).endOf("day").toDate();
 
   try {
     const getMeetingWithTeacher = await getData(
       "meeting",
       {
         where: {
-          dateTime: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
+          // dateTime: {
+          //   gte: startOfDay,
+          //   lte: endOfDay,
+          // },
+          
         },
         include: {
           teacher: {

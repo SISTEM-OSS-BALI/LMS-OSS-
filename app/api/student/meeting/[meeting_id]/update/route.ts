@@ -6,6 +6,7 @@ import utc from "dayjs/plugin/utc";
 import { google } from "googleapis";
 import crypto from "crypto";
 import axios from "axios";
+import { getData } from "@/app/lib/db/getData";
 
 dayjs.extend(utc);
 
@@ -107,6 +108,33 @@ export async function PUT(
       }
     }
 
+    const getProgramIdStudent = await getData(
+      "user",
+      {
+        where: {
+          user_id: user.user_id,
+        },
+        select: {
+          program_id: true,
+        },
+      },
+      "findFirst"
+    );
+
+    const getProgramStudent = await getData(
+      "program",
+      {
+        where: {
+          program_id: getProgramIdStudent?.program_id,
+        },
+        select: {
+          name: true,
+          duration: true,
+        },
+      },
+      "findFirst"
+    );
+
     // Update meeting
     const updatedMeeting = await prisma.meeting.update({
       where: { meeting_id: meetingId },
@@ -115,6 +143,9 @@ export async function PUT(
         student_id: user.user_id,
         method,
         dateTime: dateTime.toDate(),
+        startTime: dateTime.toDate(),
+        endTime: dateTime.add(getProgramStudent?.duration!, "minute").toDate(),
+        name_program: getProgramStudent?.name,
         ...(method === "ONLINE" && { meetLink, platform }),
       },
     });

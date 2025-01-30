@@ -74,6 +74,7 @@ export default function HomeStudent() {
           editable
           showNonCurrentDates={false}
           locale="id"
+          contentHeight="auto"
           events={events}
           eventContent={renderEventContent}
           eventClick={handleEventClick}

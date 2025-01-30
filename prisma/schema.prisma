@@ -105,6 +105,9 @@ model Meeting {
   abilityScale       String?     @db.LongText
   studentPerformance String?     @db.LongText
   dateTime           DateTime
+  startTime          DateTime?
+  name_program       String?
+  endTime            DateTime?
   createdAt          DateTime    @default(now())
 }
 

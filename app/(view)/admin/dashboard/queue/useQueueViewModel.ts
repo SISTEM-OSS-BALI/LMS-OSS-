@@ -19,17 +19,17 @@ export const useQueueViewModel = (): QueueViewModel => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const date = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
-  const fetchUrl = useMemo(() => {
-    let url = "/api/admin/queue/show";
-    const params = new URLSearchParams();
-    if (date) params.append("date", date);
-    return `${url}?${params.toString()}`;
-  }, [date]);
+  // const fetchUrl = useMemo(() => {
+  //   let url = "/api/admin/queue/show";
+  //   const params = new URLSearchParams();
+  //   if (date) params.append("date", date);
+  //   return `${url}?${params.toString()}`;
+  // }, [date]);
   const {
     data: queueData,
     error: queueError,
     mutate: queueMutate,
-  } = useSWR(fetchUrl, fetcher);
+  } = useSWR("/api/admin/queue/show", fetcher);
   const { data: showTimeResponse } = useSWR(
     "/api/admin/queue/showDateTime",
     fetcher

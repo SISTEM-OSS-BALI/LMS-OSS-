@@ -9,6 +9,7 @@ import crypto from "crypto";
 import axios from "axios";
 import schedule from "node-schedule";
 import "dayjs/locale/id";
+import { duration } from "html2canvas/dist/types/css/property-descriptors/duration";
 
 dayjs.locale("id");
 
@@ -90,11 +91,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const getProgramIdStudent = await getData(
+      "user",
+      {
+        where: {
+          user_id: user.user_id,
+        },
+        select: {
+          program_id: true,
+        },
+      },
+      "findFirst"
+    );
+
+    const getProgramStudent = await getData(
+      "program",
+      {
+        where: {
+          program_id: getProgramIdStudent?.program_id,
+        },
+        select: {
+          name: true,
+          duration: true,
+        },
+      },
+      "findFirst"
+    );
+
     const meetingData = {
       teacher_id,
       student_id: user.user_id,
       method,
       dateTime: dateTime.toDate(),
+      startTime: dateTime.toDate(),
+      endTime: dateTime.add(getProgramStudent?.duration!, "minute").toDate(),
+      name_program: getProgramStudent?.name,
       ...(method === "ONLINE" && { meetLink, platform }),
     };
 

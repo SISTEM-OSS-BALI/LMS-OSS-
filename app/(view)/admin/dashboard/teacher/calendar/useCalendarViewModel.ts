@@ -9,7 +9,7 @@ interface TeacherResponse {
 }
 
 export const useCalendarViewModel = () => {
-const { data: showScheduleTeacherAll, mutate: mutateShowScheduleTeacherAll } =
+const { data: showScheduleTeacherAll, mutate: mutateShowScheduleTeacherAll, isLoading: isLoadingSchedule } =
   useSWR(`/api/admin/schedule/showScheduleAll`, fetcher);
 const {
   data: dataTeacher,
@@ -82,6 +82,7 @@ const events = mapScheduleToEvents(showScheduleTeacherAll);
         isLoading,
         regionColorMapping,
         showScheduleTeacherAll,
-        dataTeacher
+        dataTeacher,
+        isLoadingSchedule
     }
 }

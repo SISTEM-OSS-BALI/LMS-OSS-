@@ -10,6 +10,8 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { crudService } from "@/app/lib/services/crudServices";
 import { useDashboardViewModel } from "../../useDashboardViewModel";
+import { Program } from "@/app/model/program";
+import { useProgramId } from "@/app/lib/auth/useLogin";
 dayjs.extend(utc);
 
 interface MeetingResponse {
@@ -18,6 +20,10 @@ interface MeetingResponse {
 
 interface UserResponse {
   data: User[];
+}
+
+interface ProgramResponse {
+  data: Program[];
 }
 
 export const useQueueViewModel = () => {
@@ -41,6 +47,12 @@ export const useQueueViewModel = () => {
     mutate: meetingMutate,
   } = useSWR<MeetingResponse>(fetchUrl, fetcher);
   const { mutateCountProgram } = useDashboardViewModel();
+
+  const {
+    data: programData,
+    mutate: programDataMutate,
+    isLoading: isLoadingProgram,
+  } = useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
 
   const {
     data: dataStudent,
@@ -96,6 +108,7 @@ export const useQueueViewModel = () => {
     const student = dataStudent?.data.find(
       (student: User) => student.user_id === meeting.student_id
     );
+
     return {
       ...meeting,
       studentName: student?.username,
@@ -140,8 +153,8 @@ export const useQueueViewModel = () => {
     setLoading(true);
     const payload = {
       progress: values.progress_student,
-      abilityScale : values.ability_scale,
-      studentPerformance : values.student_performance
+      abilityScale: values.ability_scale,
+      studentPerformance: values.student_performance,
     };
     console.log(payload);
     try {
