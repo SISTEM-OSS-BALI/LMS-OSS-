@@ -15,5 +15,8 @@ export interface Meeting {
   studentPerformance: string;
   module?: Buffer;
   dateTime: Date;
+  startTime: Date;
+  endTime: Date;
+  name_program: string;
   platform: string;
 }

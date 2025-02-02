@@ -17,12 +17,17 @@ export async function POST(request: NextRequest) {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const color = ["#E57373", "#FFB64D", "#4EB6AB", "#4285F4", "#66BB6A"];
+
+    const randomColor = color[Math.floor(Math.random() * color.length)];
+
     const createTeacher = await createData("user", {
       username,
       email,
       password: hashedPassword,
       no_phone,
       region,
+      color: randomColor,
       role: "TEACHER",
     });
 

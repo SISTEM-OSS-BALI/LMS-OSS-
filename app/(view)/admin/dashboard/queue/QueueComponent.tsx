@@ -72,7 +72,7 @@ export default function QueueComponent() {
   };
 
   return (
-    <div style={{ padding: "40px 20px", fontFamily: "Arial, sans-serif" }}>
+    <div style={{ padding: "40px 24px", fontFamily: "Arial, sans-serif" }}>
       <div
         style={{
           marginBottom: "20px",

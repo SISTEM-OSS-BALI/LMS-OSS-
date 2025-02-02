@@ -21,13 +21,13 @@ import Title from "antd/es/typography/Title";
 import Meta from "antd/es/card/Meta";
 import Link from "next/link";
 import { DeleteIcon, EditIcon } from "@/app/components/Icon";
-import randomBgCourse from "@/app/lib/utils/randomBgCourse";
 import { formatDate } from "@/app/lib/utils/formatDate";
 import { useCourseViewModel } from "./useCourseViewModel";
-import { Suspense } from "react";
+import { Suspense, use } from "react";
+import { useRandomBgCourse } from "@/app/lib/utils/useRandomBgCourse";
 
 export default function DetailCourseTeacherComponent() {
-  const backgroundImages = randomBgCourse();
+  const backgroundImages = useRandomBgCourse();
   const {
     detailCourse,
     materialsList,
@@ -90,11 +90,13 @@ export default function DetailCourseTeacherComponent() {
               <Card
                 key={item.base_id}
                 cover={
-                  <Image
-                    alt="default"
-                    src={backgroundImages[index % backgroundImages.length]}
-                    preview={false}
-                  />
+                  backgroundImages && (
+                    <Image
+                      alt="default"
+                      src={backgroundImages[index % backgroundImages.length]}
+                      preview={false}
+                    />
+                  )
                 }
                 style={{ width: 300, margin: 20 }}
               >

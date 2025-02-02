@@ -5,7 +5,7 @@ import Meta from "antd/es/card/Meta";
 import CustomAlert from "@/app/components/CustomAlert";
 import Loading from "@/app/components/Loading";
 import Title from "antd/es/typography/Title";
-import randomBgCourse from "@/app/lib/utils/randomBgCourse";
+import randomBgCourse from "@/app/lib/utils/useRandomBgCourse";
 import { useUsername } from "@/app/lib/auth/useLogin";
 import generateCertificate from "@/app/lib/utils/generateCertificate";
 import { formatDate } from "@/app/lib/utils/formatDate";

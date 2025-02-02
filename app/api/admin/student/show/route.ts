@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getData } from "@/app/lib/db/getData";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
+import { image } from "html2canvas/dist/types/css/types/image";
 
 export async function GET(request: NextRequest) {
   const user = authenticateRequest(request);
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
           user_id: true,
           username: true,
           email: true,
+          imageUrl: true,
         },
       },
       "findMany"

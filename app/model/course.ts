@@ -6,6 +6,8 @@ export interface Teacher {
   user_id: string;
   username: string;
   email: string;
+  color: string;
+  imageUrl: string;
 }
 export interface Course {
   course_id: string;

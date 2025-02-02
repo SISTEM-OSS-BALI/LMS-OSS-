@@ -11,12 +11,17 @@ import {
   Grid,
   Card,
   Flex,
+  Image,
 } from "antd";
 import { Meeting } from "@/app/model/meeting";
 import Table, { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import TextArea from "antd/es/input/TextArea";
 import { useQueueViewModel } from "./useQueueViewModel";
+import Dragger from "antd/es/upload/Dragger";
+import { InboxOutlined } from "@ant-design/icons";
+import { useEffect } from "react";
+import { TeacherAbsence } from "@/app/model/user";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -35,9 +40,17 @@ export default function QueueComponent() {
     isModalVisibleAddProgesStudent,
     handleCancel,
     form,
-    handleGetIdMeeting,
+    handleOpenModalAddProges,
     handleAddProgresStudent,
     loading,
+    handleOpenModalAction,
+    isModalVisibleAddAction,
+    handleCancelAddAction,
+    imageUrl,
+    handleFileChange,
+    handleBeforeUpload,
+    fileList,
+    teacherAbsenceData,
   } = useQueueViewModel();
 
   const cellRender = (currentDate: any) => {
@@ -62,7 +75,9 @@ export default function QueueComponent() {
     );
   };
 
-  const columns: ColumnsType<Meeting & { studentName?: string }> = [
+  const columns: ColumnsType<
+    Meeting & { studentName: string | undefined; teacherAbsence: boolean }
+  > = [
     {
       title: "No",
       dataIndex: "no",
@@ -79,9 +94,7 @@ export default function QueueComponent() {
       title: "Waktu Selesai",
       dataIndex: "endTime",
       key: "endTime",
-      render: (endTime: string) => {
-        return dayjs.utc(endTime).format("HH:mm");
-      },
+      render: (endTime: string) => dayjs.utc(endTime).format("HH:mm"),
     },
     {
       title: "Program",
@@ -102,48 +115,34 @@ export default function QueueComponent() {
       title: "Absen",
       dataIndex: "absent",
       key: "absent",
-      render: (text: any, record: Meeting) => (
+      render: (_, record) => (
         <Space>
-          {record.absent ? (
-            <Button
-              disabled
-              style={{
-                cursor: "not-allowed",
-                backgroundColor: "green",
-                color: "white",
-              }}
-            >
-              Hadir
-            </Button>
-          ) : (
-            <Button
-              onClick={() =>
-                updateAbsentStatus(record.meeting_id, record.student_id, true)
-              }
-            >
-              Hadir
-            </Button>
-          )}
-          {!record.absent ? (
-            <Button
-              disabled
-              style={{
-                cursor: "not-allowed",
-                backgroundColor: "red",
-                color: "white",
-              }}
-            >
-              Tidak Hadir
-            </Button>
-          ) : (
-            <Button
-              onClick={() =>
-                updateAbsentStatus(record.meeting_id, record.student_id, false)
-              }
-            >
-              Tidak Hadir
-            </Button>
-          )}
+          <Button
+            disabled={record.absent}
+            style={{
+              cursor: record.absent ? "not-allowed" : "pointer",
+              backgroundColor: record.absent ? "green" : "transparent",
+              color: record.absent ? "white" : "black",
+            }}
+            onClick={() =>
+              updateAbsentStatus(record.meeting_id, record.student_id, true)
+            }
+          >
+            Hadir
+          </Button>
+          <Button
+            disabled={!record.absent}
+            style={{
+              cursor: !record.absent ? "not-allowed" : "pointer",
+              backgroundColor: !record.absent ? "red" : "transparent",
+              color: !record.absent ? "white" : "black",
+            }}
+            onClick={() =>
+              updateAbsentStatus(record.meeting_id, record.student_id, false)
+            }
+          >
+            Tidak Hadir
+          </Button>
         </Space>
       ),
     },
@@ -151,24 +150,25 @@ export default function QueueComponent() {
       title: "Modul",
       dataIndex: "module",
       key: "module",
-      render: (module: any) => (module ? "Yes" : "No"),
+      render: (module: boolean) => (module ? "Yes" : "No"),
     },
     {
       title: "Aksi",
       key: "action",
-      render: (text, record) => (
+      render: (_, record) => (
         <Space>
           <Button
             danger
-            onClick={async () => {
-              await handleAction(record.meeting_id);
-            }}
+            disabled={record.teacherAbsence}
+            onClick={() => handleOpenModalAction(record.meeting_id)}
           >
-            Tidak Bisa Mengajar
+            {record.teacherAbsence
+              ? "Sedang Diproses Admin"
+              : "Tidak Bisa Mengajar"}
           </Button>
           <Button
             type="primary"
-            onClick={() => handleGetIdMeeting(record.meeting_id)}
+            onClick={() => handleOpenModalAddProges(record.meeting_id)}
           >
             Tambah Progress Siswa
           </Button>
@@ -237,6 +237,62 @@ export default function QueueComponent() {
             <TextArea placeholder="Masukan Inputan Pertemuan Hari Ini" />
           </Form.Item>
           <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ width: "100%" }}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={isModalVisibleAddAction}
+        onCancel={handleCancelAddAction}
+        title="Tidak Bisa Mengajar"
+        footer={null}
+      >
+        <Form form={form} onFinish={handleAction}>
+          <Form.Item name="reason">
+            <TextArea placeholder="Masukan Alasan" />
+          </Form.Item>
+          <Form.Item>
+            <Form.Item name="image">
+              <Dragger
+                name="files"
+                listType="picture-card"
+                fileList={fileList}
+                onChange={handleFileChange}
+                beforeUpload={handleBeforeUpload}
+                showUploadList={false}
+                accept="image/png, image/jpeg"
+              >
+                {imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    alt="Image preview"
+                    preview={false}
+                    style={{ width: "100%", height: "auto" }}
+                  />
+                ) : (
+                  <div>
+                    <p className="ant-upload-drag-icon">
+                      <InboxOutlined />
+                    </p>
+                    <p className="ant-upload-text">
+                      Klik atau drag file ke area ini untuk upload
+                    </p>
+                    <p className="ant-upload-hint">
+                      Support untuk single upload. Hanya file PNG, JPEG, dan JPG
+                      yang diterima.
+                    </p>
+                  </div>
+                )}
+              </Dragger>
+            </Form.Item>
             <Button
               type="primary"
               htmlType="submit"

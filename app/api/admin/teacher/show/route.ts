@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
           count_program: true,
           region: true,
           no_phone: true,
+          color: true,
         },
       },
       "findMany"

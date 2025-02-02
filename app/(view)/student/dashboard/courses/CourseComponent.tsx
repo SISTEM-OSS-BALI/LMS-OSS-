@@ -4,7 +4,7 @@ import Link from "next/link";
 import Title from "antd/es/typography/Title";
 import Meta from "antd/es/card/Meta";
 import CustomAlert from "@/app/components/CustomAlert";
-import randomBgCourse from "@/app/lib/utils/randomBgCourse";
+import randomBgCourse from "@/app/lib/utils/useRandomBgCourse";
 import { useCourseViewModel } from "./useCourseViewModel";
 
 export default function CoursesStudentComponent() {

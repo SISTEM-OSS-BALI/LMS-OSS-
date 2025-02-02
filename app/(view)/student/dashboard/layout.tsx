@@ -280,8 +280,8 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
             <div
               style={{
                 padding: 24,
-                background: colorBgContainer,
-                borderRadius: borderRadiusLG,
+                // background: colorBgContainer,
+                // borderRadius: borderRadiusLG,
                 minHeight: "100vh",
               }}
             >

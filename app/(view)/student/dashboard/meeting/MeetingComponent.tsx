@@ -4,7 +4,6 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import Title from "antd/es/typography/Title";
 import {
-  Divider,
   Modal,
   Form,
   Select,
@@ -18,6 +17,12 @@ import {
   Alert,
   Badge,
   Typography,
+  Checkbox,
+  Avatar,
+  Steps,
+  Divider,
+  Flex,
+  Tooltip,
 } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
@@ -25,16 +30,10 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 import { useMeetingViewModel } from "./useMeetingViewModel";
 import { useEffect } from "react";
+import Icon from "@ant-design/icons";
+import { InfoIcon } from "@/app/components/Icon";
 
 const { useBreakpoint } = Grid;
-
-const color = [
-  "rgb(229, 115, 115)",
-  "rgb(255, 182, 77)",
-  "rgb(78, 182, 171)",
-  "rgb(66, 133, 244)",
-  "rgb(102, 187, 106)",
-];
 
 export default function MeetingComponent() {
   const {
@@ -61,8 +60,14 @@ export default function MeetingComponent() {
     handleTeacherChange,
     selectedTeacherId,
     setMeetingId,
+    selectedTeacher,
     handleCancelReschedule,
     handleSubmitReschedule,
+    handleSelectTeacher,
+    currentStep,
+    handleOpenModalInfo,
+    handleCancelModalInfo,
+    isModalInfoVisible,
   } = useMeetingViewModel();
 
   const screens = useBreakpoint();
@@ -72,23 +77,24 @@ export default function MeetingComponent() {
     }
   }, [selectedMeeting, setMeetingId]);
   const renderEventContent = (eventInfo: any) => {
-    const { teacherName, time } = eventInfo.event.extendedProps;
-    const randomColor = color[Math.floor(Math.random() * color.length)];
+    const { teacherName, time, color } = eventInfo.event.extendedProps;
 
     return (
       <div
         style={{
-          backgroundColor: randomColor,
+          backgroundColor: color,
           color: "#fff",
           padding: "4px",
           textAlign: "center",
           boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
           display: "flex",
+          width: "100%",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
           height: "100%",
           overflow: "hidden",
+          borderRadius: "10px",
           whiteSpace: "nowrap",
           textOverflow: "ellipsis",
         }}
@@ -97,7 +103,7 @@ export default function MeetingComponent() {
           {time}
         </strong>
         <div
-          style={{ fontSize: screens.xs ? "12px" : "14px", fontWeight: "bold" }}
+          style={{ fontSize: screens.xs ? "10px" : "12px", fontWeight: "bold" }}
         >
           {teacherName}
         </div>
@@ -106,36 +112,84 @@ export default function MeetingComponent() {
   };
 
   return (
-    <div style={{ padding: screens.xs ? "10px" : "20px" }}>
-      <Card style={{ marginBottom: "20px" }}>
-        <Title level={screens.xs ? 4 : 3}>Jadwal Pertemuan</Title>
+    <div style={{ padding: "24px" }}>
+      <Card
+        style={{
+          marginBottom: "20px",
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <Steps
+          size="small"
+          current={currentStep}
+          style={{ marginBottom: "24px" }}
+          items={[
+            {
+              title: "Pilih Guru",
+            },
+            {
+              title: "Pilih Tanggal",
+            },
+            {
+              title: "Ajukan Pertemuan",
+            },
+            {
+              title: "Behasil",
+            },
+          ]}
+        />
+        <Title level={screens.xs ? 4 : 3}>Pilih Guru</Title>
         <Divider />
 
-        <Form layout="vertical">
-          <Form.Item label="Pilih Guru">
-            <Select
-              placeholder="Pilih Guru"
-              onChange={(value) => {
-                const selectedTeacherData = dataTeacher?.data.find(
-                  (teacher) => teacher.username === value
-                );
-                setSelectedTeacher(selectedTeacherData ?? null);
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+          {dataTeacher?.data.map((teacher) => (
+            <Card
+              key={teacher.user_id}
+              hoverable
+              style={{
+                width: 200,
+                borderRadius: "8px",
+                textAlign: "center",
+                cursor: "pointer",
+                border:
+                  selectedTeacher?.user_id === teacher.user_id
+                    ? "2px solid #1890ff"
+                    : "1px solid #d9d9d9",
               }}
+              onClick={() => handleSelectTeacher(teacher)}
             >
-              {dataTeacher?.data.map((teacher) => (
-                <Select.Option key={teacher.user_id} value={teacher.username}>
-                  {teacher.username}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
+              <Avatar
+                size={100}
+                src={teacher.imageUrl}
+                style={{ marginBottom: 10 }}
+              />
+              <Checkbox
+                checked={selectedTeacher?.user_id === teacher.user_id}
+                onChange={(e) => {
+                  e.stopPropagation(); // Mencegah event onClick Card ikut terpanggil
+                  handleSelectTeacher(teacher);
+                }}
+              >
+                {teacher.username}
+              </Checkbox>
+            </Card>
+          ))}
+        </div>
+        <Divider />
       </Card>
 
-      <div>
-        <Row gutter={50}>
+      <div style={{ marginTop: "50px" }}>
+        <Row gutter={30}>
           <Col md={16}>
-            <Card style={{ marginTop: "20px" }}>
+            <Title level={3}>Pilih Tanggal</Title>
+            <Card
+              style={{
+                marginTop: "20px",
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+              }}
+            >
               <FullCalendar
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView={screens.xs ? "timeGridDay" : "dayGridMonth"}
@@ -152,19 +206,31 @@ export default function MeetingComponent() {
             </Card>
           </Col>
           <Col md={8}>
-            <DatePicker
-              placeholder="Pilih Tanggal"
-              onChange={handleChangeDate}
-              style={{ width: "100%", margin: "20px 0" }}
-            />
+            <Flex justify={"space-between"}>
+              <Title level={3}>Reschedule Jadwal</Title>
+              <Tooltip title="Tutorial">
+                <Button
+                  type="primary"
+                  shape="round"
+                  onClick={() => handleOpenModalInfo()}
+                >
+                  <Icon component={InfoIcon} />
+                </Button>
+              </Tooltip>
+            </Flex>
             <Card
               style={{
-                marginBottom: "20px",
+                marginTop: "20px",
                 borderRadius: "8px",
                 overflow: "hidden",
                 boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
               }}
             >
+              <DatePicker
+                placeholder="Pilih Tanggal"
+                onChange={handleChangeDate}
+                style={{ width: "100%", margin: "20px 0" }}
+              />
               {showMeetingByDate && showMeetingByDate.data.length > 0 ? (
                 showMeetingByDate.data.map((meeting: any) => (
                   <Card
@@ -198,9 +264,9 @@ export default function MeetingComponent() {
                   </Card>
                 ))
               ) : (
-                <Card style={{ marginTop: "20px" }}>
+                <div style={{ marginTop: "20px" }}>
                   <Alert type="info" message="Tidak ada jadwal pertemuan." />
-                </Card>
+                </div>
               )}
             </Card>
           </Col>
@@ -393,6 +459,38 @@ export default function MeetingComponent() {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        open={isModalInfoVisible}
+        footer={null}
+        onCancel={handleCancelModalInfo}
+      >
+        <div style={{ textAlign: "center" }}>
+          <Typography.Title level={4}>
+            Cara Melakukan Reschedule
+          </Typography.Title>
+        </div>
+        <div style={{ padding: "20px" }}>
+          <Typography.Text>
+            <ol>
+              <li>Pilih tanggal yang akan direschedule</li>
+              <li>Tekan tombol reschedule</li>
+              <li>Pilih tanggal yang baru</li>
+              <li>Pilih guru</li>
+              <li>Pilih waktu dan metode</li>
+              <li>Tekan tombol submit</li>
+            </ol>
+          </Typography.Text>
+          <Typography.Text>
+            <Typography.Text type="danger">
+              <strong>
+                Pastikan anda melakukan reschedule maksimal H-2 jam sebelum
+                pertemuan berlangsung
+              </strong>
+            </Typography.Text>
+          </Typography.Text>
+        </div>
       </Modal>
     </div>
   );

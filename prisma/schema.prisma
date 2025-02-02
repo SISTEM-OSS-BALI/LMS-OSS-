@@ -50,18 +50,22 @@ model User {
   count_program Int?     @default(0)
   joined_at     DateTime @default(now())
   region        String?
+  color         String?
   role          Role     @default(STUDENT)
 
-  coursesTeaching        Course[]                 @relation("TeacherCourses")
-  scheduleTeacher        ScheduleTeacher[]        @relation("ScheduleTeacher")
-  coursesEnrolled        CourseEnrollment[]       @relation("StudentCourses")
-  materialCourseProgress CourseProgress[]         @relation("StudentMaterialCourseProgress")
-  materialProgress       MaterialProgress[]       @relation("StudentMaterialProgress")
-  assignmentProgress     AssignmentProgress[]     @relation("StudentAssignmentProgress")
-  studentAnswers         StudentAnswerAssigment[] @relation("StudentAnswers")
-  meetingTeacher         Meeting[]                @relation("MeetingTeacher")
-  meetingStudent         Meeting[]                @relation("MeetingStudent")
-  program                Program?                 @relation(fields: [program_id], references: [program_id], onDelete: Cascade)
+  coursesTeaching           Course[]                     @relation("TeacherCourses")
+  scheduleTeacher           ScheduleTeacher[]            @relation("ScheduleTeacher")
+  coursesEnrolled           CourseEnrollment[]           @relation("StudentCourses")
+  materialCourseProgress    CourseProgress[]             @relation("StudentMaterialCourseProgress")
+  materialProgress          MaterialProgress[]           @relation("StudentMaterialProgress")
+  assignmentProgress        AssignmentProgress[]         @relation("StudentAssignmentProgress")
+  studentAnswersAssignment  StudentAnswerAssigment[]     @relation("StudentAnswersAssignment")
+  studentAswersPlacemenTest StudentAnswerPlacementTest[] @relation("StudentAnswersPlacementTest")
+  meetingTeacher            Meeting[]                    @relation("MeetingTeacher")
+  meetingStudent            Meeting[]                    @relation("MeetingStudent")
+  teacherAbsences           TeacherAbsence[]             @relation("TeacherAbsences")
+  program                   Program?                     @relation(fields: [program_id], references: [program_id], onDelete: Cascade)
+  AccessPlacementTest       AccessPlacementTest[]
 }
 
 model ScheduleTeacher {
@@ -91,9 +95,9 @@ model ScheduleTime {
 }
 
 model Meeting {
-  meeting_id         String      @id @default(uuid())
-  teacher            User        @relation("MeetingTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
-  student            User        @relation("MeetingStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
+  meeting_id         String           @id @default(uuid())
+  teacher            User             @relation("MeetingTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  student            User             @relation("MeetingStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
   method             MethodType?
   meetLink           String?
   platform           String?
@@ -101,14 +105,15 @@ model Meeting {
   student_id         String
   absent             Boolean?
   module             Bytes?
-  progress_student   String?     @db.LongText
-  abilityScale       String?     @db.LongText
-  studentPerformance String?     @db.LongText
+  progress_student   String?          @db.LongText
+  abilityScale       String?          @db.LongText
+  studentPerformance String?          @db.LongText
   dateTime           DateTime
   startTime          DateTime?
   name_program       String?
   endTime            DateTime?
-  createdAt          DateTime    @default(now())
+  createdAt          DateTime         @default(now())
+  TeacherAbsence     TeacherAbsence[] @relation("TeacherAbsences")
 }
 
 model Course {
@@ -245,11 +250,12 @@ model Assignment {
   type                  TypeAssigment
   createdAt             DateTime              @default(now())
 
-  multipleChoices    MultipleChoice[]
-  progressAssignment AssignmentProgress[]
-  essay              Essay?
-  sentenceMatching   SentenceMatching?
-  studentAnswers     StudentAnswerAssigment[]
+  multipleChoices                     MultipleChoice[]
+  progressAssignment                  AssignmentProgress[]
+  essay                               Essay?
+  sentenceMatching                    SentenceMatching?
+  studentAnswers                      StudentAnswerAssigment[]
+  StudentAnswerAssigmentPlacementTest StudentAnswerPlacementTest[]
 }
 
 model MultipleChoice {
@@ -291,7 +297,7 @@ model Pair {
 
 model StudentAnswerAssigment {
   answer_id      String          @id @default(uuid())
-  student        User            @relation("StudentAnswers", fields: [student_id], references: [user_id])
+  student        User            @relation("StudentAnswersAssignment", fields: [student_id], references: [user_id])
   student_id     String
   assignment     Assignment      @relation(fields: [assignment_id], references: [assignment_id])
   assignment_id  String
@@ -315,4 +321,63 @@ model Program {
   description   String
   duration      Int
   User          User[]
+}
+
+model TeacherAbsence {
+  teacher_absence_id String   @id @default(uuid())
+  teacher            User     @relation(fields: [teacher_id], references: [user_id], onDelete: Cascade, name: "TeacherAbsences")
+  teacher_id         String
+  meeting_id         String
+  meeting            Meeting  @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade, name: "TeacherAbsences")
+  reason             String
+  imageUrl           String   @db.LongText
+  createdAt          DateTime @default(now())
+  status             Boolean?
+  updatedAt          DateTime @updatedAt
+}
+
+model PlacementTest {
+  placement_test_id String @id @default(uuid())
+  name              String
+  description       String @db.LongText
+  timeLimit         Int
+
+  multipleChoices     MultipleChoicePlacementTest[]
+  AccessPlacementTest AccessPlacementTest[]
+}
+
+model MultipleChoicePlacementTest {
+  mcq_id            String        @id @default(uuid())
+  question          String        @db.LongText
+  options           Json
+  correctAnswer     String
+  placementTest     PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
+  placement_test_id String
+
+  studentAnswersPlacementTest StudentAnswerPlacementTest[] @relation("MCQAnswerPlacementTest")
+}
+
+model StudentAnswerPlacementTest {
+  answer_id      String                       @id @default(uuid())
+  student        User                         @relation("StudentAnswersPlacementTest", fields: [student_id], references: [user_id])
+  student_id     String
+  assignment     Assignment                   @relation(fields: [assignment_id], references: [assignment_id])
+  assignment_id  String
+  multipleChoice MultipleChoicePlacementTest? @relation("MCQAnswerPlacementTest", fields: [mcq_id], references: [mcq_id])
+  mcq_id         String?
+
+  studentAnswer String   @db.LongText
+  isCorrect     Boolean?
+  score         Int
+  submittedAt   DateTime @default(now())
+}
+
+model AccessPlacementTest {
+  access_placement_test_id String        @id @default(uuid())
+  user                     User          @relation(fields: [user_id], references: [user_id])
+  user_id                  String
+  placementTest            PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
+  placement_test_id        String
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
 }

@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
           user_id: true,
           username: true,
           email: true,
+          color: true,
+          imageUrl: true,
         },
       },
       "findMany"

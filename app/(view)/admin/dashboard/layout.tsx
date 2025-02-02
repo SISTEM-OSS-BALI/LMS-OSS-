@@ -6,6 +6,7 @@ import {
   CalendarFilled,
   LogoutOutlined,
   PieChartOutlined,
+  ScheduleFilled,
   TableOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -25,6 +26,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { useCount, useUsername } from "@/app/lib/auth/useLogin";
+import { get } from "http";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -50,6 +52,7 @@ const menuMap: { [key: string]: string } = {
   "/admin/dashboard/teacher/calendar": "/admin/dashboard/teacher/calendar",
   "/admin/dashboard/program": "/admin/dashboard/program",
   "/admin/dashboard/queue": "/admin/dashboard/queue",
+  "/admin/dashboard/teacher/absent": "/admin/dashboard/teacher/absent",
 };
 
 const items: MenuItem[] = [
@@ -67,6 +70,11 @@ const items: MenuItem[] = [
         <Link href="/admin/dashboard/teacher/calendar">Kalender</Link>,
         "/admin/dashboard/teacher/calendar",
         <CalendarFilled />
+      ),
+      getItem(
+        <Link href="/admin/dashboard/teacher/absent">Absen</Link>,
+        "/admin/dashboard/teacher/absent",
+        <ScheduleFilled />
       ),
     ]
   ),

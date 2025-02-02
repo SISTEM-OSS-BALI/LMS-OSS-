@@ -3,6 +3,7 @@ import {
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
+  InfoCircleOutlined,
   LeftCircleOutlined,
   PlusOutlined,
   RightCircleOutlined,
@@ -16,6 +17,10 @@ export const EditIcon = () => {
 export const DeleteIcon = () => {
   return <DeleteOutlined />;
 };
+
+export const InfoIcon = () => {
+  return <InfoCircleOutlined />;
+}
 
 export const BackIcon = () => {
   return <LeftCircleOutlined />;

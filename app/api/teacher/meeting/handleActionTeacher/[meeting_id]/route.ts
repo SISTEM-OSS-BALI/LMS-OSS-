@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import { deleteData } from "@/app/lib/db/deleteData";
 import { getData } from "@/app/lib/db/getData";
 import dayjs from "dayjs";
+import { createData } from "@/app/lib/db/createData";
 
-export async function DELETE(
+export async function POST(
   request: NextRequest,
   params: { params: { meeting_id: string } }
 ) {
@@ -15,51 +15,62 @@ export async function DELETE(
     return user;
   }
 
-  const apiKey = process.env.API_KEY_WATZAP!;
-  const numberKey = process.env.NUMBER_KEY_WATZAP!;
+  const body = await request.json();
+  const { reason, imageUrl } = body;
+  // const apiKey = process.env.API_KEY_WATZAP!;
+  // const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
   try {
-    const getMeeting = await getData("meeting", {
-      where: { meeting_id: meeting_id },
-      findFirst: true,
-    });
+    // const getMeeting = await getData(
+    //   "meeting",
+    //   {
+    //     where: { meeting_id: meeting_id },
+    //   },
+    //   "findFirst"
+    // );
 
-    const getStudent = await getData(
-      "user",
-      {
-        where: { user_id: getMeeting.student_id },
-        select: { username: true, no_phone: true },
-      },
-      "findFirst"
-    );
+    // const getStudent = await getData(
+    //   "user",
+    //   {
+    //     where: { user_id: getMeeting.student_id },
+    //     select: { username: true, no_phone: true },
+    //   },
+    //   "findFirst"
+    // );
 
-  const getTacher = await getData(
-    "user",
-    {
-      where: { user_id: user.user_id },
-      select: { username: true,},
-    },
-    "findFirst"
-  );
+    // const getTacher = await getData(
+    //   "user",
+    //   {
+    //     where: { user_id: user.user_id },
+    //     select: { username: true },
+    //   },
+    //   "findFirst"
+    // );
 
-    const formattedStudentPhone = formatPhoneNumber(getStudent.no_phone);
-    const studentName = getStudent.username;
-    const dateTime = getMeeting.dateTime; 
-
-    await sendWhatsAppMessage(
-      apiKey,
-      numberKey,
-      formattedStudentPhone,
-      `Meeting dengan guru ${getTacher.username} pada ${dayjs(dateTime).format(
-        "dddd, DD MMMM YYYY HH:mm"
-      )}`
-    );
-
-    const getDelete = await deleteData("meeting", {
+    const createTeacherAbsent = await createData("teacherAbsence", {
       meeting_id: meeting_id,
+      teacher_id: user.user_id,
+      reason: reason,
+      imageUrl: imageUrl,
     });
 
-    return NextResponse.json({ status: 200, error: false, data: getMeeting });
+    // const formattedStudentPhone = formatPhoneNumber(getStudent.no_phone);
+    // const dateTime = getMeeting.dateTime;
+
+    // await sendWhatsAppMessage(
+    //   apiKey,
+    //   numberKey,
+    //   formattedStudentPhone,
+    //   `Meeting dengan guru ${getTacher.username} pada ${dayjs(dateTime).format(
+    //     "dddd, DD MMMM YYYY HH:mm"
+    //   )}`
+    // );
+
+    return NextResponse.json({
+      status: 200,
+      error: false,
+      data: createTeacherAbsent,
+    });
   } catch (error) {
     console.error("Error accessing database:", error);
     return new NextResponse(

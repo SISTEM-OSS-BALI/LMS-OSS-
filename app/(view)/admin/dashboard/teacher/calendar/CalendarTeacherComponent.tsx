@@ -56,7 +56,7 @@ export default function CalendarTeacherComponent() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "24px" }}>
       {isLoading && isLoadingSchedule ? (
         <Loading />
       ) : (

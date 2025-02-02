@@ -20,6 +20,7 @@ export interface User {
   imageUrl: string;
   role: Role;
   region: string;
+  color: string;
   count_program: number;
 
   coursesTeaching: Course[];
@@ -31,4 +32,15 @@ export interface User {
   studentAnswers: StudentAnswerAssignment[];
   meetingTeacher: Meeting[];
   meetingStudent: Meeting[];
+}
+
+export interface TeacherAbsence {
+  teacher_absence_id: string;
+  teacher_id: string;
+  meeting_id: string;
+  reason: string;
+  imageUrl: string;
+  createdAt: Date
+  status: boolean
+  updatedAt: Date
 }

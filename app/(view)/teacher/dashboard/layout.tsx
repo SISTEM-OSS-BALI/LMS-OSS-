@@ -49,6 +49,7 @@ const menuMap: { [key: string]: string } = {
   "/teacher/dashboard/courses": "/teacher/dashboard/courses",
   "/teacher/dashboard/queue": "/teacher/dashboard/queue",
   "/teacher/dashboard/student": "/teacher/dashboard/student",
+  "/teacher/dashboard/placement-test": "/teacher/dashboard/placement-test",
 };
 
 const items: MenuItem[] = [
@@ -70,6 +71,11 @@ const items: MenuItem[] = [
   getItem(
     <Link href="/teacher/dashboard/student">Siswa</Link>,
     "/teacher/dashboard/student",
+    <UserOutlined />
+  ),
+  getItem(
+    <Link href="/teacher/dashboard/placement-test">Placement Test</Link>,
+    "/teacher/dashboard/placement-test",
     <UserOutlined />
   )
 ];

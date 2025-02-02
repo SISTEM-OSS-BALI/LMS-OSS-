@@ -15,7 +15,7 @@ import Icon from "@ant-design/icons";
 import Title from "antd/es/typography/Title";
 import Link from "next/link";
 import { AddIcon, CopyIcon, DeleteIcon, EditIcon } from "@/app/components/Icon";
-import randomBgCourse from "@/app/lib/utils/randomBgCourse";
+import randomBgCourse from "@/app/lib/utils/useRandomBgCourse";
 import { useCourseViewModel } from "./useCourseViewModel";
 import CustomAlert from "@/app/components/CustomAlert";
 import Meta from "antd/es/card/Meta";

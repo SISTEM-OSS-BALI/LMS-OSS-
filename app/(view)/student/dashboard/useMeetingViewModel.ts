@@ -4,11 +4,20 @@ import utc from "dayjs/plugin/utc";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { User } from "@/app/model/user";
 import { useState } from "react";
+import { AccessPlacementTest, PlacementTest } from "@prisma/client";
 
 dayjs.extend(utc);
 
 interface UserResponse {
   data: User[];
+}
+
+interface PlacementTestResponse {
+  data: PlacementTest[]
+}
+
+interface AccessPlacementTestResponse {
+  data: AccessPlacementTest[]
 }
 
 export const useMeetings = () => {
@@ -26,9 +35,30 @@ export const useMeetings = () => {
     fetcher
   );
 
+  const {data: accessPlacemenetTestData} = useSWR<AccessPlacementTestResponse>(
+    "/api/student/placementTest/show",
+    fetcher
+  );
+
+  const { data: placemenetTestData } = useSWR<PlacementTestResponse>(
+    "/api/teacher/placementTest/show",
+    fetcher
+  );
+
   const formatDateTimeToUTC = (dateTime: string) => {
     return dayjs.utc(dateTime).toISOString();
   };
+
+  const mergedData = accessPlacemenetTestData?.data.map((access) => {
+    const placementInfo = placemenetTestData?.data.find(
+      (placement) => placement.placement_test_id === access.placement_test_id
+    );
+
+    return {
+      ...access,
+      ...placementInfo,
+    };
+  });
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -77,5 +107,6 @@ export const useMeetings = () => {
     handleModalClose,
     events,
     count_program,
+    mergedData
   };
 };

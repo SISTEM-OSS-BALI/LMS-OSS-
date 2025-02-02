@@ -11,7 +11,6 @@ import { useSearchParams } from "next/navigation";
 import { crudService } from "@/app/lib/services/crudServices";
 import { useDashboardViewModel } from "../../useDashboardViewModel";
 import { Program } from "@/app/model/program";
-import { useProgramId } from "@/app/lib/auth/useLogin";
 dayjs.extend(utc);
 
 interface MeetingResponse {
@@ -20,10 +19,6 @@ interface MeetingResponse {
 
 interface UserResponse {
   data: User[];
-}
-
-interface ProgramResponse {
-  data: Program[];
 }
 
 export const useQueueViewModel = () => {
@@ -49,10 +44,10 @@ export const useQueueViewModel = () => {
   const { mutateCountProgram } = useDashboardViewModel();
 
   const {
-    data: programData,
+    data: teacherAbsenceData,
     mutate: programDataMutate,
     isLoading: isLoadingProgram,
-  } = useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
+  } = useSWR("/api/teacher/teacherAbsent/show", fetcher);
 
   const {
     data: dataStudent,
@@ -64,6 +59,9 @@ export const useQueueViewModel = () => {
     useState(false);
   const [form] = Form.useForm();
   const [meetingId, setMeetingId] = useState<string>("");
+  const [isModalVisibleAddAction, setIsModalVisibleAddAction] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [fileList, setFileList] = useState<any[]>([]);
 
   const updateAbsentStatus = async (
     meeting_id: string,
@@ -109,9 +107,14 @@ export const useQueueViewModel = () => {
       (student: User) => student.user_id === meeting.student_id
     );
 
+    const teacherAbsence = teacherAbsenceData?.data.find(
+      (t: Meeting) => t.meeting_id === meeting.meeting_id
+    );
+
     return {
       ...meeting,
       studentName: student?.username,
+      teacherAbsence,
     };
   });
 
@@ -126,13 +129,32 @@ export const useQueueViewModel = () => {
     }
   };
 
-  const handleAction = async (meeting_id: string) => {
+  const handleOpenModalAction = (meeting_id: string) => {
+    setIsModalVisibleAddAction(true);
+    setMeetingId(meeting_id);
+  };
+
+  const handleAction = async (values: any) => {
+    setLoading(true);
+    const payload = {
+      reason: values.reason,
+      imageUrl: imageUrl,
+    };
     setLoading(true);
     try {
-      await crudService.delete(
-        `/api/teacher/meeting/handleActionTeacher/${meeting_id}`,
-        meeting_id
-      );
+      await crudService.post(
+        `/api/teacher/meeting/handleActionTeacher/${meetingId}`,
+        payload
+      )
+      notification.success({
+        message: "Berhasil Menambahkan Action",
+      });
+      setLoading(false);
+      handleCancelAddAction();
+      meetingMutate();
+      mutateDataStudent();
+      mutateCountProgram();
+      setMeetingId("");
     } catch (error) {
       console.error("Failed to delete meeting:", error);
     } finally {
@@ -142,9 +164,18 @@ export const useQueueViewModel = () => {
 
   const handleCancel = () => {
     setIsModalVisibleAddProgesStudent(false);
+    setMeetingId("");
+    form.resetFields();
   };
 
-  const handleGetIdMeeting = (meeting_id: string) => {
+  const handleCancelAddAction = () => {
+    setIsModalVisibleAddAction(false);
+    setMeetingId("");
+    form.resetFields();
+    setImageUrl(null);
+  };
+
+  const handleOpenModalAddProges = (meeting_id: string) => {
     setIsModalVisibleAddProgesStudent(true);
     setMeetingId(meeting_id);
   };
@@ -176,6 +207,30 @@ export const useQueueViewModel = () => {
       setLoading(false);
     }
   };
+
+  const getBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleFileChange = async (info: any) => {
+    if (info.file.status === "done") {
+      const base64 = await getBase64(info.file.originFileObj as File);
+      setImageUrl(base64);
+    }
+    setFileList(info.fileList);
+  };
+
+  const handleBeforeUpload = async (file: any) => {
+    const base64 = await getBase64(file);
+    setImageUrl(base64);
+    return false;
+  };
+
   return {
     meetingData,
     updateAbsentStatus,
@@ -190,8 +245,17 @@ export const useQueueViewModel = () => {
     isModalVisibleAddProgesStudent,
     handleCancel,
     form,
-    handleGetIdMeeting,
+    handleOpenModalAddProges,
     handleAddProgresStudent,
     loading,
+    handleOpenModalAction,
+    isModalVisibleAddAction,
+    handleCancelAddAction,
+    imageUrl,
+    setImageUrl,
+    handleFileChange,
+    handleBeforeUpload,
+    fileList,
+    teacherAbsenceData,
   };
 };
