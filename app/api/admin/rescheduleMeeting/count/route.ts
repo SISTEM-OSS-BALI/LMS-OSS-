@@ -1,29 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getData } from "@/app/lib/db/getData";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import { createData } from "@/app/lib/db/createData";
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const user = authenticateRequest(request);
-  const body = await request.json();
-  const { name, description, count_program, duration } = body;
 
   if (user instanceof NextResponse) {
     return user;
   }
 
+  const url = new URL(request.url);
+  const searchParams = new URLSearchParams(url.search);
+  const lastChecked = searchParams.get("lastChecked");
+  console.log(lastChecked);
+  const lastCheckedNumber = Number(lastChecked);
+  const lastCheckedDate = !isNaN(lastCheckedNumber)
+    ? new Date(lastCheckedNumber)
+    : new Date(0);
+
   try {
-    const createProgram = await createData("program", {
-      name,
-      description,
-      count_program: Number(count_program),
-      duration: Number(duration),
+    const getResheduleMeetingCount = await prisma.rescheduleMeeting.count({
+      where: {
+        createdAt: {
+          gt: lastCheckedDate,
+        },
+      },
     });
 
     return NextResponse.json({
       status: 200,
       error: false,
-      data: createProgram,
+      data: getResheduleMeetingCount,
     });
   } catch (error) {
     console.error("Error accessing database:", error);

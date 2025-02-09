@@ -3,8 +3,13 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { User } from "@/app/model/user";
-import { useState } from "react";
-import { AccessPlacementTest, PlacementTest } from "@prisma/client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  AccessPlacementTest,
+  MultipleChoicePlacementTest,
+  PlacementTest,
+} from "@prisma/client";
 
 dayjs.extend(utc);
 
@@ -13,14 +18,15 @@ interface UserResponse {
 }
 
 interface PlacementTestResponse {
-  data: PlacementTest[]
+  data: PlacementTest[];
 }
 
 interface AccessPlacementTestResponse {
-  data: AccessPlacementTest[]
+  data: AccessPlacementTest[];
 }
 
 export const useMeetings = () => {
+  const router = useRouter();
   const { data: showMeetingById } = useSWR(
     "/api/student/meeting/showById",
     fetcher
@@ -35,15 +41,37 @@ export const useMeetings = () => {
     fetcher
   );
 
-  const {data: accessPlacemenetTestData} = useSWR<AccessPlacementTestResponse>(
-    "/api/student/placementTest/show",
-    fetcher
-  );
+  const { data: accessPlacemenetTestData } =
+    useSWR<AccessPlacementTestResponse>(
+      "/api/student/placementTest/show",
+      fetcher
+    );
 
   const { data: placemenetTestData } = useSWR<PlacementTestResponse>(
     "/api/teacher/placementTest/show",
     fetcher
   );
+
+  const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (accessPlacemenetTestData?.data && placemenetTestData?.data) {
+      const foundPlacement = accessPlacemenetTestData.data
+        .map((access) =>
+          placemenetTestData.data.find(
+            (placement) =>
+              placement.placement_test_id === access.placement_test_id
+          )
+        )
+        .find((placement) => placement !== undefined);
+
+      if (foundPlacement) {
+        setSelectedPlacementId(foundPlacement.placement_test_id);
+      }
+    }
+  }, [accessPlacemenetTestData, placemenetTestData]);
 
   const formatDateTimeToUTC = (dateTime: string) => {
     return dayjs.utc(dateTime).toISOString();
@@ -59,6 +87,12 @@ export const useMeetings = () => {
       ...placementInfo,
     };
   });
+
+  const startQuiz = () => {
+    router.push(
+      `/student/dashboard/placement-test?testId=${selectedPlacementId}&t=${mergedData?.[0]?.timeLimit}&accessId=${mergedData?.[0]?.access_placement_test_id}`
+    );
+  };
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -107,6 +141,7 @@ export const useMeetings = () => {
     handleModalClose,
     events,
     count_program,
-    mergedData
+    mergedData,
+    startQuiz,
   };
 };

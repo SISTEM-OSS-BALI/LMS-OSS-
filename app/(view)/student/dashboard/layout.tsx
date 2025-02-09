@@ -122,7 +122,11 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
 
   const shouldHideSidebar = () => {
     const regex = /^\/student\/dashboard\/courses\/[^/]+\/materials\/[^/]+$/;
-    return regex.test(pathname);
+    const regex2 = /^\/student\/dashboard\/placement-test$/;
+    const regex3 = /^\/student\/dashboard\/placement-test\/result$/;
+    return (
+      regex.test(pathname) || regex2.test(pathname) || regex3.test(pathname)
+    );
   };
 
   const menu = (

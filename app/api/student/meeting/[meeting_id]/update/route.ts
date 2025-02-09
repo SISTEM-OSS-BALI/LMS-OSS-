@@ -3,10 +3,16 @@ import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import prisma from "@/app/lib/prisma";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { google } from "googleapis";
-import crypto from "crypto";
-import axios from "axios";
 import { getData } from "@/app/lib/db/getData";
+import {
+  createGoogleMeetEvent,
+  createZoomMeeting,
+  getOAuthClient,
+} from "@/app/lib/utils/meetingHelper";
+import {
+  formatPhoneNumber,
+  sendWhatsAppMessage,
+} from "@/app/lib/utils/notificationHelper";
 
 dayjs.extend(utc);
 
@@ -55,13 +61,14 @@ export async function PUT(
 
     const [hours, minutes] = time.split(":").map(Number);
     const dateTime = dayjs
-      .utc(dayjsDate)
+      .utc(dayjsDate.add(1, "day"))
       .set("hour", hours)
       .set("minute", minutes);
 
     // Cari meeting di database
     const existingMeeting = await prisma.meeting.findUnique({
       where: { meeting_id: meetingId },
+      include: { teacher: true, student: true },
     });
 
     if (!existingMeeting) {
@@ -71,22 +78,22 @@ export async function PUT(
       );
     }
 
-    // Validasi H-2 jam sebelum jadwal sebelumnya
+    // Validasi H-12 jam sebelum jadwal sebelumnya
     const now = dayjs().add(8, "hour");
     const previousMeetingTime = dayjs.utc(existingMeeting.dateTime);
 
-    if (previousMeetingTime.diff(now, "minute") < 120) {
+    if (previousMeetingTime.diff(now, "minute") < 720) {
       return NextResponse.json(
         {
           status: 400,
           error:
-            "Meeting hanya dapat diperbarui maksimal H-2 jam sebelum jadwal sebelumnya.",
+            "Meeting hanya dapat diperbarui maksimal 12 jam sebelum jadwal sebelumnya.",
         },
         { status: 400 }
       );
     }
 
-    let meetLink;
+    let meetLink = null;
     if (method === "ONLINE") {
       if (platform === "GOOGLE_MEET") {
         const auth = await getOAuthClient();
@@ -98,10 +105,8 @@ export async function PUT(
         );
       } else if (platform === "ZOOM") {
         meetLink = await createZoomMeeting(
-          "Zoom Authentication Client",
           "Meeting dengan guru",
-          dateTime.toDate(),
-          dateTime.add(1, "hour").toDate()
+          dateTime.toDate()
         );
       } else {
         throw new Error("Platform tidak valid");
@@ -150,6 +155,40 @@ export async function PUT(
       },
     });
 
+    // 🔹 Kirim Notifikasi WhatsApp ke guru dan siswa
+    const apiKey = process.env.API_KEY_WATZAP!;
+    const numberKey = process.env.NUMBER_KEY_WATZAP!;
+    const formattedTeacherPhone = formatPhoneNumber(
+      existingMeeting.teacher.no_phone ?? ""
+    );
+    const formattedStudentPhone = formatPhoneNumber(
+      existingMeeting.student.no_phone ?? ""
+    );
+    const studentName = existingMeeting.student.username;
+    const teacherName = existingMeeting.teacher.username;
+    const formattedDate = dayjs(dateTime).format("dddd, DD MMMM YYYY HH:mm");
+
+    const messages = [
+      {
+        phone: formattedTeacherPhone,
+        text: `🔄 *Update Pertemuan!*\n\n👨‍🏫 *Guru:* ${teacherName}\n👨‍🎓 *Siswa:* ${studentName}\n📅 *Tanggal Baru:* ${formattedDate}\n📝 *Metode:* ${method}\n📍 *Platform:* ${
+          platform || "-"
+        }\n🔗 *Link:* ${meetLink || "-"}\n\nHarap periksa jadwal terbaru.`,
+      },
+      { 
+        phone: formattedStudentPhone,
+        text: `🔄 *Update Pertemuan!*\n\n👨‍🎓 *Siswa:* ${studentName}\n👨‍🏫 *Guru:* ${teacherName}\n📅 *Tanggal Baru:* ${formattedDate}\n📝 *Metode:* ${method}\n📍 *Platform:* ${
+          platform || "-"
+        }\n🔗 *Link:* ${meetLink || "-"}\n\nHarap periksa jadwal terbaru.`,
+      },
+    ];
+
+    await Promise.all(
+      messages.map((msg) =>
+        sendWhatsAppMessage(apiKey, numberKey, msg.phone, msg.text)
+      )
+    );
+
     return NextResponse.json({
       status: 200,
       error: false,
@@ -167,163 +206,4 @@ export async function PUT(
   } finally {
     await prisma.$disconnect();
   }
-}
-
-async function getOAuthClient() {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-
-  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
-  oauth2Client.setCredentials({ refresh_token: refreshToken });
-
-  return oauth2Client;
-}
-
-async function getZoomAccessToken() {
-  const zoomClientId = process.env.ZOOM_CLIENT_ID;
-  const zoomClientSecret = process.env.ZOOM_CLIENT_SECRET;
-  const zoomRefreshToken = process.env.ZOOM_REFRESH_TOKEN;
-
-  // Buat URL untuk request token
-  const tokenUrl = "https://zoom.us/oauth/token";
-
-  const response = await fetch(tokenUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${Buffer.from(
-        `${zoomClientId}:${zoomClientSecret}`
-      ).toString("base64")}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: zoomRefreshToken || "",
-    }).toString(),
-  });
-
-  const responseData = await response.json();
-  const { access_token } = responseData;
-
-  return access_token;
-}
-
-async function createZoomMeeting(
-  auth: any,
-  summary: string,
-  startDateTime: Date,
-  endDateTime: Date
-) {
-  const accessToken = await getZoomAccessToken();
-
-  const zoomMeetingData = {
-    topic: summary,
-    type: 2, // 2 = Scheduled Meeting
-    start_time: startDateTime.toISOString(),
-    duration: 60, // durasi dalam menit
-    timezone: "Asia/Jakarta",
-    agenda: summary,
-    settings: {
-      host_video: true,
-      participant_video: true,
-      join_before_host: true,
-      mute_upon_entry: true,
-      audio: "voip", // hanya VOIP
-    },
-  };
-
-  try {
-    const response = await axios.post(
-      "https://api.zoom.us/v2/users/me/meetings",
-      zoomMeetingData,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-    return response.data.join_url;
-  } catch (error) {
-    console.error("Error creating Zoom meeting:", error);
-    throw new Error("Failed to create Zoom meeting");
-  }
-}
-
-const createGoogleMeetEvent = async (
-  auth: any,
-  summary: string,
-  startDateTime: Date,
-  endDateTime: Date
-) => {
-  const calendar = google.calendar({ version: "v3", auth });
-
-  const event = {
-    summary,
-    start: {
-      dateTime: new Date(
-        startDateTime.setHours(startDateTime.getHours() - 8)
-      ).toISOString(),
-      timeZone: "Asia/Jakarta",
-    },
-    end: {
-      dateTime: new Date(
-        endDateTime.setHours(endDateTime.getHours() - 8)
-      ).toISOString(),
-      timeZone: "Asia/Jakarta",
-    },
-    conferenceData: {
-      createRequest: {
-        requestId: `meet-${crypto.randomBytes(5).toString("hex")}`,
-        conferenceSolutionKey: {
-          type: "hangoutsMeet",
-        },
-      },
-    },
-  };
-
-  try {
-    const response = await calendar.events.insert({
-      calendarId: "primary",
-      requestBody: event,
-      conferenceDataVersion: 1,
-    });
-    console.log("Google Meet event created:", response.data);
-    return response.data.hangoutLink;
-  } catch (error) {
-    console.error("Error creating Google Meet event:", error);
-    throw new Error("Failed to create Google Meet event");
-  }
-};
-
-function formatPhoneNumber(phone: string): string {
-  if (!phone.startsWith("08")) {
-    throw new Error("Nomor telepon harus dimulai dengan 08.");
-  }
-
-  const formattedPhone = phone.replace(/^0/, "+62");
-  if (formattedPhone.length < 11 || formattedPhone.length > 15) {
-    throw new Error(
-      "Nomor telepon tidak valid. Panjang nomor harus antara 11 hingga 15 digit."
-    );
-  }
-
-  return formattedPhone;
-}
-
-async function sendWhatsAppMessage(
-  client: any,
-  {
-    to,
-    variables,
-  }: {
-    to: string;
-    variables: { date: string; time: string; name: string };
-  }
-) {
-  await client.messages.create({
-    from: "whatsapp:+14155238886",
-    contentSid: process.env.TWILIO_CONTENT_SID,
-    contentVariables: JSON.stringify(variables),
-    to: `whatsapp:${to}`,
-  });
 }

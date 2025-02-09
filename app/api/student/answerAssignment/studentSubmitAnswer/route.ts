@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { getData } from "@/app/lib/db/getData";
 import { NextRequest, NextResponse } from "next/server";
-
 
 export async function POST(request: NextRequest) {
   const user = authenticateRequest(request);
@@ -22,16 +20,20 @@ export async function POST(request: NextRequest) {
     });
 
     // Looping for each answer submitted by the student
-     await Promise.all(
+    await Promise.all(
       selectedData.map(async (answer: any) => {
         const { mcq_id, selectedAnswer } = answer;
 
         // Fetching the multiple-choice question
-        const multipleChoice = await getData("multipleChoice", {
-          where: {
-            mcq_id,
+        const multipleChoice = await getData(
+          "multipleChoice",
+          {
+            where: {
+              mcq_id,
+            },
           },
-        }, "findUnique");
+          "findUnique"
+        );
 
         if (!multipleChoice) {
           throw new Error("Multiple Choice not found");

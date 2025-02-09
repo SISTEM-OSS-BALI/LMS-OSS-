@@ -77,7 +77,7 @@ const items: MenuItem[] = [
     <Link href="/teacher/dashboard/placement-test">Placement Test</Link>,
     "/teacher/dashboard/placement-test",
     <UserOutlined />
-  )
+  ),
 ];
 
 const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
@@ -109,9 +109,13 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
       return ["/teacher/dashboard/courses"];
     }
 
-   if (pathname.startsWith("/teacher/dashboard/student/detail/")) {
-     return ["/teacher/dashboard/student"];
-   }
+    if (pathname.startsWith("/teacher/dashboard/student/detail")) {
+      return ["/teacher/dashboard/student"];
+    }
+
+    if (pathname.startsWith("/teacher/dashboard/placement-test/")) {
+      return ["/teacher/dashboard/placement-test"];
+    }
 
     return matchedEntry ? [matchedEntry[1]] : [];
   };

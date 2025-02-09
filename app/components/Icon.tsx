@@ -3,6 +3,7 @@ import {
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
+  IdcardOutlined,
   InfoCircleOutlined,
   LeftCircleOutlined,
   PlusOutlined,
@@ -44,4 +45,8 @@ export const AddIcon = () => {
 
 export const CalendarIcon = () => {
  return <CalendarOutlined />;
+}
+
+export const DetailsIcon = () => {
+  return <IdcardOutlined />;
 }

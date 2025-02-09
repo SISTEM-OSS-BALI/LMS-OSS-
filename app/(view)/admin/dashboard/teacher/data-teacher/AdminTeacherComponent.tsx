@@ -110,6 +110,11 @@ export default function AdminDashboardTeacheComponent() {
       render: (text) => text || "Tidak ada data",
     },
     {
+      title: "Total Pertemuan",
+      dataIndex: "count_program",
+      key: "count_program",
+    },
+    {
       title: "Aksi",
       key: "actions",
       render: (_, record) => (
@@ -142,30 +147,23 @@ export default function AdminDashboardTeacheComponent() {
 
   return (
     <div style={{ padding: "24px" }}>
-      <Card
+      <div
         style={{
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: 16,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 16,
-          }}
-        >
-          <Title level={3} style={{ marginBlock: 0 }}>
-            Data Guru
-          </Title>
-          <Input
-            placeholder="Cari nama guru"
-            style={{ width: 300 }}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            value={searchKeyword}
-          />
-        </div>
-      </Card>
+        <Title level={3} style={{ marginBlock: 0 }}>
+          Data Guru
+        </Title>
+        <Input
+          placeholder="Cari nama guru"
+          style={{ width: 300 }}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          value={searchKeyword}
+        />
+      </div>
       <Divider />
       <Card
         style={{

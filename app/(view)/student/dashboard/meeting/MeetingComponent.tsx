@@ -23,15 +23,17 @@ import {
   Divider,
   Flex,
   Tooltip,
+  Image,
 } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
-import { useMeetingViewModel } from "./useMeetingViewModel";
 import { useEffect } from "react";
-import Icon from "@ant-design/icons";
+import Icon, { InboxOutlined } from "@ant-design/icons";
 import { InfoIcon } from "@/app/components/Icon";
+import { useMeetingViewModel } from "./useMeetingViewModel";
+import Dragger from "antd/es/upload/Dragger";
 
 const { useBreakpoint } = Grid;
 
@@ -48,7 +50,6 @@ export default function MeetingComponent() {
     form,
     dataTeacher,
     loading,
-    handleEventClick,
     selectedEvent,
     handleChangeDate,
     showMeetingByDate,
@@ -68,6 +69,14 @@ export default function MeetingComponent() {
     handleOpenModalInfo,
     handleCancelModalInfo,
     isModalInfoVisible,
+    showDate,
+    isModalVisibleEmergency,
+    handleCancelEmergency,
+    handleFileChange,
+    fileList,
+    handleBeforeUpload,
+    imageUrl,
+    handleSubmitRescheduleEmergency,
   } = useMeetingViewModel();
 
   const screens = useBreakpoint();
@@ -76,6 +85,28 @@ export default function MeetingComponent() {
       setMeetingId(selectedMeeting.meeting_id);
     }
   }, [selectedMeeting, setMeetingId]);
+
+  const cellRender = (currentDate: any) => {
+    const formattedDate = dayjs(currentDate).format("YYYY-MM-DD");
+    const isShowTime = showDate.includes(formattedDate);
+
+    return (
+      <div className="ant-picker-cell-inner">
+        {currentDate.date()}
+        {isShowTime && (
+          <Badge
+            status="success"
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              transform: "translate(50%, -50%)",
+            }}
+          />
+        )}
+      </div>
+    );
+  };
   const renderEventContent = (eventInfo: any) => {
     const { teacherName, time, color } = eventInfo.event.extendedProps;
 
@@ -279,14 +310,7 @@ export default function MeetingComponent() {
         onCancel={handleCancel}
         footer={null}
       >
-        <Form
-          layout="vertical"
-          onFinish={handleSubmit}
-          form={form}
-          initialValues={{
-            remember: true,
-          }}
-        >
+        <Form layout="vertical" onFinish={handleSubmit} form={form}>
           <Form.Item label="Tanggal">
             <Input value={selectedDate} disabled />
           </Form.Item>
@@ -357,14 +381,7 @@ export default function MeetingComponent() {
         onCancel={() => setIsRescheduleModalVisible(false)}
         footer={null}
       >
-        <Form
-          layout="vertical"
-          onFinish={handleSubmitReschedule}
-          form={form}
-          initialValues={{
-            remember: true,
-          }}
-        >
+        <Form layout="vertical" onFinish={handleSubmitReschedule} form={form}>
           {/* Input nama guru */}
           <Form.Item
             label="Nama Guru"
@@ -398,6 +415,7 @@ export default function MeetingComponent() {
               }
               onChange={(date) => handleChangeDateReschedule(date)}
               disabled={!selectedTeacherId}
+              cellRender={cellRender}
             />
           </Form.Item>
 
@@ -485,12 +503,202 @@ export default function MeetingComponent() {
           <Typography.Text>
             <Typography.Text type="danger">
               <strong>
-                Pastikan anda melakukan reschedule maksimal H-2 jam sebelum
+                Pastikan anda melakukan reschedule maksimal 12 jam sebelum
                 pertemuan berlangsung
               </strong>
             </Typography.Text>
           </Typography.Text>
         </div>
+      </Modal>
+
+      <Modal
+        open={isModalVisibleEmergency}
+        title="Pengajuan Emergency"
+        footer={null}
+        onCancel={handleCancelEmergency}
+        width={800} // Lebar modal agar lebih lebar ke samping
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmitRescheduleEmergency}
+        >
+          <Row gutter={16}>
+            {/* Bagian Kiri - Data Meeting */}
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Nama Guru"
+                name="teacher"
+                rules={[{ required: true, message: "Nama guru harus diisi!" }]}
+              >
+                <Select
+                  placeholder="Pilih Guru"
+                  onChange={handleTeacherChange}
+                  value={selectedTeacherId}
+                >
+                  {dataTeacher?.data.map((teacher) => (
+                    <Select.Option
+                      key={teacher.user_id}
+                      value={teacher.user_id}
+                    >
+                      {teacher.username}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="Tanggal"
+                name="date"
+                rules={[{ required: true, message: "Harap pilih tanggal!" }]}
+              >
+                <DatePicker
+                  style={{ width: "100%" }}
+                  placeholder="Pilih Tanggal"
+                  disabledDate={(current) =>
+                    current && current < dayjs().startOf("day")
+                  }
+                  onChange={(date) => handleChangeDateReschedule(date)}
+                  disabled={!selectedTeacherId}
+                  cellRender={cellRender}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Pilih Jam"
+                name="time"
+                rules={[{ required: true, message: "Harap pilih waktu!" }]}
+              >
+                <Select placeholder="Pilih Waktu">
+                  {availableTimes.map((time) => (
+                    <Select.Option key={time} value={time}>
+                      {time}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="Metode"
+                name="method"
+                rules={[{ required: true, message: "Harap pilih metode!" }]}
+              >
+                <Select placeholder="Pilih Metode">
+                  <Select.Option value="ONLINE">Online</Select.Option>
+                  <Select.Option value="OFFLINE">Offline</Select.Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                shouldUpdate={(prevValues, currentValues) =>
+                  prevValues.method !== currentValues.method
+                }
+              >
+                {() =>
+                  form.getFieldValue("method") === "ONLINE" ? (
+                    <Form.Item
+                      label="Platform"
+                      name="platform"
+                      rules={[
+                        { required: true, message: "Harap pilih platform!" },
+                      ]}
+                    >
+                      <Select placeholder="Pilih Platform">
+                        <Select.Option value="ZOOM">Zoom</Select.Option>
+                        <Select.Option value="GOOGLE_MEET">
+                          Google Meet
+                        </Select.Option>
+                      </Select>
+                    </Form.Item>
+                  ) : null
+                }
+              </Form.Item>
+            </Col>
+
+            {/* Bagian Kanan - Keterangan & Bukti */}
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="reason"
+                label="Keterangan"
+                rules={[{ required: true, message: "Keterangan harus diisi!" }]}
+              >
+                <Input.TextArea
+                  placeholder="Masukan keterangan pengajuan"
+                  rows={3}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="option_reason"
+                label="Pilih Keterangan"
+                rules={[
+                  { required: true, message: "Opsi keterangan harus diisi!" },
+                ]}
+              >
+                <Select placeholder="Pilih Keterangan">
+                  <Select.Option value="NATURAL_DISASTERS">
+                    Bencana Alam
+                  </Select.Option>
+                  <Select.Option value="GRIEF">Duka</Select.Option>
+                  <Select.Option value="SICK">Sakit</Select.Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="Upload Bukti"
+                rules={[{ required: true, message: "Bukti harus diisi!" }]}
+              >
+                <Form.Item name="image">
+                  <Dragger
+                    name="files"
+                    listType="picture-card"
+                    fileList={fileList}
+                    onChange={handleFileChange}
+                    beforeUpload={handleBeforeUpload}
+                    showUploadList={false}
+                    accept="image/png, image/jpeg"
+                  >
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt="Image preview"
+                        preview={false}
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          borderRadius: "6px",
+                        }}
+                      />
+                    ) : (
+                      <div>
+                        <p className="ant-upload-drag-icon">
+                          <InboxOutlined />
+                        </p>
+                        <p className="ant-upload-text">
+                          Klik atau drag file ke area ini untuk upload
+                        </p>
+                        <p className="ant-upload-hint">
+                          Support untuk single upload. Hanya file PNG, JPEG, dan
+                          JPG yang diterima.
+                        </p>
+                      </div>
+                    )}
+                  </Dragger>
+                </Form.Item>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Tombol Submit */}
+          <Button
+            type="primary"
+            htmlType="submit"
+            style={{ width: "100%", marginTop: "16px" }}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </Form>
       </Modal>
     </div>
   );

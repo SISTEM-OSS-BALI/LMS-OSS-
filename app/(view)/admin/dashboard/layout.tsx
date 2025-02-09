@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BookOutlined,
   CalendarFilled,
@@ -21,12 +21,14 @@ import {
   theme,
   Dropdown,
   Modal,
+  Badge,
 } from "antd";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
-import { useCount, useUsername } from "@/app/lib/auth/useLogin";
-import { get } from "http";
+import { useUsername } from "@/app/lib/auth/useLogin";
+import { crudService } from "@/app/lib/services/crudServices";
+import { useRouter } from "next/navigation";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -48,47 +50,16 @@ function getItem(
 
 const menuMap: { [key: string]: string } = {
   "/admin/dashboard": "/admin/dashboard",
+  "/admin/dashboard/consultant": "/admin/dashboard/consultant",
   "/admin/dashboard/teacher": "/admin/dashboard/teacher",
   "/admin/dashboard/teacher/calendar": "/admin/dashboard/teacher/calendar",
   "/admin/dashboard/program": "/admin/dashboard/program",
   "/admin/dashboard/queue": "/admin/dashboard/queue",
   "/admin/dashboard/teacher/absent": "/admin/dashboard/teacher/absent",
+  "/admin/dashboard/teacher/data-teacher":
+    "/admin/dashboard/teacher/data-teacher",
+  "/admin/dashboard/student/reschedule": "/admin/dashboard/student/reschedule",
 };
-
-const items: MenuItem[] = [
-  getItem(
-    <Link href="/admin/dashboard">Dashboard</Link>,
-    "/admin/dashboard",
-    <PieChartOutlined />
-  ),
-  getItem(
-    <Link href="/admin/dashboard/teacher">Guru</Link>,
-    "/admin/dashboard/teacher",
-    <UserOutlined />,
-    [
-      getItem(
-        <Link href="/admin/dashboard/teacher/calendar">Kalender</Link>,
-        "/admin/dashboard/teacher/calendar",
-        <CalendarFilled />
-      ),
-      getItem(
-        <Link href="/admin/dashboard/teacher/absent">Absen</Link>,
-        "/admin/dashboard/teacher/absent",
-        <ScheduleFilled />
-      ),
-    ]
-  ),
-  getItem(
-    <Link href="/admin/dashboard/program">Program</Link>,
-    "/admin/dashboard/program",
-    <BookOutlined />
-  ),
-  getItem(
-    <Link href="/admin/dashboard/queue">Antrian</Link>,
-    "/admin/dashboard/queue",
-    <TableOutlined />
-  ),
-];
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -99,8 +70,122 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   } = theme.useToken();
   const pathname = usePathname();
   const username = useUsername();
-  const count = useCount();
-  const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
+  const router = useRouter();
+
+  const [newRescheduleCount, setNewRescheduleCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDataWithLastChecked = async (
+    endpoint: string,
+    lastCheckedKey: string,
+    setStateCallback: React.Dispatch<React.SetStateAction<number>>
+  ) => {
+    const lastChecked = localStorage.getItem(lastCheckedKey) || "";
+
+    try {
+      const query = lastChecked ? `?lastChecked=${lastChecked}` : "";
+      const response = await crudService.get(`${endpoint}${query}`);
+      setStateCallback(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDataWithLastChecked(
+      "/api/admin/rescheduleMeeting/count",
+      "lastCheckedRescheduleTime",
+      setNewRescheduleCount
+    );
+
+    const intervalId = setInterval(() => {
+      fetchDataWithLastChecked(
+        "/api/admin/rescheduleMeeting/count",
+        "lastCheckedRescheduleTime",
+        setNewRescheduleCount
+      );
+    }, 30000);
+
+    console.log(newRescheduleCount);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleRescheduleClick = () => {
+    localStorage.setItem("lastCheckedRescheduleTime", Date.now().toString());
+    setNewRescheduleCount(0);
+    router.push("/admin/dashboard/student/reschedule");
+  };
+
+  const items: MenuItem[] = [
+    getItem(
+      <Link href="/admin/dashboard">Dashboard</Link>,
+      "/admin/dashboard",
+      <PieChartOutlined />
+    ),
+    getItem(
+      <Link href="/admin/dashboard/consultant">Konsultan</Link>,
+      "/admin/dashboard/consultant",
+      <UserOutlined />
+    ),
+    getItem(<span>Guru</span>, "/admin/dashboard/teacher", <UserOutlined />, [
+      getItem(
+        <Link href="/admin/dashboard/teacher/data-teacher">Data Guru</Link>,
+        "/admin/dashboard/teacher/data-teacher",
+        <UserOutlined />
+      ),
+      getItem(
+        <Link href="/admin/dashboard/teacher/calendar">Kalender</Link>,
+        "/admin/dashboard/teacher/calendar",
+        <CalendarFilled />
+      ),
+      getItem(
+        <Link href="/admin/dashboard/teacher/absent">Absen</Link>,
+        "/admin/dashboard/teacher/absent",
+        <ScheduleFilled />
+      ),
+    ]),
+    getItem(<span>Siswa</span>, "/admin/dashboard/student", <UserOutlined />, [
+      getItem(
+        <Link href="/admin/dashboard/student/data-student">Data Siswa</Link>,
+        "/admin/dashboard/student/data-student",
+        <UserOutlined />
+      ),
+      getItem(
+        newRescheduleCount > 0 ? (
+          <Badge count={newRescheduleCount} offset={[10, 0]}>
+            <Link
+              href="/admin/dashboard/student/reschedule"
+              onClick={handleRescheduleClick}
+            >
+              Reschedule
+            </Link>
+          </Badge>
+        ) : (
+          <Link
+            href="/admin/dashboard/student/reschedule"
+            onClick={handleRescheduleClick}
+          >
+            Reschedule
+          </Link>
+        ),
+        "/admin/dashboard/student/reschedule",
+        <ScheduleFilled />
+      ),
+    ]),
+    getItem(
+      <Link href="/admin/dashboard/program">Program</Link>,
+      "/admin/dashboard/program",
+      <BookOutlined />
+    ),
+    getItem(
+      <Link href="/admin/dashboard/queue">Antrian</Link>,
+      "/admin/dashboard/queue",
+      <TableOutlined />
+    ),
+  ];
 
   const determineSelectedKeys = (pathname: string): string[] => {
     const exactMatch = Object.entries(menuMap).find(
@@ -119,6 +204,14 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
       return ["/admin/dashboard/teacher"];
     }
 
+    if (pathname.startsWith("/admin/dashboard/student")) {
+      return ["/admin/dashboard/student"];
+    }
+
+    if (pathname.startsWith("/admin/dashboard/consultant")) {
+      return ["/admin/dashboard/consultant"];
+    }
+
     return matchedEntry ? [matchedEntry[1]] : [];
   };
 
@@ -131,7 +224,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           key: "profil",
           label: "Profil",
           icon: <UserOutlined />,
-          onClick: () => setIsModalProfileVisible(true),
+          onClick: () => {},
         },
         {
           key: "logout",

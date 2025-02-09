@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { Form, message, notification } from "antd";
+import { Button, Form, message, notification } from "antd";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { crudService } from "@/app/lib/services/crudServices";
 import { Teacher } from "@/app/model/course";
@@ -59,7 +59,6 @@ interface UseMeetingViewModelReturn {
   dataTeacher: UserResponse | undefined;
   loading: boolean;
   programData: ProgramResponse | undefined;
-  handleEventClick: (arg: any) => void;
   selectedEvent: any;
   handleChangeDate: (date: any) => void;
   showMeetingByDate: MeetingResponse | undefined;
@@ -76,11 +75,20 @@ interface UseMeetingViewModelReturn {
   setMeetingId: any;
   selectedTeacher: any;
   currentStep: any;
-  isModalInfoVisible: boolean
+  isModalInfoVisible: boolean;
   handleSelectTeacher: (teacher: any) => void;
   handleSubmitReschedule: (values: any) => void;
   handleOpenModalInfo: () => void;
   handleCancelModalInfo: () => void;
+  showDate: any;
+  handleOpenModalEmergency: () => void;
+  isModalVisibleEmergency: boolean;
+  handleCancelEmergency: () => void;
+  handleFileChange: (info: any) => Promise<void>;
+  handleBeforeUpload: (file: any) => Promise<boolean>;
+  fileList: any[];
+  imageUrl: string | null;
+  handleSubmitRescheduleEmergency: (values: any) => Promise<void>;
 }
 
 export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
@@ -143,12 +151,12 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     fetcher
   );
 
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [fileList, setFileList] = useState<any[]>([]);
   const [isModalInfoVisible, setIsModalInfoVisible] = useState(false);
-
+  const [isModalVisibleEmergency, setIsModalVisibleEmergency] = useState(false);
   const [form] = Form.useForm();
-
   const program_id = useProgramId();
-
   const filterProgram = programData?.data.filter(
     (program) => program.program_id === program_id
   );
@@ -233,13 +241,12 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   };
 
   const handleOpenModalInfo = () => {
-    setIsModalInfoVisible(true)
-  }
+    setIsModalInfoVisible(true);
+  };
 
   const handleCancelModalInfo = () => {
-    setIsModalInfoVisible(false)
-  }
-
+    setIsModalInfoVisible(false);
+  };
 
   const handleDateClick = (arg: any) => {
     if (!selectedTeacher) {
@@ -331,26 +338,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     return intervals;
   };
 
-  const handleEventClick = (clickInfo: any) => {
-    const { date, extendedProps } = clickInfo.event;
-
-    form.setFieldsValue({
-      method: extendedProps.method,
-      time: extendedProps.time,
-      platform: extendedProps.platform,
-    });
-
-    setSelectedEvent({
-      date: dayjs(date).locale("id").format("dddd, DD MMMM YYYY"),
-      method: extendedProps.method,
-      time: extendedProps.time,
-      platform: extendedProps.platform,
-      teacherName: extendedProps.teacherName,
-    });
-
-    setIsModalVisible(true);
-  };
-
   const handleCancel = () => {
     setIsModalVisible(false);
     setAvailableTimes([]);
@@ -425,6 +412,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
   const handleCancelReschedule = () => {
     setIsRescheduleModalVisible(false);
+    setSelectedDate("");
     setSelectedTeacherId(null);
     setSelectedMeeting(null);
     form.resetFields();
@@ -479,7 +467,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
               setAvailableTeachers([teacherSchedule]);
               setSelectedDate(dayjs(date).format("YYYY-MM-DD"));
               setAvailableTimes(filteredTimes);
-              setIsRescheduleModalVisible(true);
             } else {
               message.warning(
                 "Tidak ada waktu yang tersedia pada tanggal ini."
@@ -496,6 +483,40 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       }
     }
   };
+
+  const showDate = useMemo(() => {
+    let uniqueDates = new Set<string>();
+
+    if (showScheduleAllTeacher && showScheduleAllTeacher.data) {
+      const teacherSchedule = showScheduleAllTeacher.data.find(
+        (schedule: any) => schedule.teacher_id === selectedTeacherId
+      );
+
+      if (teacherSchedule) {
+        const availableDays = teacherSchedule.days
+          .filter((day: any) => day.isAvailable)
+          .map((day: any) => day.day); // Misalnya: ["SATURDAY", "THURSDAY"]
+
+        // Loop dari hari ini ke depan (misal, 2 tahun ke depan)
+        const today = dayjs();
+        const futureDate = today.add(2, "year"); // Bisa diubah sesuai kebutuhan
+
+        let currentDate = today;
+
+        while (currentDate.isBefore(futureDate)) {
+          const dayName = currentDate.format("dddd").toUpperCase(); // "SATURDAY", "THURSDAY", etc.
+
+          if (availableDays.includes(dayName)) {
+            uniqueDates.add(currentDate.format("YYYY-MM-DD"));
+          }
+
+          currentDate = currentDate.add(1, "day"); // Pindah ke hari berikutnya
+        }
+      }
+    }
+
+    return Array.from(uniqueDates);
+  }, [showScheduleAllTeacher, selectedTeacherId]);
 
   const handleSubmitReschedule = async (values: any) => {
     setLoading(true);
@@ -523,7 +544,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
           message: "Tidak Bisa Melakukan Reschedule",
           description:
             data.error || "Maksimal H-2 Jam Sebelum Pertemuan Terakhir Kali",
+          btn: (
+            <Button danger onClick={() => handleOpenModalEmergency()}>
+              Pengajuan Emergency
+            </Button>
+          ),
         });
+        handleCancelReschedule();
         return;
       }
 
@@ -536,7 +563,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       await mutateShowMeeting();
       await mutateShowMeetingById();
       await mutateShowMeetingByDate();
-      handleCancelReschedule();
+       handleCancelReschedule();
     } catch (error) {
       if (error instanceof Error) {
         message.error(
@@ -553,6 +580,99 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const handleSelectTeacher = (teacher: any) => {
     setSelectedTeacher(teacher);
     setCurrentStep(1);
+  };
+
+  const handleOpenModalEmergency = () => {
+    setIsModalVisibleEmergency(true);
+  };
+
+  const handleCancelEmergency = () => {
+    setIsModalVisibleEmergency(false);
+    setSelectedTeacherId(null);
+    setImageUrl(null);
+    form.resetFields();
+  };
+
+  const getBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleFileChange = async (info: any) => {
+    if (info.file.status === "done") {
+      const base64 = await getBase64(info.file.originFileObj as File);
+      setImageUrl(base64);
+    }
+    setFileList(info.fileList);
+  };
+
+  const handleBeforeUpload = async (file: any) => {
+    const base64 = await getBase64(file);
+    setImageUrl(base64);
+    return false;
+  };
+
+  const handleSubmitRescheduleEmergency = async (values: any) => {
+    if (!selectedTeacherId) {
+      message.error("Silakan pilih guru terlebih dahulu!");
+      return;
+    }
+
+    // Buat payload sesuai skema `RescheduleMeeting`
+    const payload = {
+      teacher_id: selectedTeacherId,
+      meeting_id: meetingId,
+      date: selectedDate,
+      method: values.method,
+      time: values.time,
+      platform: values.platform,
+      reason: values.reason,
+      option_reason: values.option_reason,
+      imageUrl: imageUrl,
+      status: "PENDING",
+    };
+
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/student/rescheduleMeeting/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Cookies.get("token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Terjadi kesalahan saat menambahkan jadwal");
+      }
+
+      notification.success({
+        message: "Berhasil Mengirimkan Pengajuan",
+        description:
+          "Menunggu konfirmasi admin, hasil konfirmasi akan dikirim ke Whatsapp",
+      });
+
+      await mutateShowMeeting();
+      await mutateShowMeetingById();
+      await mutateShowMeetingByDate();
+      setLoading(false);
+      handleCancelEmergency();
+    } catch (error) {
+      if (error instanceof Error) {
+        message.error(
+          error.message || "Terjadi kesalahan saat menambahkan jadwal"
+        );
+      } else {
+        message.error("Terjadi kesalahan saat menambahkan jadwal");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
@@ -574,7 +694,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     loading,
     programData,
     selectedEvent,
-    handleEventClick,
     handleChangeDate,
     handleCancelReschedule,
     handleRescheduleClick,
@@ -592,5 +711,14 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     handleOpenModalInfo,
     handleCancelModalInfo,
     isModalInfoVisible,
+    showDate,
+    handleOpenModalEmergency,
+    isModalVisibleEmergency,
+    handleCancelEmergency,
+    handleFileChange,
+    handleBeforeUpload,
+    fileList,
+    imageUrl,
+    handleSubmitRescheduleEmergency,
   };
 };

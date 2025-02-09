@@ -39,19 +39,32 @@ enum MethodType {
   OFFLINE
 }
 
+enum RescheduleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  user_id       String   @id @default(uuid())
+  user_id       String    @id @default(uuid())
   username      String
   email         String
   password      String
   no_phone      String?
   program_id    String?
-  imageUrl      String?  @db.LongText
-  count_program Int?     @default(0)
-  joined_at     DateTime @default(now())
+  imageUrl      String?   @db.LongText
+  count_program Int?      @default(0)
+  joined_at     DateTime  @default(now())
   region        String?
   color         String?
-  role          Role     @default(STUDENT)
+  level         String?
+  is_active     Boolean?  @default(true)
+  startDate     DateTime?
+  endDate       DateTime?
+  role          Role      @default(STUDENT)
+
+  consultant_id String?
+  consultant    Consultant? @relation(name: "ConsultantUsers", fields: [consultant_id], references: [consultant_id], onDelete: SetNull)
 
   coursesTeaching           Course[]                     @relation("TeacherCourses")
   scheduleTeacher           ScheduleTeacher[]            @relation("ScheduleTeacher")
@@ -66,6 +79,16 @@ model User {
   teacherAbsences           TeacherAbsence[]             @relation("TeacherAbsences")
   program                   Program?                     @relation(fields: [program_id], references: [program_id], onDelete: Cascade)
   AccessPlacementTest       AccessPlacementTest[]
+  rescheduleMeetingsTeacher RescheduleMeeting[]          @relation("TeacherReschedules")
+
+  rescheduleMeetingsStudent RescheduleMeeting[] @relation("StudentReschedules")
+}
+
+model Consultant {
+  consultant_id String @id @default(uuid())
+  name          String
+  no_phone      String
+  students      User[] @relation(name: "ConsultantUsers")
 }
 
 model ScheduleTeacher {
@@ -95,9 +118,9 @@ model ScheduleTime {
 }
 
 model Meeting {
-  meeting_id         String           @id @default(uuid())
-  teacher            User             @relation("MeetingTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
-  student            User             @relation("MeetingStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
+  meeting_id         String              @id @default(uuid())
+  teacher            User                @relation("MeetingTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  student            User                @relation("MeetingStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
   method             MethodType?
   meetLink           String?
   platform           String?
@@ -105,15 +128,16 @@ model Meeting {
   student_id         String
   absent             Boolean?
   module             Bytes?
-  progress_student   String?          @db.LongText
-  abilityScale       String?          @db.LongText
-  studentPerformance String?          @db.LongText
+  progress_student   String?             @db.LongText
+  abilityScale       String?             @db.LongText
+  studentPerformance String?             @db.LongText
   dateTime           DateTime
   startTime          DateTime?
-  name_program       String?
   endTime            DateTime?
-  createdAt          DateTime         @default(now())
-  TeacherAbsence     TeacherAbsence[] @relation("TeacherAbsences")
+  name_program       String?
+  createdAt          DateTime            @default(now())
+  TeacherAbsence     TeacherAbsence[]    @relation("TeacherAbsences")
+  RescheduleMeetings RescheduleMeeting[] @relation("MeetingReschedules")
 }
 
 model Course {
@@ -250,12 +274,11 @@ model Assignment {
   type                  TypeAssigment
   createdAt             DateTime              @default(now())
 
-  multipleChoices                     MultipleChoice[]
-  progressAssignment                  AssignmentProgress[]
-  essay                               Essay?
-  sentenceMatching                    SentenceMatching?
-  studentAnswers                      StudentAnswerAssigment[]
-  StudentAnswerAssigmentPlacementTest StudentAnswerPlacementTest[]
+  multipleChoices    MultipleChoice[]
+  progressAssignment AssignmentProgress[]
+  essay              Essay?
+  sentenceMatching   SentenceMatching?
+  studentAnswers     StudentAnswerAssigment[]
 }
 
 model MultipleChoice {
@@ -342,8 +365,9 @@ model PlacementTest {
   description       String @db.LongText
   timeLimit         Int
 
-  multipleChoices     MultipleChoicePlacementTest[]
-  AccessPlacementTest AccessPlacementTest[]
+  multipleChoices            MultipleChoicePlacementTest[]
+  AccessPlacementTest        AccessPlacementTest[]
+  StudentAnswerPlacementTest StudentAnswerPlacementTest[]
 }
 
 model MultipleChoicePlacementTest {
@@ -358,13 +382,13 @@ model MultipleChoicePlacementTest {
 }
 
 model StudentAnswerPlacementTest {
-  answer_id      String                       @id @default(uuid())
-  student        User                         @relation("StudentAnswersPlacementTest", fields: [student_id], references: [user_id])
-  student_id     String
-  assignment     Assignment                   @relation(fields: [assignment_id], references: [assignment_id])
-  assignment_id  String
-  multipleChoice MultipleChoicePlacementTest? @relation("MCQAnswerPlacementTest", fields: [mcq_id], references: [mcq_id])
-  mcq_id         String?
+  answer_id         String                       @id @default(uuid())
+  student           User                         @relation("StudentAnswersPlacementTest", fields: [student_id], references: [user_id])
+  student_id        String
+  placementTest     PlacementTest                @relation(fields: [placement_test_id], references: [placement_test_id])
+  placement_test_id String
+  multipleChoice    MultipleChoicePlacementTest? @relation("MCQAnswerPlacementTest", fields: [mcq_id], references: [mcq_id])
+  mcq_id            String?
 
   studentAnswer String   @db.LongText
   isCorrect     Boolean?
@@ -380,4 +404,37 @@ model AccessPlacementTest {
   placement_test_id        String
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
+  is_completed             Boolean?      @default(false)
+}
+
+model RescheduleMeeting {
+  reschedule_meeting_id String @id @default(uuid())
+
+  /// Relasi ke Teacher
+  teacher      User   @relation("TeacherReschedules", fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  teacher_id   String
+  teacher_name String
+  student      User   @relation("StudentReschedules", fields: [student_id], references: [user_id], onDelete: Cascade)
+  student_id   String
+  student_name String
+
+  /// Relasi ke Meeting Lama (Sebelum Reschedule)
+  meeting_id   String
+  meeting      Meeting @relation("MeetingReschedules", fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+  program_name String
+
+  /// Data untuk meeting baru yang diajukan
+  new_dateTime  DateTime // Tanggal & waktu baru yang diajukan
+  new_startTime DateTime? // Start time baru (opsional)
+  new_endTime   DateTime? // End time baru (opsional)
+  new_platform  String? // Platform baru (jika berubah)
+  new_method    MethodType? // Metode baru (Online/Offline)
+
+  reason        String
+  option_reason String
+  imageUrl      String           @db.LongText
+  createdAt     DateTime         @default(now())
+  is_deleted    Boolean          @default(false)
+  status        RescheduleStatus @default(PENDING) // Status persetujuan
+  updatedAt     DateTime         @updatedAt
 }

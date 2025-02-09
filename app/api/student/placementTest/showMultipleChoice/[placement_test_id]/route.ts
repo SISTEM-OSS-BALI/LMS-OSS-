@@ -1,29 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getData } from "@/app/lib/db/getData";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import { createData } from "@/app/lib/db/createData";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 
-export async function POST(request: NextRequest) {
+dayjs.extend(utc);
+
+export async function GET(
+  request: NextRequest,
+  params: { params: { placement_test_id: string } }
+) {
   const user = authenticateRequest(request);
-  const body = await request.json();
-  const { name, description, count_program, duration } = body;
 
   if (user instanceof NextResponse) {
     return user;
   }
 
   try {
-    const createProgram = await createData("program", {
-      name,
-      description,
-      count_program: Number(count_program),
-      duration: Number(duration),
-    });
+    const getMultipleChoicePlacementTest = await getData(
+      "multipleChoicePlacementTest",
+      {
+        where: {
+          placement_test_id: params.params.placement_test_id,
+        },
+      },
+      "findMany"
+    );
 
     return NextResponse.json({
       status: 200,
       error: false,
-      data: createProgram,
+      data: getMultipleChoicePlacementTest,
     });
   } catch (error) {
     console.error("Error accessing database:", error);

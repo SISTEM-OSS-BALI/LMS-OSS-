@@ -1,15 +1,26 @@
+"use client";
+
+import { useState } from "react";
 import { useUsername } from "@/app/lib/auth/useLogin";
-import { Typography, Modal, Badge, Card, Row, Col, List } from "antd";
+import {
+  Typography,
+  Modal,
+  Badge,
+  Card,
+  Row,
+  Col,
+  List,
+  Button,
+  Alert,
+  Space,
+} from "antd";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import Link from "next/link";
 import { useMeetings } from "./useMeetingViewModel";
-
-dayjs.extend(utc);
+import Link from "next/link";
+import CustomAlert from "@/app/components/CustomAlert";
 
 const { Title, Text } = Typography;
 
@@ -17,33 +28,45 @@ export default function HomeStudent() {
   const username = useUsername();
 
   const {
-    formatDateTimeToUTC,
     isModalVisible,
     selectedEvent,
     handleEventClick,
     handleModalClose,
     events,
     mergedData,
+    startQuiz,
   } = useMeetings();
 
+  // State untuk modal Placement Test
+  const [isTestModalVisible, setIsTestModalVisible] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<any>(null);
+
+  // Menampilkan modal deskripsi sebelum tes
+  const handleStartTest = (test: any) => {
+    setSelectedTest(test);
+    setIsTestModalVisible(true);
+  };
+
+  // Redirect ke halaman Placement Test
+
+  // Render event di FullCalendar
   const renderEventContent = (eventInfo: any) => {
     const { teacherName, time } = eventInfo.event.extendedProps;
-
     return (
       <Badge.Ribbon text={time} color="blue">
         <div
           style={{
-            height: "100%", // Memenuhi tinggi kotak tanggal
-            width: "100%", // Memenuhi lebar kotak tanggal
+            height: "100%",
+            width: "100%",
             padding: "8px",
             borderRadius: "6px",
-            backgroundColor: "#E6F7FF", // Warna latar belakang Ant Design light blue
+            backgroundColor: "#E6F7FF",
             textAlign: "center",
-            display: "flex", // Flexbox untuk penataan
-            flexDirection: "column", // Menata konten secara vertikal
-            justifyContent: "center", // Memusatkan konten secara vertikal
-            alignItems: "center", // Memusatkan konten secara horizontal
-            boxSizing: "border-box", // Memastikan padding dihitung dalam ukuran elemen
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            boxSizing: "border-box",
           }}
         >
           <br />
@@ -56,17 +79,15 @@ export default function HomeStudent() {
   };
 
   return (
-    <div
-      style={{
-        padding: "24px",
-      }}
-    >
+    <div style={{ padding: "24px" }}>
       <Card>
         <Title level={3}>Selamat Datang, {username || "Student"}!</Title>
         <p>Jaga Selalu Kerahasian Akun Anda</p>
       </Card>
+
       <Row gutter={20} style={{ marginTop: "20px" }}>
         <Col md={16}>
+          <Title level={4}>Jadwal Pertemuan</Title>
           <Card style={{ marginTop: "20px" }}>
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -82,10 +103,11 @@ export default function HomeStudent() {
             />
           </Card>
         </Col>
+
         <Col md={8}>
-          <Title level={4}>To Do List </Title>
-          <Card style={{ marginTop: "10px", padding: "10px" }}>
-            {!!mergedData && mergedData?.length > 0 ? (
+          <Title level={4}>To Do List</Title>
+          <Card style={{ marginTop: "20px", padding: "10px" }}>
+            {!!mergedData && mergedData.length > 0 ? (
               <List
                 dataSource={mergedData}
                 renderItem={(item: any) => (
@@ -99,30 +121,69 @@ export default function HomeStudent() {
                     >
                       <Text strong>{item.name}</Text>
                       <p style={{ margin: "5px 0" }}>
-                        <Text type="secondary">
-                          Durasi: {item.timeLimit} menit
-                        </Text>
-                      </p>
-                      <p style={{ margin: "5px 0" }}>
                         <Text>{item.description}</Text>
                       </p>
+                      {item.is_completed ? (
+                        <Space>
+                          <Button
+                            type="primary"
+                            onClick={() => handleStartTest(item)}
+                            disabled
+                          >
+                            Tes Telah Dilakukan
+                          </Button>
+                          <Button type="primary">Riwayat</Button>
+                        </Space>
+                      ) : (
+                        <Button
+                          type="primary"
+                          onClick={() => handleStartTest(item)}
+                        >
+                          Mulai
+                        </Button>
+                      )}
                     </Card>
                   </List.Item>
                 )}
               />
             ) : (
-              <Text type="secondary">
-                Tidak ada tugas yang harus dikerjakan.
-              </Text>
+              <Alert
+                type="warning"
+                message="Tidak ada to do list yang tersedia."
+              />
             )}
           </Card>
         </Col>
       </Row>
 
-      {/* Modal for Event Details */}
+      {/* Modal Deskripsi Placement Test */}
+      <Modal
+        title="Deskripsi Tes"
+        open={isTestModalVisible}
+        onCancel={() => setIsTestModalVisible(false)}
+        footer={null}
+      >
+        {selectedTest ? (
+          <div>
+            <p>
+              <Text strong>Deskripsi:</Text> {selectedTest.description}
+            </p>
+            <p>
+              <Text strong>Durasi:</Text> {selectedTest.timeLimit} menit
+            </p>
+            <Button type="primary" onClick={startQuiz}>
+              Start
+            </Button>
+          </div>
+        ) : (
+          <Text>Tidak ada informasi tes yang tersedia.</Text>
+        )}
+      </Modal>
+
+      {/* Modal Detail Pertemuan */}
       <Modal
         title={<Title level={4}>Detail Pertemuan</Title>}
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={handleModalClose}
         footer={null}
       >
