@@ -1,20 +1,31 @@
 import Table, { ColumnsType } from "antd/es/table";
 import { useAbsentViewModel } from "./useAbsentViewModel";
 import { TeacherAbsence } from "@/app/model/user";
-import { Button, Card, Image, Space } from "antd";
+import { Button, Card, Image, Space, Grid } from "antd"; // Import Grid untuk useBreakpoint
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import Title from "antd/es/typography/Title";
+import { useState } from "react";
 dayjs.extend(utc);
+
+const { useBreakpoint } = Grid; // Menggunakan useBreakpoint dari Ant Design
 
 export default function AbsentTeacherComponent() {
   const { mergedData, updateAbsentStatus } = useAbsentViewModel();
+  const [showHistory, setShowHistory] = useState(false);
+  const screens = useBreakpoint(); // Menentukan ukuran layar
 
-  const colums: ColumnsType<TeacherAbsence> = [
+  // Filter data berdasarkan is_delete
+  const filteredData = showHistory
+    ? mergedData?.filter((item) => item.is_delete === true) || []
+    : mergedData?.filter((item) => item.is_delete === false) || [];
+
+  const columns: ColumnsType<TeacherAbsence> = [
     {
       title: "Nama Guru",
       dataIndex: "teacher_name",
       key: "teacher_name",
+      responsive: ["md"], // Disembunyikan di mobile
     },
     {
       title: "Waktu Mulai",
@@ -39,6 +50,7 @@ export default function AbsentTeacherComponent() {
       title: "Alasan",
       dataIndex: "reason",
       key: "reason",
+      responsive: ["md"], // Disembunyikan di mobile
     },
     {
       title: "Bukti",
@@ -48,7 +60,9 @@ export default function AbsentTeacherComponent() {
         <Image
           src={imageUrl}
           alt="Bukti"
-          style={{ width: "100px", height: "100px" }}
+          width={screens.xs ? 50 : 80} // Ukuran lebih kecil di mobile
+          height={screens.xs ? 50 : 80}
+          style={{ borderRadius: "8px", objectFit: "cover" }}
         />
       ),
     },
@@ -56,57 +70,94 @@ export default function AbsentTeacherComponent() {
       title: "Konfirmasi",
       dataIndex: "status",
       key: "status",
-      render: (_, record) => (
-        <Space>
-          <Button
-            disabled={record.status}
-            style={{
-              cursor: record.status ? "not-allowed" : "pointer",
-              backgroundColor: record.status ? "green" : "transparent",
-              color: record.status ? "white" : "black",
-            }}
-            onClick={() =>
-              updateAbsentStatus(
-                record.teacher_absence_id,
-                true,
-                record.meeting_id
-              )
-            }
-          >
-            Konfirmasi
-          </Button>
-          <Button
-            disabled={!record.status}
-            style={{
-              cursor: !record.status ? "not-allowed" : "pointer",
-              backgroundColor: !record.status ? "red" : "transparent",
-              color: !record.status ? "white" : "black",
-            }}
-            onClick={() =>
-              updateAbsentStatus(
-                record.teacher_absence_id,
-                false,
-                record.meeting_id
-              )
-            }
-          >
-            Tolak
-          </Button>
-        </Space>
-      ),
+      render: (_, record) =>
+        !showHistory && (
+          <Space wrap>
+            <Button
+              disabled={record.status}
+              size={screens.xs ? "small" : "middle"}
+              style={{
+                backgroundColor: record.status ? "#52c41a" : "#d9d9d9",
+                color: "white",
+                borderRadius: "5px",
+              }}
+              onClick={() =>
+                updateAbsentStatus(
+                  record.teacher_absence_id,
+                  true,
+                  record.meeting_id
+                )
+              }
+            >
+              Konfirmasi
+            </Button>
+            <Button
+              disabled={!record.status}
+              size={screens.xs ? "small" : "middle"}
+              style={{
+                backgroundColor: !record.status ? "#ff4d4f" : "#d9d9d9",
+                color: "white",
+                borderRadius: "5px",
+              }}
+              onClick={() =>
+                updateAbsentStatus(
+                  record.teacher_absence_id,
+                  false,
+                  record.meeting_id
+                )
+              }
+            >
+              Tolak
+            </Button>
+          </Space>
+        ),
     },
   ];
+
   return (
-    <div style={{ padding: "24px" }}>
-      <Title level={3}>Absent Teacher</Title>
-      <Card
+    <div style={{ padding: screens.xs ? "12px" : "24px" }}>
+      <Title level={3} style={{ color: "#1890ff" }}>
+        Absensi Guru
+      </Title>
+
+      {/* Tombol Riwayat */}
+      <Space
         style={{
-          marginTop: "24px",
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "start",
         }}
       >
-        <Table columns={colums} dataSource={mergedData} />
+        <Button
+          type={showHistory ? "default" : "primary"}
+          size={screens.xs ? "small" : "middle"}
+          onClick={() => setShowHistory(false)}
+        >
+          Data Aktif
+        </Button>
+        <Button
+          type={showHistory ? "primary" : "default"}
+          size={screens.xs ? "small" : "middle"}
+          onClick={() => setShowHistory(true)}
+        >
+          Riwayat
+        </Button>
+      </Space>
+
+      <Card
+        style={{
+          borderRadius: "12px",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
+        }}
+      >
+        <Table
+          columns={columns}
+          dataSource={filteredData}
+          rowKey="teacher_absence_id"
+          pagination={{ pageSize: 5 }}
+          scroll={screens.xs ? { x: "max-content" } : undefined} // Scroll untuk mobile
+        />
       </Card>
     </div>
   );

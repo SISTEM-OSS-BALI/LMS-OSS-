@@ -42,5 +42,6 @@ export interface TeacherAbsence {
   imageUrl: string;
   createdAt: Date
   status: boolean
+  is_delete: boolean
   updatedAt: Date
 }

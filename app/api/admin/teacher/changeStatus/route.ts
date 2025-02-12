@@ -5,6 +5,7 @@ import { deleteData } from "@/app/lib/db/deleteData";
 import { getData } from "@/app/lib/db/getData";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { formatPhoneNumber, sendWhatsAppMessage } from "@/app/lib/utils/notificationHelper";
 dayjs.extend(utc);
 
 export async function POST(request: NextRequest) {
@@ -27,101 +28,66 @@ export async function POST(request: NextRequest) {
     });
 
     const getMeeting = await getData("meeting", {
-      where: {
-        meeting_id: meeting_id,
-      },
+      where: { meeting_id: meeting_id },
     });
 
     const getStudent = await getData(
       "user",
-      {
-        where: {
-          user_id: getMeeting.student_id,
-        },
-      },
+      { where: { user_id: getMeeting.student_id } },
       "findFirst"
     );
 
     const getTeacher = await getData(
       "user",
-      {
-        where: {
-          user_id: getMeeting.teacher_id,
-        },
-      },
+      { where: { user_id: getMeeting.teacher_id } },
       "findFirst"
     );
 
     const formattedStudentPhone = formatPhoneNumber(getStudent.no_phone);
+    const formattedTeacherPhone = formatPhoneNumber(getTeacher.no_phone);
 
-    await sendWhatsAppMessage(
-      apiKey,
-      numberKey,
-      formattedStudentPhone,
-      `Meeting dengan guru ${getTeacher.username} pada ${dayjs
-        .utc(getMeeting.startTime)
-        .format("dddd, DD MMMM YYYY HH:mm")} sampai ${dayjs
-        .utc(getMeeting.endTime)
-        .format("dddd, DD MMMM YYYY HH:mm")} Di Batalkan Akibat ${
-        getTeacher.username
-      } berhalangan hadir`
-    );
+    // Pesan untuk Siswa 📩
+    const studentMessage = `🚨 *Pemberitahuan Pembatalan Meeting* 🚨\n\n` +
+      `Halo, *${getStudent.username}*! 👋\n\n` +
+      `Kami ingin menginformasikan bahwa meeting Anda dengan *${getTeacher.username}* telah *dibatalkan* 🚫.\n\n` +
+      `📅 *Jadwal*: ${dayjs.utc(getMeeting.startTime).format("dddd, DD MMMM YYYY HH:mm")} - ${dayjs.utc(getMeeting.endTime).format("HH:mm")}\n` +
+      `❌ *Alasan*: Guru berhalangan hadir.\n\n` +
+      `Kami mohon maaf atas ketidaknyamanannya 🙏. Silakan hubungi admin untuk menjadwalkan ulang. 📞✨`;
 
-    await deleteData("meeting", {
-      meeting_id,
+    await sendWhatsAppMessage(apiKey, numberKey, formattedStudentPhone, studentMessage);
+
+    // Pesan untuk Guru 📩
+    const teacherMessage = `✅ *Pengajuan Absen Berhasil* ✅\n\n` +
+      `Halo, *${getTeacher.username}*! 👋\n\n` +
+      `Pengajuan ketidakhadiran Anda pada meeting berikut telah dikonfirmasi:\n\n` +
+      `📅 *Jadwal*: ${dayjs.utc(getMeeting.startTime).format("dddd, DD MMMM YYYY HH:mm")} - ${dayjs.utc(getMeeting.endTime).format("HH:mm")}\n` +
+      `📢 *Status*: Disetujui.\n\n` +
+      `Terima kasih telah memberi tahu kami sebelumnya! 🚀✨`;
+
+    await sendWhatsAppMessage(apiKey, numberKey, formattedTeacherPhone, teacherMessage);
+
+    await prisma.teacherAbsence.update({
+      where: { teacher_absence_id },
+      data: { is_delete: true },
     });
+
     return NextResponse.json({
       status: 200,
       error: false,
       data: updateAbsent,
     });
+
   } catch (error) {
     console.error("Error updating absent status:", error);
     return new NextResponse(
       JSON.stringify({ error: "Internal Server Error" }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
-  } finally {
-    await prisma.$disconnect();
+ 
   }
 }
 
-async function sendWhatsAppMessage(
-  apiKey: string,
-  numberKey: string,
-  phoneNo: string,
-  message: string
-) {
-  const response = await fetch("https://api.watzap.id/v1/send_message", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      api_key: apiKey,
-      number_key: numberKey,
-      phone_no: phoneNo,
-      message: message,
-      wait_until_send: "1",
-    }),
-  });
 
-  if (!response.ok) {
-    throw new Error(`Failed to send WhatsApp message: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data;
-}
-
-function formatPhoneNumber(phone: string): string {
-  if (phone.startsWith("0")) {
-    return "62" + phone.slice(1);
-  }
-  return phone;
-}

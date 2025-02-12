@@ -1,9 +1,14 @@
 "use client";
 
+import Loading from "@/app/components/Loading";
+import { Suspense, lazy } from "react";
+
+const DashboardComponent = lazy(() => import("./DashboardComponent"));
+
 export default function AdminDashboard() {
   return (
-    <div>
-      <h1>Admin Dashboard</h1>
-    </div>
+    <Suspense fallback={<Loading />}>
+      <DashboardComponent />
+    </Suspense>
   );
 }

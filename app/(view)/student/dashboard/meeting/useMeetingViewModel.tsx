@@ -399,7 +399,11 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const handleChangeDate = (date: any) => {
     if (date) {
       const formatedDate = dayjs(date).format("YYYY-MM-DD");
-      router.push(`/student/dashboard/meeting?date=${formatedDate}`);
+      const scrollPosition = window.scrollY;
+      router.replace(`/student/dashboard/meeting?date=${formatedDate}`);
+      setTimeout(() => {
+        window.scrollTo(0, scrollPosition);
+      }, 100);
     }
   };
 
@@ -563,7 +567,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       await mutateShowMeeting();
       await mutateShowMeetingById();
       await mutateShowMeetingByDate();
-       handleCancelReschedule();
+      handleCancelReschedule();
     } catch (error) {
       if (error instanceof Error) {
         message.error(

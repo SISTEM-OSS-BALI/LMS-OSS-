@@ -29,6 +29,7 @@ import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { useUsername } from "@/app/lib/auth/useLogin";
 import { crudService } from "@/app/lib/services/crudServices";
 import { useRouter } from "next/navigation";
+import { useDashboard } from "./useDashboardViewModel";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -70,28 +71,15 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   } = theme.useToken();
   const pathname = usePathname();
   const username = useUsername();
-  const router = useRouter();
-
-  const [newRescheduleCount, setNewRescheduleCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  const fetchDataWithLastChecked = async (
-    endpoint: string,
-    lastCheckedKey: string,
-    setStateCallback: React.Dispatch<React.SetStateAction<number>>
-  ) => {
-    const lastChecked = localStorage.getItem(lastCheckedKey) || "";
-
-    try {
-      const query = lastChecked ? `?lastChecked=${lastChecked}` : "";
-      const response = await crudService.get(`${endpoint}${query}`);
-      setStateCallback(response.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    newRescheduleCount,
+    setNewRescheduleCount,
+    newTeacherAbsance,
+    setNewTeacherAbsance,
+    fetchDataWithLastChecked,
+    handleRescheduleClick,
+    handleAbsentClick,
+  } = useDashboard();
 
   useEffect(() => {
     fetchDataWithLastChecked(
@@ -100,24 +88,28 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
       setNewRescheduleCount
     );
 
+    fetchDataWithLastChecked(
+      "/api/admin/teacher/countAbsent",
+      "lastCheckedTeacherAbsence",
+      setNewTeacherAbsance
+    );
+
     const intervalId = setInterval(() => {
       fetchDataWithLastChecked(
-        "/api/admin/rescheduleMeeting/count",
+        "/api/admin/teacher/countAbsent",
         "lastCheckedRescheduleTime",
         setNewRescheduleCount
       );
+
+      fetchDataWithLastChecked(
+        "/api/admin/teacher/countAbsent",
+        "lastCheckedTeacherAbsence",
+        setNewTeacherAbsance
+      );
     }, 30000);
 
-    console.log(newRescheduleCount);
-
     return () => clearInterval(intervalId);
-  }, []);
-
-  const handleRescheduleClick = () => {
-    localStorage.setItem("lastCheckedRescheduleTime", Date.now().toString());
-    setNewRescheduleCount(0);
-    router.push("/admin/dashboard/student/reschedule");
-  };
+  }, [newRescheduleCount]);
 
   const items: MenuItem[] = [
     getItem(
@@ -142,8 +134,24 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <CalendarFilled />
       ),
       getItem(
-        <Link href="/admin/dashboard/teacher/absent">Absen</Link>,
-        "/admin/dashboard/teacher/absent",
+        newTeacherAbsance > 0 ? (
+          <Badge count={newTeacherAbsance} offset={[10, 0]}>
+            <Link
+              href="/admin/dashboard/teacher/absent"
+              onClick={handleAbsentClick}
+            >
+              Absen
+            </Link>
+          </Badge>
+        ) : (
+          <Link
+            href="/admin/dashboard/teacher/absent"
+            onClick={handleAbsentClick}
+          >
+            Absen
+          </Link>
+        ),
+        "/admin/dashboard/student/reschedule",
         <ScheduleFilled />
       ),
     ]),

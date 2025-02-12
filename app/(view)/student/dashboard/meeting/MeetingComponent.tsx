@@ -24,6 +24,7 @@ import {
   Flex,
   Tooltip,
   Image,
+  FloatButton,
 } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
@@ -31,9 +32,10 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 import { useEffect } from "react";
 import Icon, { InboxOutlined } from "@ant-design/icons";
-import { InfoIcon } from "@/app/components/Icon";
+import { AddIcon, InfoIcon } from "@/app/components/Icon";
 import { useMeetingViewModel } from "./useMeetingViewModel";
 import Dragger from "antd/es/upload/Dragger";
+import CustomerServiceChat from "@/app/components/CustomerService";
 
 const { useBreakpoint } = Grid;
 
@@ -171,6 +173,7 @@ export default function MeetingComponent() {
           ]}
         />
         <Title level={screens.xs ? 4 : 3}>Pilih Guru</Title>
+        <CustomerServiceChat/>
         <Divider />
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
@@ -377,8 +380,7 @@ export default function MeetingComponent() {
       <Modal
         open={isRescheduleModalVisible}
         title="Reschedule Jadwal"
-        onClose={handleCancelReschedule}
-        onCancel={() => setIsRescheduleModalVisible(false)}
+        onCancel={handleCancelReschedule}
         footer={null}
       >
         <Form layout="vertical" onFinish={handleSubmitReschedule} form={form}>
@@ -425,10 +427,13 @@ export default function MeetingComponent() {
             name="time"
             rules={[{ required: true, message: "Harap pilih waktu!" }]}
           >
-            <Select placeholder="Pilih Waktu">
+            <Select
+              placeholder="Pilih Waktu"
+              notFoundContent="Tidak Ada Waktu Jadwal"
+            >
               {availableTimes.map((time) => (
                 <Select.Option key={time} value={time}>
-                  {time}
+                  {time || "Tidak Ada Jadwal"}
                 </Select.Option>
               ))}
             </Select>

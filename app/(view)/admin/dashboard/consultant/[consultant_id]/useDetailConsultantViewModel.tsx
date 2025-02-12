@@ -42,9 +42,12 @@ export const useDetailConsultantViewModel = () => {
     const halfProgram = Math.floor(program?.count_program! / 2);
 
     let status;
-    if (program?.count_program == student.count_program) {
+    if (program?.count_program == student?.count_program) {
       status = "DONE";
-    } else if (halfProgram == student.count_program) {
+    } else if (
+      student?.count_program! >= halfProgram &&
+      student?.count_program! < program?.count_program!
+    ) {
       status = "HALF";
     } else {
       status = "";

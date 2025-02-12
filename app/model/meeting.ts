@@ -18,5 +18,6 @@ export interface Meeting {
   startTime: Date;
   endTime: Date;
   name_program: string;
+  is_delete: boolean;
   platform: string;
 }

@@ -34,7 +34,10 @@ export const useQueueViewModel = (): QueueViewModel => {
     "/api/admin/queue/showDateTime",
     fetcher
   );
-  const showTimeData = showTimeResponse?.data || [];
+  const showTimeData = useMemo(
+    () => showTimeResponse?.data || [],
+    [showTimeResponse]
+  );
 
   const handleChangeDate = (date: any) => {
     if (date) {

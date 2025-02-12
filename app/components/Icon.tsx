@@ -1,11 +1,13 @@
 import {
   CalendarOutlined,
+  CloseCircleOutlined,
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
   IdcardOutlined,
   InfoCircleOutlined,
   LeftCircleOutlined,
+  MinusOutlined,
   PlusOutlined,
   RightCircleOutlined,
   SettingOutlined,
@@ -43,10 +45,18 @@ export const AddIcon = () => {
   return <PlusOutlined />;
 };
 
+export const MinusIcon = () => {
+  return <MinusOutlined />;
+}
+
 export const CalendarIcon = () => {
  return <CalendarOutlined />;
 }
 
 export const DetailsIcon = () => {
   return <IdcardOutlined />;
+}
+
+export const CloseIcon = () => {
+  return <CloseCircleOutlined />;
 }

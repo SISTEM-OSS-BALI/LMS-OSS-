@@ -62,6 +62,9 @@ export const useQueueViewModel = () => {
   const [isModalVisibleAddAction, setIsModalVisibleAddAction] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [fileList, setFileList] = useState<any[]>([]);
+  const [loadingState, setLoadingState] = useState<{
+    [key: string]: boolean | null;
+  }>({});
 
   const updateAbsentStatus = async (
     meeting_id: string,
@@ -73,22 +76,40 @@ export const useQueueViewModel = () => {
       absent: absent,
       student_id,
     };
+
+    setLoadingState((prev) => ({
+      ...prev,
+      [meeting_id]: absent ? true : false,
+    }));
+
     try {
       const response = await crudService.post(
         "/api/teacher/absent/changeAbsent",
         payload
       );
+
+      // ✅ Jika berhasil, tampilkan notifikasi sukses
       if (response.status === 200) {
         notification.success({
-          message: "Berhasil Absent",
+          message: "Absensi Berhasil ",
+          description: `Absensi telah diperbarui.`,
         });
-        meetingMutate();
-        mutateDataStudent();
-        mutateCountProgram();
+      } else if (response.status === 403) {
+        notification.error({
+          message: "Absensi Gagal",
+          description: response.message,
+        });
       }
-    } catch (error) {
+      meetingMutate();
+      mutateDataStudent();
+      mutateCountProgram();
+    } catch (error: any) {
       console.error("Failed to update arrival status:", error);
-      message.error("Failed to update arrival status.");
+    } finally {
+      setLoadingState((prev) => ({
+        ...prev,
+        [meeting_id]: null,
+      }));
     }
   };
 
@@ -145,7 +166,7 @@ export const useQueueViewModel = () => {
       await crudService.post(
         `/api/teacher/meeting/handleActionTeacher/${meetingId}`,
         payload
-      )
+      );
       notification.success({
         message: "Berhasil Menambahkan Action",
       });
@@ -257,5 +278,6 @@ export const useQueueViewModel = () => {
     handleBeforeUpload,
     fileList,
     teacherAbsenceData,
+    loadingState,
   };
 };

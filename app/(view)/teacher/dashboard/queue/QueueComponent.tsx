@@ -12,6 +12,7 @@ import {
   Card,
   Flex,
   Image,
+  Tooltip,
 } from "antd";
 import { Meeting } from "@/app/model/meeting";
 import Table, { ColumnsType } from "antd/es/table";
@@ -19,9 +20,10 @@ import dayjs from "dayjs";
 import TextArea from "antd/es/input/TextArea";
 import { useQueueViewModel } from "./useQueueViewModel";
 import Dragger from "antd/es/upload/Dragger";
-import { InboxOutlined } from "@ant-design/icons";
+import Icon, { InboxOutlined } from "@ant-design/icons";
 import { useEffect } from "react";
 import { TeacherAbsence } from "@/app/model/user";
+import { AddIcon, MinusIcon } from "@/app/components/Icon";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -36,7 +38,7 @@ export default function QueueComponent() {
     filteredData,
     showTimes,
     handleAction,
-    setIsModalVisibleAddProgesStudent,
+    loadingState,
     isModalVisibleAddProgesStudent,
     handleCancel,
     form,
@@ -117,41 +119,47 @@ export default function QueueComponent() {
       key: "absent",
       render: (_, record) => (
         <Space>
-          <Button
-            disabled={record.absent}
-            style={{
-              cursor: record.absent ? "not-allowed" : "pointer",
-              backgroundColor: record.absent ? "green" : "transparent",
-              color: record.absent ? "white" : "black",
-            }}
-            onClick={() =>
-              updateAbsentStatus(record.meeting_id, record.student_id, true)
-            }
-          >
-            Hadir
-          </Button>
-          <Button
-            disabled={!record.absent}
-            style={{
-              cursor: !record.absent ? "not-allowed" : "pointer",
-              backgroundColor: !record.absent ? "red" : "transparent",
-              color: !record.absent ? "white" : "black",
-            }}
-            onClick={() =>
-              updateAbsentStatus(record.meeting_id, record.student_id, false)
-            }
-          >
-            Tidak Hadir
-          </Button>
+          <Tooltip title="Hadir">
+            <Button
+              loading={loadingState[record.meeting_id] == true}
+              disabled={record.absent == true || record.teacherAbsence}
+              style={{
+                cursor: record.absent == true ? "not-allowed" : "pointer",
+                backgroundColor: record.absent == true ? "green" : "transparent",
+                color: record.absent == true ? "white" : "black",
+              }}
+              onClick={() =>
+                updateAbsentStatus(record.meeting_id, record.student_id, true)
+              }
+            >
+              <Icon component={AddIcon} />
+            </Button>
+          </Tooltip>
+          <Tooltip title="Tidak Hadir">
+            <Button
+              loading={loadingState[record.meeting_id] == false}
+              disabled={record.absent == false || record.teacherAbsence}
+              style={{
+                cursor: record.absent == false ? "not-allowed" : "pointer",
+                backgroundColor: record.absent == false ? "red" : "transparent",
+                color: record.absent == false ? "white" : "black",
+              }}
+              onClick={() =>
+                updateAbsentStatus(record.meeting_id, record.student_id, false)
+              }
+            >
+              <Icon component={MinusIcon} />
+            </Button>
+          </Tooltip>
         </Space>
       ),
     },
-    {
-      title: "Modul",
-      dataIndex: "module",
-      key: "module",
-      render: (module: boolean) => (module ? "Yes" : "No"),
-    },
+    // {
+    //   title: "Modul",
+    //   dataIndex: "module",
+    //   key: "module",
+    //   render: (module: boolean) => (module ? "Yes" : "No"),
+    // },
     {
       title: "Aksi",
       key: "action",
@@ -169,6 +177,7 @@ export default function QueueComponent() {
           <Button
             type="primary"
             onClick={() => handleOpenModalAddProges(record.meeting_id)}
+            disabled={record.teacherAbsence}
           >
             Tambah Progress Siswa
           </Button>

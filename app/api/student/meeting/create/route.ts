@@ -106,7 +106,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const meeting = await prisma.meeting.create({
+    const existingMeeting = await prisma.meeting.findFirst({
+      where: {
+        student_id: user.user_id,
+      },
+    });
+
+    if (!existingMeeting) {
+      await prisma.user.update({
+        where: {
+          user_id: user.user_id,
+        },
+        data: {
+          start_date: dateTime.toDate(),
+          end_date: dateTime.add(2, "month").toDate(),
+        },
+      });
+    }
+
+    await prisma.meeting.create({
       data: {
         teacher_id,
         student_id: user.user_id,
@@ -181,30 +199,13 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    const sessionThresholds =
-      programData.duration === 90 ? [10, 20, 25] : [10, 15];
-
-    if (sessionThresholds.includes(studentData.count_program ?? 0)) {
-      const consultant = await prisma.consultant.findUnique({
-        where: { consultant_id: studentData.consultant_id ?? "" },
-        select: { name: true, no_phone: true },
-      });
-
-      if (consultant) {
-        messages.push({
-          phone: formatPhoneNumber(consultant.no_phone),
-          text: `👋 *Hallo Konsultan ${consultant.name},*\n\n📢 *Notifikasi Konsultasi!*\n\n🎓 *Siswa:* ${studentData.username}\n📚 *Program:* ${programData.name}\n✅ *Sesi Selesai:* ${studentData.count_program} sesi\n\nSilakan lakukan konsultasi dengan siswa tersebut. Terima kasih! 🙌`,
-        });
-      }
-    }
-
     await Promise.all(
       messages.map((msg) =>
         sendWhatsAppMessage(apiKey, numberKey, msg.phone, msg.text)
       )
     );
 
-    return NextResponse.json({ status: 200, error: false, data: meeting });
+    return NextResponse.json({ status: 200, error: false, message: "Success" });
   } catch (error) {
     console.error("Error:", error);
     return new NextResponse(

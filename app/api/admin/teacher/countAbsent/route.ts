@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getData } from "@/app/lib/db/getData";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 
 export async function GET(request: NextRequest) {
@@ -19,7 +18,7 @@ export async function GET(request: NextRequest) {
     : new Date(0);
 
   try {
-    const getResheduleMeetingCount = await prisma.rescheduleMeeting.count({
+    const getTeacherAbsanceCount = await prisma.teacherAbsence.count({
       where: {
         createdAt: {
           gt: lastCheckedDate,
@@ -30,7 +29,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: 200,
       error: false,
-      data: getResheduleMeetingCount,
+      data: getTeacherAbsanceCount,
     });
   } catch (error) {
     console.error("Error accessing database:", error);
