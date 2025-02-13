@@ -13,6 +13,7 @@ interface QueueViewModel {
   queueMutate: () => void;
   handleChangeDate: (date: any) => void;
   showTimes: any;
+  isLoadingQueue: boolean;
 }
 
 export const useQueueViewModel = (): QueueViewModel => {
@@ -29,6 +30,7 @@ export const useQueueViewModel = (): QueueViewModel => {
     data: queueData,
     error: queueError,
     mutate: queueMutate,
+    isLoading: isLoadingQueue,
   } = useSWR("/api/admin/queue/show", fetcher);
   const { data: showTimeResponse } = useSWR(
     "/api/admin/queue/showDateTime",
@@ -60,5 +62,6 @@ export const useQueueViewModel = (): QueueViewModel => {
     queueMutate,
     handleChangeDate,
     showTimes,
+    isLoadingQueue,
   };
 };

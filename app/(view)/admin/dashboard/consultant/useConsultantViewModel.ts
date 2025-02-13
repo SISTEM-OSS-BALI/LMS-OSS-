@@ -11,18 +11,15 @@ interface ConsultantResponse {
 
 export const useConsultantViewModel = () => {
   const router = useRouter();
-  const { data: consultantData } = useSWR<ConsultantResponse>(
-    "/api/admin/consultant/show",
-    fetcher
-  );
+  const { data: consultantData, isLoading: isLoadingConsultant } =
+    useSWR<ConsultantResponse>("/api/admin/consultant/show", fetcher);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedConsultant, setSelectedConsultant] = useState<any>(null);
   const [form] = Form.useForm();
 
   const handleDetail = (consultant_id: string) => {
     router.push(`/admin/dashboard/consultant/${consultant_id}`);
-  }
-
+  };
 
   const handleEdit = (consultant: any) => {
     setSelectedConsultant(consultant);
@@ -36,5 +33,17 @@ export const useConsultantViewModel = () => {
 
   const handleDelete = async (consultant_id: string) => {};
 
-  return {consultantData, handleDetail, handleEdit, handleUpdate, handleDelete, isModalVisible, setIsModalVisible, selectedConsultant, setSelectedConsultant, form};
+  return {
+    consultantData,
+    handleDetail,
+    handleEdit,
+    handleUpdate,
+    handleDelete,
+    isModalVisible,
+    setIsModalVisible,
+    selectedConsultant,
+    setSelectedConsultant,
+    form,
+    isLoadingConsultant,
+  };
 };

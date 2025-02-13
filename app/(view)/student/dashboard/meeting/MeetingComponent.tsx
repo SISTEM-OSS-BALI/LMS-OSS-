@@ -25,6 +25,7 @@ import {
   Tooltip,
   Image,
   FloatButton,
+  Skeleton,
 } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
@@ -79,6 +80,11 @@ export default function MeetingComponent() {
     handleBeforeUpload,
     imageUrl,
     handleSubmitRescheduleEmergency,
+    isLoadingMeeting,
+    isLoadingProgram,
+    isLoadingMeetingByDate,
+    isLoadingMeetingById,
+    isLoadingScheduleAll,
   } = useMeetingViewModel();
 
   const screens = useBreakpoint();
@@ -158,58 +164,67 @@ export default function MeetingComponent() {
           current={currentStep}
           style={{ marginBottom: "24px" }}
           items={[
-            {
-              title: "Pilih Guru",
-            },
-            {
-              title: "Pilih Tanggal",
-            },
-            {
-              title: "Ajukan Pertemuan",
-            },
-            {
-              title: "Behasil",
-            },
+            { title: "Pilih Guru" },
+            { title: "Pilih Tanggal" },
+            { title: "Ajukan Pertemuan" },
+            { title: "Berhasil" },
           ]}
         />
         <Title level={screens.xs ? 4 : 3}>Pilih Guru</Title>
-        <CustomerServiceChat/>
+        <CustomerServiceChat />
         <Divider />
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
-          {dataTeacher?.data.map((teacher) => (
-            <Card
-              key={teacher.user_id}
-              hoverable
-              style={{
-                width: 200,
-                borderRadius: "8px",
-                textAlign: "center",
-                cursor: "pointer",
-                border:
-                  selectedTeacher?.user_id === teacher.user_id
-                    ? "2px solid #1890ff"
-                    : "1px solid #d9d9d9",
-              }}
-              onClick={() => handleSelectTeacher(teacher)}
-            >
-              <Avatar
-                size={100}
-                src={teacher.imageUrl}
-                style={{ marginBottom: 10 }}
-              />
-              <Checkbox
-                checked={selectedTeacher?.user_id === teacher.user_id}
-                onChange={(e) => {
-                  e.stopPropagation(); // Mencegah event onClick Card ikut terpanggil
-                  handleSelectTeacher(teacher);
+        {isLoadingMeeting ? (
+          <Skeleton active paragraph={{ rows: 4 }} />
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+            {dataTeacher?.data.map((teacher) => (
+              <Card
+                key={teacher.user_id}
+                hoverable
+                style={{
+                  width: 200,
+                  borderRadius: "8px",
+                  textAlign: "center",
+                  cursor: "pointer",
+                  border:
+                    selectedTeacher?.user_id === teacher.user_id
+                      ? "2px solid #1890ff"
+                      : "1px solid #d9d9d9",
                 }}
+                onClick={() => handleSelectTeacher(teacher)}
               >
-                {teacher.username}
-              </Checkbox>
-            </Card>
-          ))}
-        </div>
+                {isLoadingMeeting ? (
+                  <Skeleton.Avatar
+                    active
+                    size={100}
+                    shape="circle"
+                    style={{ marginBottom: 10 }}
+                  />
+                ) : (
+                  <Avatar
+                    size={100}
+                    src={teacher.imageUrl}
+                    style={{ marginBottom: 10 }}
+                  />
+                )}
+                {isLoadingMeeting ? (
+                  <Skeleton.Input active size="small" style={{ width: 80 }} />
+                ) : (
+                  <Checkbox
+                    checked={selectedTeacher?.user_id === teacher.user_id}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleSelectTeacher(teacher);
+                    }}
+                  >
+                    {teacher.username}
+                  </Checkbox>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
         <Divider />
       </Card>
 
@@ -224,19 +239,22 @@ export default function MeetingComponent() {
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
               }}
             >
-              <FullCalendar
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView={screens.xs ? "timeGridDay" : "dayGridMonth"}
-                selectable={true}
-                editable={true}
-                dateClick={handleDateClick}
-                showNonCurrentDates={false}
-                events={events}
-                eventContent={renderEventContent}
-                contentHeight="auto"
-                locale={"id"}
-                // eventClick={handleEventClick}
-              />
+              {isLoadingScheduleAll ? (
+                <Skeleton active />
+              ) : (
+                <FullCalendar
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView={screens.xs ? "timeGridDay" : "dayGridMonth"}
+                  selectable={true}
+                  editable={true}
+                  dateClick={handleDateClick}
+                  showNonCurrentDates={false}
+                  events={events}
+                  eventContent={renderEventContent}
+                  contentHeight="auto"
+                  locale={"id"}
+                />
+              )}
             </Card>
           </Col>
           <Col md={8}>
@@ -265,8 +283,10 @@ export default function MeetingComponent() {
                 onChange={handleChangeDate}
                 style={{ width: "100%", margin: "20px 0" }}
               />
-              {showMeetingByDate && showMeetingByDate.data.length > 0 ? (
-                showMeetingByDate.data.map((meeting: any) => (
+              {isLoadingMeetingByDate ? (
+                <Skeleton active paragraph={{ rows: 4 }} />
+              ) : showMeetingByDate && showMeetingByDate.data.length > 0 ? (
+                showMeetingByDate.data.map((meeting) => (
                   <Card
                     key={meeting.meeting_id}
                     style={{
@@ -298,9 +318,7 @@ export default function MeetingComponent() {
                   </Card>
                 ))
               ) : (
-                <div style={{ marginTop: "20px" }}>
-                  <Alert type="info" message="Tidak ada jadwal pertemuan." />
-                </div>
+                <Alert type="info" message="Tidak ada jadwal pertemuan." />
               )}
             </Card>
           </Col>

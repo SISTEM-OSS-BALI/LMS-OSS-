@@ -1,17 +1,17 @@
 import Table, { ColumnsType } from "antd/es/table";
 import { useAbsentViewModel } from "./useAbsentViewModel";
 import { TeacherAbsence } from "@/app/model/user";
-import { Button, Card, Image, Space, Grid } from "antd"; // Import Grid untuk useBreakpoint
+import { Button, Card, Image, Space, Grid, Skeleton } from "antd"; // Import Grid untuk useBreakpoint
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import Title from "antd/es/typography/Title";
 import { useState } from "react";
 dayjs.extend(utc);
 
-const { useBreakpoint } = Grid; // Menggunakan useBreakpoint dari Ant Design
+const { useBreakpoint } = Grid; 
 
 export default function AbsentTeacherComponent() {
-  const { mergedData, updateAbsentStatus } = useAbsentViewModel();
+  const { mergedData, updateAbsentStatus, isLoadingAbsent, isLoadingTeacher } = useAbsentViewModel();
   const [showHistory, setShowHistory] = useState(false);
   const screens = useBreakpoint(); // Menentukan ukuran layar
 
@@ -50,7 +50,7 @@ export default function AbsentTeacherComponent() {
       title: "Alasan",
       dataIndex: "reason",
       key: "reason",
-      responsive: ["md"], // Disembunyikan di mobile
+      responsive: ["md"], 
     },
     {
       title: "Bukti",
@@ -151,13 +151,17 @@ export default function AbsentTeacherComponent() {
           overflow: "hidden",
         }}
       >
-        <Table
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="teacher_absence_id"
-          pagination={{ pageSize: 5 }}
-          scroll={screens.xs ? { x: "max-content" } : undefined} // Scroll untuk mobile
-        />
+        {isLoadingAbsent ? (
+          <Skeleton active paragraph={{ rows: 6 }} />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredData}
+            rowKey="teacher_absence_id"
+            pagination={{ pageSize: 5 }}
+            scroll={screens.xs ? { x: "max-content" } : undefined} // Scroll untuk mobile
+          />
+        )}
       </Card>
     </div>
   );

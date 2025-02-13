@@ -1,19 +1,20 @@
-import { Divider, Tag, Badge, Card } from "antd";
+import { Divider, Tag, Badge, Card, Skeleton, Grid } from "antd";
 import { useEffect, useState } from "react";
 import { useQueueViewModel } from "./useQueueViewModel";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import Loading from "@/app/components/Loading";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 dayjs.extend(utc);
 
+const { useBreakpoint } = Grid;
+
 export default function QueueComponent() {
-  const { queueData, queueError } = useQueueViewModel();
-  const isLoading = !queueData && !queueError;
+  const { queueData, queueError, isLoadingQueue } = useQueueViewModel();
   const [events, setEvents] = useState([]);
+  const screens = useBreakpoint();
 
   useEffect(() => {
     if (queueData?.data) {
@@ -32,8 +33,7 @@ export default function QueueComponent() {
   }, [queueData]);
 
   const renderEventContent = (eventInfo: any) => {
-    const { title, start, time, teacher, student } =
-      eventInfo.event.extendedProps;
+    const { title, time, teacher, student } = eventInfo.event.extendedProps;
 
     return (
       <div
@@ -53,16 +53,29 @@ export default function QueueComponent() {
           textOverflow: "ellipsis",
         }}
       >
-        <strong style={{ fontSize: "14px", marginBottom: "4px" }}>
+        <strong
+          style={{
+            fontSize: screens.xs ? "12px" : "14px",
+            marginBottom: "4px",
+          }}
+        >
           {time}
         </strong>
         <div
-          style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px" }}
+          style={{
+            fontSize: screens.xs ? "10px" : "12px",
+            fontWeight: "bold",
+            marginBottom: "4px",
+          }}
         >
           {teacher}
         </div>
         <div
-          style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px" }}
+          style={{
+            fontSize: screens.xs ? "10px" : "12px",
+            fontWeight: "bold",
+            marginBottom: "4px",
+          }}
         >
           {student}
         </div>
@@ -72,36 +85,50 @@ export default function QueueComponent() {
   };
 
   return (
-    <div style={{ padding: "40px 24px", fontFamily: "Arial, sans-serif" }}>
+    <div
+      style={{
+        padding: screens.xs ? "20px 12px" : "40px 24px",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
       <div
         style={{
           marginBottom: "20px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          flexWrap: screens.xs ? "wrap" : "nowrap",
         }}
       >
         <h1
-          style={{ fontSize: "28px", fontWeight: "600", marginBottom: "10px" }}
+          style={{
+            fontSize: screens.xs ? "22px" : "28px",
+            fontWeight: "600",
+            marginBottom: "10px",
+          }}
         >
           Jadwal Pertemuan
         </h1>
       </div>
-      <Divider style={{ margin: "20px 0" }} />
+      <Divider style={{ margin: screens.xs ? "10px 0" : "20px 0" }} />
       <Card
         style={{
           borderRadius: "8px",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-          padding: "20px",
+          padding: screens.xs ? "10px" : "20px",
         }}
       >
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          events={events}
-          locale={"id"}
-          eventContent={renderEventContent}
-        />
+        {isLoadingQueue ? (
+          <Skeleton active paragraph={{ rows: screens.xs ? 3 : 6 }} />
+        ) : (
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView={screens.xs ? "timeGridDay" : "dayGridMonth"}
+            events={events}
+            locale={"id"}
+            eventContent={renderEventContent}
+          />
+        )}
       </Card>
     </div>
   );

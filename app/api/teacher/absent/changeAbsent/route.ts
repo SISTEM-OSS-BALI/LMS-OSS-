@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
       select: {
         username: true,
         count_program: true,
+        no_phone: true,
       },
     });
 
@@ -152,13 +153,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ✅ Cek apakah program selesai
     const completionThreshold = programData.duration === 90 ? 30 : 20;
 
     if (updatedCountProgramStudent === completionThreshold) {
       await prisma.user.update({
         where: { user_id: student_id },
         data: { is_completed: true, is_active: false },
+
       });
 
       await sendWhatsAppMessage(
@@ -166,6 +167,16 @@ export async function POST(request: NextRequest) {
         numberKey,
         formatPhoneNumber(studentData.no_phone ?? ""),
         `🎉 *Selamat ${studentData.username}!* \n\nAnda telah menyelesaikan *${programData.name}* dengan total ${updatedCountProgramStudent} sesi.\n👏 Terima kasih telah menyelesaikan program ini!`
+      );
+
+      await sendWhatsAppMessage(
+        apiKey,
+        numberKey,
+        formatPhoneNumber(teacherData?.no_phone ?? ""),
+        `📢 *Pengingat Penting!* 📢\n\n` +
+          `Siswa atas nama *${studentData.username}* telah *menyelesaikan* program *${programData.name}*.\n\n` +
+          `🎓 *Harap segera memberikan nilai pada sertifikat mereka* agar dapat diterbitkan.\n\n` +
+          `Terima kasih atas dedikasi Anda dalam membimbing siswa! 🙌`
       );
     }
 

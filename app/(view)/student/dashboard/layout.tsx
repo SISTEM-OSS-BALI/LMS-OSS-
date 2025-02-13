@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import {
+import Icon, {
   CalendarOutlined,
   DesktopOutlined,
   LogoutOutlined,
   PieChartOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import type { MenuProps } from "antd";
+import type { GetProps, MenuProps } from "antd";
 import {
   Avatar,
   ConfigProvider,
@@ -25,10 +25,16 @@ import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { useCount, useUsername } from "@/app/lib/auth/useLogin";
 import { useMeetings } from "./useMeetingViewModel";
+import { CertificateSvg } from "@/app/components/Icon";
 
 const { Content, Footer, Sider } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
+type CustomIconComponentProps = GetProps<typeof Icon>;
+
+const CertificateIcon = ({ ...props }: CustomIconComponentProps) => (
+  <Icon component={CertificateSvg} {...props} />
+);
 
 function getItem(
   label: React.ReactNode,
@@ -82,9 +88,11 @@ const items: MenuItem[] = [
   getItem(
     <Link href={"/student/dashboard/certificate"}>Sertifikat</Link>,
     "/student/dashboard/certificate",
-    <CalendarOutlined />
+    <CertificateIcon style={{ fontSize: "16px" }} />
   ),
 ];
+
+
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   children,

@@ -14,7 +14,7 @@ interface MeetingResponse {
 }
 
 export const useRescheduleViewModel = () => {
-  const { data: dataReschedule, mutate: rescheduleMutate } =
+  const { data: dataReschedule, mutate: rescheduleMutate, isLoading: isLoadingReschedule } =
     useSWR<RescheduleResponse>("/api/admin/rescheduleMeeting/show", fetcher);
   const { data: dataMeeting, mutate: meetingMutate } = useSWR<MeetingResponse>(
     "/api/student/meeting/show",
@@ -70,5 +70,5 @@ export const useRescheduleViewModel = () => {
     }
   };
 
-  return { mergedData, handleApproveReschedule, loadingState };
+  return { mergedData, handleApproveReschedule, loadingState, isLoadingReschedule };
 };

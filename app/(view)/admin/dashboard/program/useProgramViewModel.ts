@@ -2,7 +2,6 @@ import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { Program } from "@/app/model/program";
 import { Form, notification } from "antd";
-import { duration } from "html2canvas/dist/types/css/property-descriptors/duration";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -17,7 +16,7 @@ export const useProgramViewModel = () => {
   const {
     data: programData,
     mutate: programDataMutate,
-    isLoading,
+    isLoading: isLoadingProgram,
   } = useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
@@ -97,7 +96,7 @@ export const useProgramViewModel = () => {
   return {
     handleOk,
     programData,
-    isLoading,
+    isLoadingProgram,
     handleCancel,
     form,
     isModalVisible,

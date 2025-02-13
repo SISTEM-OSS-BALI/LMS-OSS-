@@ -45,6 +45,13 @@ enum RescheduleStatus {
   REJECTED
 }
 
+enum SectionType {
+  READING
+  SPEAKING
+  LISTENING
+  WRITING
+}
+
 model User {
   user_id       String    @id @default(uuid())
   username      String
@@ -62,6 +69,7 @@ model User {
   start_date    DateTime?
   end_date      DateTime?
   is_completed  Boolean   @default(false)
+  is_evaluation Boolean?
   role          Role      @default(STUDENT)
 
   consultant_id String?
@@ -83,6 +91,8 @@ model User {
   rescheduleMeetingsTeacher RescheduleMeeting[]          @relation("TeacherReschedules")
 
   rescheduleMeetingsStudent RescheduleMeeting[] @relation("StudentReschedules")
+  Certificate               Certificate[]       @relation("StudentCertificate")
+  Section                   Section[]           @relation("StudentSection")
 }
 
 model Consultant {
@@ -354,7 +364,7 @@ model TeacherAbsence {
   teacher_id         String
   meeting_id         String
   meeting            Meeting  @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade, name: "TeacherAbsences")
-  reason             String
+  reason             String   @db.LongText
   imageUrl           String   @db.LongText
   is_delete          Boolean  @default(false)
   createdAt          DateTime @default(now())
@@ -433,11 +443,34 @@ model RescheduleMeeting {
   new_platform  String? // Platform baru (jika berubah)
   new_method    MethodType? // Metode baru (Online/Offline)
 
-  reason        String
+  reason        String           @db.LongText
   option_reason String
   imageUrl      String           @db.LongText
   createdAt     DateTime         @default(now())
   is_deleted    Boolean          @default(false)
   status        RescheduleStatus @default(PENDING) // Status persetujuan
   updatedAt     DateTime         @updatedAt
+}
+
+model Certificate {
+  certificate_id         String    @id @default(uuid())
+  no_certificate         String    @unique
+  student                User      @relation("StudentCertificate", fields: [student_id], references: [user_id], onDelete: Cascade)
+  student_id             String
+  is_complated_meeting   Boolean?  @default(false)
+  is_complated_testimoni Boolean?  @default(false)
+  overall                String?
+  is_download            Boolean?  @default(false)
+  section                Section[]
+}
+
+model Section {
+  section_id     String      @id @default(uuid())
+  section_type   SectionType
+  level          String
+  comment        String      @db.LongText
+  student        User        @relation("StudentSection", fields: [student_id], references: [user_id], onDelete: Cascade)
+  student_id     String
+  certificate    Certificate @relation(fields: [certificate_id], references: [certificate_id])
+  certificate_id String
 }

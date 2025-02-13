@@ -21,6 +21,7 @@ export interface User {
   role: Role;
   region: string;
   color: string;
+  is_evaluation: boolean;
   count_program: number;
 
   coursesTeaching: Course[];
@@ -40,8 +41,8 @@ export interface TeacherAbsence {
   meeting_id: string;
   reason: string;
   imageUrl: string;
-  createdAt: Date
-  status: boolean
-  is_delete: boolean
-  updatedAt: Date
+  createdAt: Date;
+  status: boolean;
+  is_delete: boolean;
+  updatedAt: Date;
 }

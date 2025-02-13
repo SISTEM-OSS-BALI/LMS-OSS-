@@ -4,10 +4,8 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-
-import Loading from "@/app/components/Loading";
 import Title from "antd/es/typography/Title";
-import { Card, Divider } from "antd";
+import { Card, Divider, Skeleton, Grid } from "antd";
 import { useCalendarViewModel } from "./useCalendarViewModel";
 dayjs.extend(utc);
 
@@ -20,6 +18,8 @@ export default function CalendarTeacherComponent() {
     dataTeacher,
     isLoadingSchedule,
   } = useCalendarViewModel();
+
+  const { useBreakpoint } = Grid;
 
   const renderEventContent = (eventInfo: any) => {
     const { teacherName, startTime, endTime, region } =
@@ -55,54 +55,35 @@ export default function CalendarTeacherComponent() {
     );
   };
 
+  const screens = useBreakpoint();
+
   return (
-    <div style={{ padding: "24px" }}>
-      {isLoading && isLoadingSchedule ? (
-        <Loading />
-      ) : (
-        <>
-          <Title level={3}>Kalender Guru</Title>
-          <Divider />
-          <Card
-            style={{
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-              padding: "20px",
-            }}
-          >
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              editable={true}
-              selectable={true}
-              showNonCurrentDates={false}
-              events={events}
-              contentHeight="auto"
-              eventContent={renderEventContent}
-              locale={"id"}
-            />
-            <style jsx global>{`
-              .fc .fc-daygrid-event {
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              }
-
-              .fc .fc-daygrid-day-frame {
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
-                align-items: stretch;
-              }
-
-              .fc .fc-daygrid-day-frame > div {
-                flex-grow: 1;
-                flex-shrink: 1;
-              }
-            `}</style>
-          </Card>
-        </>
-      )}
+    <div style={{ padding: screens.xs ? "12px" : "24px" }}>
+      <Title level={3}>Kalender Guru</Title>
+      <Divider />
+      <Card
+        style={{
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          padding: "20px",
+        }}
+      >
+        {isLoading || isLoadingSchedule ? (
+          <Skeleton active paragraph={{ rows: 8 }} />
+        ) : (
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            editable={true}
+            selectable={true}
+            showNonCurrentDates={false}
+            events={events}
+            contentHeight="auto"
+            eventContent={renderEventContent}
+            locale={"id"}
+          />
+        )}
+      </Card>
     </div>
   );
 }

@@ -18,14 +18,14 @@ interface MeetingResponse {
 }
 
 export const useAbsentViewModel = () => {
-  const { data: dataAbsent, mutate: absentMutate } = useSWR<AbsentResponse>(
+  const { data: dataAbsent, mutate: absentMutate, isLoading: isLoadingAbsent } = useSWR<AbsentResponse>(
     "/api/admin/teacher/showAbsent",
     fetcher
   );
 
   const {
     data: dataTeacher,
-    isLoading,
+    isLoading: isLoadingTeacher,
     mutate: mutateDataTeacher,
   } = useSWR<TeacherResponse>("/api/admin/teacher/show", fetcher);
 
@@ -77,5 +77,5 @@ export const useAbsentViewModel = () => {
       message.error("Failed to update arrival status.");
     }
   };
-  return { mergedData, updateAbsentStatus };
+  return { mergedData, updateAbsentStatus, isLoadingAbsent, isLoadingTeacher };
 };

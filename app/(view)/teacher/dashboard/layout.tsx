@@ -24,7 +24,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { useCount, useUsername } from "@/app/lib/auth/useLogin";
-import { useDashboardViewModel } from "../useDashboardViewModel";
+import { useDashboardViewModel } from "./useDashboardViewModel";
 
 const { Content, Footer, Sider } = Layout;
 

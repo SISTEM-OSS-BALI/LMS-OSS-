@@ -151,7 +151,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
             Absen
           </Link>
         ),
-        "/admin/dashboard/student/reschedule",
+        "/admin/dashboard/teacher/absent",
         <ScheduleFilled />
       ),
     ]),

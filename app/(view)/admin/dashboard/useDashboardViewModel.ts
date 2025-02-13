@@ -28,7 +28,7 @@ export const useDashboard = () => {
     if (year) params.append("year", year);
     return `${url}?${params.toString()}`;
   }, [year]);
-  const { data: monthlyStudentData } = useSWR<MonthlyStudentDataResponse>(
+  const { data: monthlyStudentData, isLoading: isLoadingMonthly } = useSWR<MonthlyStudentDataResponse>(
     fetchUrl,
     fetcher
   );
@@ -81,5 +81,6 @@ export const useDashboard = () => {
     setSelectedYear,
     selectedYear,
     changeYear,
+    isLoadingMonthly
   };
 };

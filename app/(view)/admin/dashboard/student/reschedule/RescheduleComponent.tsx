@@ -12,20 +12,29 @@ import {
   Tag,
   Flex,
   Pagination,
+  Skeleton,
+  Grid
 } from "antd";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+const { useBreakpoint } = Grid;
 
 dayjs.extend(utc);
+ 
 
 const { Title, Text } = Typography;
 
 export default function RescheduleApprovalComponent() {
-  const { mergedData, handleApproveReschedule, loadingState } =
-    useRescheduleViewModel();
+  const {
+    mergedData,
+    handleApproveReschedule,
+    loadingState,
+    isLoadingReschedule,
+  } = useRescheduleViewModel();
   const [showHistory, setShowHistory] = useState(false);
   const [pageSize, setPageSize] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
+  const screens = useBreakpoint();
 
   // Mapping untuk opsi alasan
   const optionReasonMapping: Record<string, string> = {
@@ -44,65 +53,106 @@ export default function RescheduleApprovalComponent() {
     currentPage * pageSize
   );
   return (
-    <div style={{ padding: "32px" }}>
+    <div style={{ padding: screens.xs ? "16px" : "32px" }}>
       <Flex
         justify="space-between"
         align="center"
+        wrap={screens.xs ? "wrap" : "nowrap"}
         style={{ marginBottom: "32px" }}
       >
-        <Title level={3} style={{ marginBlock: 0 }}>
+        <Title level={screens.xs ? 4 : 3} style={{ marginBlock: 0 }}>
           {showHistory ? "Riwayat Reschedule" : "Pengajuan Emergency Pertemuan"}
         </Title>
         <Button onClick={() => setShowHistory(!showHistory)} type="primary">
           {showHistory ? "Kembali ke Pengajuan" : "Riwayat Pengajuan"}
         </Button>
       </Flex>
-      <List
-        dataSource={paginatedData}
-        renderItem={(item) => (
-          <Card
-            style={{
-              marginBottom: 24,
-              borderRadius: "12px",
-              boxShadow: "0 6px 16px rgba(0, 0, 0, 0.1)",
-              backgroundColor: "#fff",
-              padding: "16px",
-            }}
-            title={
-              <Row justify="space-between" align="middle">
-                <Col>
-                  <Title level={4} style={{ margin: 0 }}>
-                    {item.program_name} - {item.student_name}
-                  </Title>
-                </Col>
-                <Col>
-                  <Tag
-                    color={
-                      item.status === "PENDING"
-                        ? "orange"
-                        : item.status === "APPROVED"
-                        ? "green"
-                        : item.status === "REJECTED"
-                        ? "red"
-                        : "default"
-                    }
-                    style={{ fontSize: "14px", padding: "4px 10px" }}
-                  >
-                    {item.status}
-                  </Tag>
-                </Col>
-              </Row>
-            }
-            extra={
-              <Text type="secondary">
-                {dayjs(item.createdAt).format("DD MMM YYYY")}
-              </Text>
-            }
-          >
-            <Row gutter={[16, 16]}>
-              {/* Meeting Sebelumnya - TIDAK DITAMPILKAN di RIWAYAT */}
-              {!showHistory && (
-                <Col xs={24} md={8}>
+      {isLoadingReschedule ? (
+        <Skeleton active paragraph={{ rows: screens.xs ? 3 : 6 }} />
+      ) : (
+        <List
+          dataSource={paginatedData}
+          renderItem={(item) => (
+            <Card
+              style={{
+                marginBottom: 24,
+                borderRadius: "12px",
+                boxShadow: "0 6px 16px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "#fff",
+                padding: "16px",
+              }}
+              title={
+                <Row justify="space-between" align="middle">
+                  <Col>
+                    <Title level={screens.xs ? 5 : 4} style={{ margin: 0 }}>
+                      {item.program_name} - {item.student_name}
+                    </Title>
+                  </Col>
+                  <Col>
+                    <Tag
+                      color={
+                        item.status === "PENDING"
+                          ? "orange"
+                          : item.status === "APPROVED"
+                          ? "green"
+                          : item.status === "REJECTED"
+                          ? "red"
+                          : "default"
+                      }
+                      style={{ fontSize: "14px", padding: "4px 10px" }}
+                    >
+                      {item.status}
+                    </Tag>
+                  </Col>
+                </Row>
+              }
+              extra={
+                <Text type="secondary">
+                  {dayjs(item.createdAt).format("DD MMM YYYY")}
+                </Text>
+              }
+            >
+              <Row gutter={[16, 16]}>
+                {/* Meeting Sebelumnya - TIDAK DITAMPILKAN di RIWAYAT */}
+                {!showHistory && (
+                  <Col xs={24} md={8}>
+                    <Card
+                      bordered
+                      style={{
+                        borderRadius: "10px",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                        padding: "16px",
+                      }}
+                    >
+                      <Title
+                        level={5}
+                        style={{ marginBottom: "12px", color: "#1890ff" }}
+                      >
+                        Meeting Sebelumnya
+                      </Title>
+                      <Text>
+                        <strong>Guru:</strong> {item.teacher_name}
+                      </Text>
+                      <br />
+                      <Text>
+                        <strong>Tanggal:</strong>{" "}
+                        {dayjs.utc(item.dateTime).format("DD MMM YYYY, HH:mm")}{" "}
+                        -{dayjs.utc(item.endTime).format(" HH:mm")}
+                      </Text>
+                      <br />
+                      <Text>
+                        <strong>Metode:</strong> {item.method || "-"}
+                      </Text>
+                      <br />
+                      <Text>
+                        <strong>Platform:</strong> {item.platform || "-"}
+                      </Text>
+                    </Card>
+                  </Col>
+                )}
+
+                {/* Meeting yang Diajukan */}
+                <Col xs={24} md={showHistory ? 12 : 8}>
                   <Card
                     bordered
                     style={{
@@ -113,9 +163,9 @@ export default function RescheduleApprovalComponent() {
                   >
                     <Title
                       level={5}
-                      style={{ marginBottom: "12px", color: "#1890ff" }}
+                      style={{ marginBottom: "12px", color: "#52c41a" }}
                     >
-                      Meeting Sebelumnya
+                      Meeting yang Diajukan
                     </Title>
                     <Text>
                       <strong>Guru:</strong> {item.teacher_name}
@@ -123,165 +173,131 @@ export default function RescheduleApprovalComponent() {
                     <br />
                     <Text>
                       <strong>Tanggal:</strong>{" "}
-                      {dayjs.utc(item.dateTime).format("DD MMM YYYY, HH:mm")} -
-                      {dayjs.utc(item.endTime).format(" HH:mm")}
+                      {dayjs
+                        .utc(item.new_dateTime)
+                        .format("DD MMM YYYY, HH:mm")}{" "}
+                      - {dayjs.utc(item.new_endTime).format(" HH:mm")}
                     </Text>
                     <br />
                     <Text>
-                      <strong>Metode:</strong> {item.method || "-"}
+                      <strong>Metode:</strong> {item.new_method || "-"}
                     </Text>
                     <br />
                     <Text>
-                      <strong>Platform:</strong> {item.platform || "-"}
+                      <strong>Platform:</strong> {item.new_platform || "-"}
                     </Text>
                   </Card>
                 </Col>
-              )}
 
-              {/* Meeting yang Diajukan */}
-              <Col xs={24} md={showHistory ? 12 : 8}>
-                <Card
-                  bordered
-                  style={{
-                    borderRadius: "10px",
-                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                    padding: "16px",
-                  }}
-                >
-                  <Title
-                    level={5}
-                    style={{ marginBottom: "12px", color: "#52c41a" }}
+                {/* Keterangan & Bukti */}
+                <Col xs={24} md={showHistory ? 12 : 8}>
+                  <Card
+                    bordered
+                    style={{
+                      borderRadius: "10px",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                      padding: "16px",
+                      height: "100%",
+                    }}
                   >
-                    Meeting yang Diajukan
-                  </Title>
-                  <Text>
-                    <strong>Guru:</strong> {item.teacher_name}
-                  </Text>
-                  <br />
-                  <Text>
-                    <strong>Tanggal:</strong>{" "}
-                    {dayjs.utc(item.new_dateTime).format("DD MMM YYYY, HH:mm")}{" "}
-                    - {dayjs.utc(item.new_endTime).format(" HH:mm")}
-                  </Text>
-                  <br />
-                  <Text>
-                    <strong>Metode:</strong> {item.new_method || "-"}
-                  </Text>
-                  <br />
-                  <Text>
-                    <strong>Platform:</strong> {item.new_platform || "-"}
-                  </Text>
-                </Card>
-              </Col>
-
-              {/* Keterangan & Bukti */}
-              <Col xs={24} md={showHistory ? 12 : 8}>
-                <Card
-                  bordered
-                  style={{
-                    borderRadius: "10px",
-                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                    padding: "16px",
-                    height: "100%",
-                  }}
-                >
-                  <Row gutter={16}>
-                    {/* Keterangan */}
-                    <Col span={12}>
-                      <Title
-                        level={5}
-                        style={{ marginBottom: "12px", color: "#fa8c16" }}
-                      >
-                        Keterangan
-                      </Title>
-                      <Text>
-                        <strong>Alasan:</strong> {item.reason}
-                      </Text>
-                      <br />
-                      <Text>
-                        <strong>Keterangan:</strong>{" "}
-                        {optionReasonMapping[item.option_reason] ||
-                          "Tidak Diketahui"}
-                      </Text>
-                    </Col>
-
-                    {/* Bukti Gambar */}
-                    <Col span={12} style={{ textAlign: "center" }}>
-                      <Title
-                        level={5}
-                        style={{ marginBottom: "8px", color: "#fa541c" }}
-                      >
-                        Bukti
-                      </Title>
-                      {item.imageUrl ? (
-                        <Image
-                          src={item.imageUrl}
-                          alt="Bukti"
-                          width={120}
-                          height={80}
-                          style={{
-                            display: "block",
-                            margin: "0 auto",
-                            borderRadius: "6px",
-                            boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-                          }}
-                        />
-                      ) : (
-                        <Text
-                          type="secondary"
-                          style={{ textAlign: "center", display: "block" }}
+                    <Row gutter={16}>
+                      {/* Keterangan */}
+                      <Col span={12}>
+                        <Title
+                          level={5}
+                          style={{ marginBottom: "12px", color: "#fa8c16" }}
                         >
-                          Tidak ada bukti
+                          Keterangan
+                        </Title>
+                        <Text>
+                          <strong>Alasan:</strong> {item.reason}
                         </Text>
-                      )}
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-            </Row>
+                        <br />
+                        <Text>
+                          <strong>Keterangan:</strong>{" "}
+                          {optionReasonMapping[item.option_reason] ||
+                            "Tidak Diketahui"}
+                        </Text>
+                      </Col>
 
-            {/* Tombol Aksi - Tidak ditampilkan untuk Riwayat */}
-            {!showHistory && (
-              <div style={{ marginTop: 20, textAlign: "right" }}>
-                <Button
-                  type="primary"
-                  loading={
-                    loadingState[item.reschedule_meeting_id] === "APPROVED"
-                  }
-                  onClick={() =>
-                    handleApproveReschedule(item.reschedule_meeting_id, true)
-                  }
-                  style={{
-                    marginRight: 10,
-                    padding: "10px 20px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                  }}
-                >
-                  Verifikasi
-                </Button>
-                <Button
-                  type="default"
-                  danger
-                  loading={
-                    loadingState[item.reschedule_meeting_id] === "REJECTED"
-                  }
-                  onClick={() =>
-                    handleApproveReschedule(item.reschedule_meeting_id, false)
-                  }
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                  }}
-                >
-                  Tolak
-                </Button>
-              </div>
-            )}
-          </Card>
-        )}
-      />
+                      {/* Bukti Gambar */}
+                      <Col span={12} style={{ textAlign: "center" }}>
+                        <Title
+                          level={5}
+                          style={{ marginBottom: "8px", color: "#fa541c" }}
+                        >
+                          Bukti
+                        </Title>
+                        {item.imageUrl ? (
+                          <Image
+                            src={item.imageUrl}
+                            alt="Bukti"
+                            width={120}
+                            height={80}
+                            style={{
+                              display: "block",
+                              margin: "0 auto",
+                              borderRadius: "6px",
+                              boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                            }}
+                          />
+                        ) : (
+                          <Text
+                            type="secondary"
+                            style={{ textAlign: "center", display: "block" }}
+                          >
+                            Tidak ada bukti
+                          </Text>
+                        )}
+                      </Col>
+                    </Row>
+                  </Card>
+                </Col>
+              </Row>
+
+              {/* Tombol Aksi - Tidak ditampilkan untuk Riwayat */}
+              {!showHistory && (
+                <div style={{ marginTop: 20, textAlign: "right" }}>
+                  <Button
+                    type="primary"
+                    loading={
+                      loadingState[item.reschedule_meeting_id] === "APPROVED"
+                    }
+                    onClick={() =>
+                      handleApproveReschedule(item.reschedule_meeting_id, true)
+                    }
+                    style={{
+                      marginRight: 10,
+                      padding: "10px 20px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Verifikasi
+                  </Button>
+                  <Button
+                    type="default"
+                    danger
+                    loading={
+                      loadingState[item.reschedule_meeting_id] === "REJECTED"
+                    }
+                    onClick={() =>
+                      handleApproveReschedule(item.reschedule_meeting_id, false)
+                    }
+                    style={{
+                      padding: "10px 20px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Tolak
+                  </Button>
+                </div>
+              )}
+            </Card>
+          )}
+        />
+      )}
       <Pagination
         current={currentPage}
         pageSize={pageSize}

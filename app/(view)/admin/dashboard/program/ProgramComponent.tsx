@@ -1,19 +1,31 @@
-import { Button, Card, Divider, Flex, Form, Input, Modal, Tooltip } from "antd";
+import {
+  Button,
+  Card,
+  Divider,
+  Flex,
+  Form,
+  Input,
+  Modal,
+  Tooltip,
+  Skeleton,
+  Spin,
+  Grid
+} from "antd";
 import Title from "antd/es/typography/Title";
 import { useProgramViewModel } from "./useProgramViewModel";
 import ReactQuill from "react-quill";
-import Loading from "@/app/components/Loading";
 import { Program } from "@/app/model/program";
 import Table, { ColumnsType } from "antd/es/table";
 import Icon, { ExclamationCircleOutlined } from "@ant-design/icons";
 import { DeleteIcon, EditIcon } from "@/app/components/Icon";
+const { useBreakpoint } = Grid;
 
 export default function ProgramComponent() {
   const {
     handleOk,
     handleCancel,
     form,
-    isLoading,
+    isLoadingProgram,
     isModalVisible,
     setIsModalVisible,
     loading,
@@ -25,9 +37,7 @@ export default function ProgramComponent() {
     selectedProgram,
   } = useProgramViewModel();
 
-  if (isLoading) {
-    return <Loading />;
-  }
+    const screens = useBreakpoint();
 
   const showDeleteConfirm = (program_id: string) => {
     Modal.confirm({
@@ -94,19 +104,26 @@ export default function ProgramComponent() {
   ];
 
   return (
-    <div style={{ padding: "24px" }}>
+    <div style={{ padding: screens.xs ? "10px" : "24px" }}>
       <Card
         style={{
           borderRadius: "8px",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
         }}
       >
-        <Flex justify="space-between" gap={30}>
-          <Title level={3} style={{ marginBottom: "20px", marginBlock: 0 }}>
+        <Flex
+          justify="space-between"
+          gap={screens.xs ? 10 : 30}
+          wrap={screens.xs ? "wrap" : "nowrap"}
+        >
+          <Title
+            level={screens.xs ? 4 : 3}
+            style={{ marginBottom: "20px", marginBlock: 0 }}
+          >
             Data Program
           </Title>
           <Input
-            style={{ width: "500px" }}
+            style={{ width: screens.xs ? "100%" : "500px" }}
             placeholder="Cari nama program"
             onChange={(e) => setSearchKeyword(e.target.value)}
             value={searchKeyword}
@@ -121,18 +138,26 @@ export default function ProgramComponent() {
           padding: "20px",
         }}
       >
-        <Button
-          type="primary"
-          style={{ marginBottom: "20px" }}
-          onClick={() => setIsModalVisible(true)}
-        >
-          Tambah Program
-        </Button>
-        <Table
-          columns={columns}
-          loading={isLoading}
-          dataSource={filteredData}
-        />
+        {isLoadingProgram ? (
+          <Skeleton active paragraph={{ rows: 6 }} />
+        ) : (
+          <>
+            <Button
+              type="primary"
+              style={{ marginBottom: "20px" }}
+              onClick={() => setIsModalVisible(true)}
+            >
+              Tambah Program
+            </Button>
+            <Table
+              columns={columns}
+              loading={isLoadingProgram}
+              dataSource={filteredData}
+              size={screens.xs ? "small" : "middle"}
+              scroll={screens.xs ? { x: true } : undefined}
+            />
+          </>
+        )}
       </Card>
       <Modal
         title={selectedProgram ? "Edit Data Program" : "Tambah Data Program"}
@@ -140,30 +165,35 @@ export default function ProgramComponent() {
         footer={null}
         onCancel={handleCancel}
       >
-        <Form name="createProgram" onFinish={handleOk} form={form}>
-          <Form.Item name="name">
-            <Input placeholder="Masukan Nama Program Kursus" />
-          </Form.Item>
-          <Form.Item name="description">
-            <ReactQuill theme="snow" placeholder="Masukkan Deskripsi Program" />
-          </Form.Item>
-          <Form.Item name="count_program">
-            <Input placeholder="Masukan Total Pertemuan" />
-          </Form.Item>
-          <Form.Item name="duration">
-            <Input placeholder="Masukan Durasi Program" />
-          </Form.Item>
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              style={{ width: "100%" }}
-            >
-              Submit
-            </Button>
-          </Form.Item>
-        </Form>
+        <Spin spinning={loading}>
+          <Form name="createProgram" onFinish={handleOk} form={form} layout="vertical">
+            <Form.Item name="name">
+              <Input placeholder="Masukan Nama Program Kursus" />
+            </Form.Item>
+            <Form.Item name="description">
+              <ReactQuill
+                theme="snow"
+                placeholder="Masukkan Deskripsi Program"
+              />
+            </Form.Item>
+            <Form.Item name="count_program">
+              <Input placeholder="Masukan Total Pertemuan" />
+            </Form.Item>
+            <Form.Item name="duration">
+              <Input placeholder="Masukan Durasi Program" />
+            </Form.Item>
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                style={{ width: "100%" }}
+              >
+                Submit
+              </Button>
+            </Form.Item>
+          </Form>
+        </Spin>
       </Modal>
     </div>
   );

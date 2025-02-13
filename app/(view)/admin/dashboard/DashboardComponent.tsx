@@ -11,9 +11,8 @@ import {
   Legend,
 } from "recharts";
 import dayjs from "dayjs";
-import { Card, Flex, Select } from "antd";
+import { Card, Flex, Select, Skeleton } from "antd";
 
-// Mapping angka bulan ke nama bulan
 const monthNames = [
   "Januari",
   "Februari",
@@ -30,7 +29,8 @@ const monthNames = [
 ];
 
 export default function DashboardComponent() {
-  const { monthlyStudentData, selectedYear, changeYear } = useDashboard();
+  const { monthlyStudentData, selectedYear, changeYear, isLoadingMonthly } =
+    useDashboard();
 
   return (
     <div style={{ width: "100%", height: 400, padding: 24 }}>
@@ -53,36 +53,42 @@ export default function DashboardComponent() {
             ))}
           </Select>
         </Flex>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart
-            data={monthlyStudentData?.data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="month"
-              tickFormatter={(month) => monthNames[month - 1]}
-            />
-            <YAxis
-              allowDecimals={false}
-              label={{
-                value: "Total Siswa",
-                angle: -90,
-                position: "insideLeft",
-              }}
-            />
-            <Tooltip formatter={(value) => [`${value} Siswa`, "Total Siswa"]} />
-            <Legend verticalAlign="top" align="right" />
-            <Line
-              type="monotone"
-              dataKey="total_students"
-              stroke="#0088FE"
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              name="Total Siswa"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {isLoadingMonthly ? (
+          <Skeleton active paragraph={{ rows: 6 }} />
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart
+              data={monthlyStudentData?.data}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="month"
+                tickFormatter={(month) => monthNames[month - 1]}
+              />
+              <YAxis
+                allowDecimals={false}
+                label={{
+                  value: "Total Siswa",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
+              <Tooltip
+                formatter={(value) => [`${value} Siswa`, "Total Siswa"]}
+              />
+              <Legend verticalAlign="top" align="right" />
+              <Line
+                type="monotone"
+                dataKey="total_students"
+                stroke="#0088FE"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                name="Total Siswa"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </Card>
     </div>
   );

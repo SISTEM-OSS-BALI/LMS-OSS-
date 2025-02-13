@@ -5,11 +5,11 @@ import Meta from "antd/es/card/Meta";
 import CustomAlert from "@/app/components/CustomAlert";
 import Loading from "@/app/components/Loading";
 import Title from "antd/es/typography/Title";
-import randomBgCourse from "@/app/lib/utils/useRandomBgCourse";
-import { useUsername } from "@/app/lib/auth/useLogin";
 import generateCertificate from "@/app/lib/utils/generateCertificate";
 import { formatDate } from "@/app/lib/utils/formatDate";
 import { useCourseFollowedViewModel } from "./useCourseFollowedViewModel";
+import { useUsername } from "@/app/lib/auth/useLogin";
+import { useRandomBgCourse } from "@/app/lib/utils/useRandomBgCourse";
 
 export default function CoursesFollowedComponent() {
   const { courseData, progressData, error } = useCourseFollowedViewModel();
@@ -17,7 +17,7 @@ export default function CoursesFollowedComponent() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const username = useUsername();
   const router = useRouter();
-  const backgroundImages = randomBgCourse();
+  const backgroundImages = useRandomBgCourse();
 
   const handleFilterChange = (e: any) => {
     setFilterStatus(e.target.value);
@@ -125,11 +125,13 @@ export default function CoursesFollowedComponent() {
                   style={{ width: 300, margin: 20 }}
                   onClick={handleCardClick}
                   cover={
-                    <Image
-                      alt="default"
-                      src={backgroundImages[index % backgroundImages.length]}
-                      preview={false}
-                    />
+                    backgroundImages && (
+                      <Image
+                        alt="default"
+                        src={backgroundImages[index % backgroundImages.length]}
+                        preview={false}
+                      />
+                    )
                   }
                   hoverable
                 >

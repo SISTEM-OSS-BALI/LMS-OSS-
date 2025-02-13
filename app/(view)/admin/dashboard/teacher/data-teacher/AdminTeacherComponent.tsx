@@ -14,6 +14,8 @@ import {
   Form,
   Modal,
   Card,
+  Grid,
+  Skeleton,
 } from "antd";
 import Title from "antd/es/typography/Title";
 import {
@@ -60,6 +62,8 @@ export default function AdminDashboardTeacheComponent() {
     form,
     handleDelete,
   } = useCalendarViewModel();
+
+  const { useBreakpoint } = Grid;
 
   const showDeleteConfirm = (user_id: string) => {
     Modal.confirm({
@@ -145,25 +149,21 @@ export default function AdminDashboardTeacheComponent() {
     },
   ];
 
+  const screens = useBreakpoint();
+
   return (
-    <div style={{ padding: "24px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 16,
-        }}
-      >
-        <Title level={3} style={{ marginBlock: 0 }}>
+    <div style={{ padding: screens.xs ? "12px" : "24px" }}>
+      <Flex justify="space-between" wrap={screens.xs ? "wrap" : "nowrap"}>
+        <Title level={screens.xs ? 4 : 3} style={{ marginBlock: 0 }}>
           Data Guru
         </Title>
         <Input
           placeholder="Cari nama guru"
-          style={{ width: 300 }}
+          style={{ width: screens.xs ? "100%" : 300 }}
           onChange={(e) => setSearchKeyword(e.target.value)}
           value={searchKeyword}
         />
-      </div>
+      </Flex>
       <Divider />
       <Card
         style={{
@@ -172,24 +172,30 @@ export default function AdminDashboardTeacheComponent() {
           padding: "20px",
         }}
       >
-        <Flex justify="start">
-          <Button
-            type="primary"
-            style={{ marginBottom: 20 }}
-            onClick={() => setIsModalVisible(true)}
-          >
-            <Icon component={AddIcon} />
-            Tambah Guru
-          </Button>
-        </Flex>
-        <Table
-          columns={columns}
-          dataSource={filteredData || []}
-          rowKey="user_id"
-          loading={isLoading}
-          bordered
-          pagination={{ pageSize: 5 }}
-        />
+        {isLoading ? (
+          <Skeleton active paragraph={{ rows: 8 }} />
+        ) : (
+          <div>
+            <Flex justify="start">
+              <Button
+                type="primary"
+                style={{ marginBottom: 20 }}
+                onClick={() => setIsModalVisible(true)}
+              >
+                <Icon component={AddIcon} />
+                Tambah Guru
+              </Button>
+            </Flex>
+            <Table
+              columns={columns}
+              dataSource={filteredData || []}
+              rowKey="user_id"
+              loading={isLoading}
+              bordered
+              pagination={{ pageSize: 5 }}
+            />
+          </div>
+        )}
       </Card>
 
       <Drawer

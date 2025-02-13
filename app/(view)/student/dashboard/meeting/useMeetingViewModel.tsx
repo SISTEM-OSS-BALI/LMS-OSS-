@@ -89,6 +89,11 @@ interface UseMeetingViewModelReturn {
   fileList: any[];
   imageUrl: string | null;
   handleSubmitRescheduleEmergency: (values: any) => Promise<void>;
+  isLoadingMeeting: boolean;
+  isLoadingProgram: boolean;
+  isLoadingMeetingByDate: boolean;
+  isLoadingMeetingById: boolean;
+  isLoadingScheduleAll: boolean;
 }
 
 export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
@@ -136,17 +141,17 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     if (date) params.append("date", date);
     return `${url}?${params.toString()}`;
   }, [date]);
-  const { data: showMeeting, mutate: mutateShowMeeting } =
+  const { data: showMeeting, mutate: mutateShowMeeting, isLoading: isLoadingMeeting } =
     useSWR<MeetingResponse>("/api/student/meeting/show", fetcher);
-  const { data: showMeetingByDate, mutate: mutateShowMeetingByDate } =
+  const { data: showMeetingByDate, mutate: mutateShowMeetingByDate, isLoading: isLoadingMeetingByDate } =
     useSWR<MeetingResponse>(fetchUrl, fetcher);
 
-  const { data: showMeetingById, mutate: mutateShowMeetingById } = useSWR(
+  const { data: showMeetingById, mutate: mutateShowMeetingById, isLoading: isLoadingMeetingById } = useSWR(
     "/api/student/meeting/showById",
     fetcher
   );
 
-  const { data: showScheduleAllTeacher } = useSWR(
+  const { data: showScheduleAllTeacher, isLoading: isLoadingScheduleAll } = useSWR(
     "/api/admin/schedule/showScheduleAll",
     fetcher
   );
@@ -724,5 +729,10 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     fileList,
     imageUrl,
     handleSubmitRescheduleEmergency,
+    isLoadingMeeting,
+    isLoadingProgram,
+    isLoadingMeetingByDate,
+    isLoadingMeetingById,
+    isLoadingScheduleAll,
   };
 };

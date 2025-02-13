@@ -1,6 +1,6 @@
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { Enrollment } from "@/app/model/course";
-import { CourseEnrollment, CourseProgress } from "@prisma/client";
+import { CourseProgress } from "@prisma/client";
 import useSWR from "swr";
 
 interface CourseEnrollmentResponse {

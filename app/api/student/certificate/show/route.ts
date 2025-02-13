@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getData } from "@/app/lib/db/getData";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-
-dayjs.extend(utc);
 
 export async function GET(request: NextRequest) {
   const user = authenticateRequest(request);
@@ -15,27 +11,37 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const getStudent = await getData(
-      "user",
-      {
-        where: {
-          role: "STUDENT",
-        },
-        select: {
-          user_id: true,
-          username: true,
-          no_phone: true,
-          count_program: true,
-          program_id: true,
-          imageUrl: true,
-          region: true,
-          is_evaluation: true,
-        },
-      },
-      "findMany"
+    const getCertificate = await getData(
+      "certificate",
+      { where: { student_id: user.user_id } },
+      "findFirst"
     );
 
-    return NextResponse.json({ status: 200, error: false, data: getStudent });
+    const getStudent = await getData(
+      "user",
+      { where: { user_id: user.user_id } },
+      "findFirst"
+    );
+
+    const getProgram = await getData(
+      "program",
+      { where: { program_id: getStudent?.program_id } },
+      "findFirst"
+    );
+
+    const programName = getProgram?.name;
+
+    const mergedData = {
+      ...getCertificate,
+      program_name: programName,
+      student_name: getStudent?.username,
+    };
+
+    return NextResponse.json({
+      status: 200,
+      error: false,
+      data: mergedData,
+    });
   } catch (error) {
     console.error("Error accessing database:", error);
     return new NextResponse(

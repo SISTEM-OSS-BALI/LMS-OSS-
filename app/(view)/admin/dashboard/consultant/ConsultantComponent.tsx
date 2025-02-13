@@ -12,6 +12,9 @@ import {
   Space,
   Flex,
   Card,
+  Skeleton,
+  Spin,
+  Grid,
 } from "antd";
 import { useConsultantViewModel } from "./useConsultantViewModel";
 import Icon from "@ant-design/icons";
@@ -22,6 +25,8 @@ import {
   EditIcon,
 } from "@/app/components/Icon";
 import Title from "antd/es/typography/Title";
+
+const { useBreakpoint } = Grid;
 
 export default function ConsultantComponent() {
   const {
@@ -35,7 +40,10 @@ export default function ConsultantComponent() {
     selectedConsultant,
     setSelectedConsultant,
     form,
+    isLoadingConsultant,
   } = useConsultantViewModel();
+
+  const screens = useBreakpoint();
 
   // 🔹 Table Columns
   const columns = [
@@ -59,7 +67,7 @@ export default function ConsultantComponent() {
       title: "Aksi",
       key: "actions",
       render: (_: any, record: any) => (
-        <Space>
+        <Space size={screens.xs ? "small" : "middle"}>
           <Button type="primary" onClick={() => handleEdit(record)}>
             <Icon component={EditIcon} />
           </Button>
@@ -78,20 +86,26 @@ export default function ConsultantComponent() {
   ];
 
   return (
-    <div style={{ padding: "20px" }}>
-      <Flex justify="space-between">
-        <Title level={3}>Daftar Konsultan</Title>
+    <div style={{ padding: screens.xs ? "10px" : "20px" }}>
+      <Flex justify="space-between" wrap={screens.xs ? "wrap" : "nowrap"}>
+        <Title level={screens.xs ? 4 : 3}>Daftar Konsultan</Title>
         <Button type="primary">
           <Icon component={AddIcon} />
           Tambah Konsultan
         </Button>
       </Flex>
       <Card>
-        <Table
-          columns={columns}
-          dataSource={consultantData?.data}
-          rowKey="consultant_id"
-        />
+        {isLoadingConsultant ? (
+          <Skeleton active paragraph={{ rows: 6 }} />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={consultantData?.data}
+            rowKey="consultant_id"
+            size={screens.xs ? "small" : "middle"}
+            scroll={screens.xs ? { x: true } : undefined}
+          />
+        )}
       </Card>
 
       <Modal
@@ -100,17 +114,19 @@ export default function ConsultantComponent() {
         onCancel={() => setIsModalVisible(false)}
         onOk={handleUpdate}
       >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            label="Name"
-            name="name"
-            rules={[
-              { required: true, message: "Please enter consultant name" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
+        <Spin spinning={isLoadingConsultant}>
+          <Form form={form} layout="vertical">
+            <Form.Item
+              label="Name"
+              name="name"
+              rules={[
+                { required: true, message: "Please enter consultant name" },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+          </Form>
+        </Spin>
       </Modal>
     </div>
   );
