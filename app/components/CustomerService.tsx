@@ -54,82 +54,68 @@ export default function CustomerServiceChat() {
     setTimeout(() => {
       let botResponse: Message = { sender: "admin", text: "" };
 
-      switch (userMessage) {
-        case "Penjadwalan":
-          botResponse = {
-            sender: "admin",
-            text: "Untuk penjadwalan, pastikan kamu memilih tanggal yang tersedia dan mengikuti panduan di halaman jadwal.",
-            options: ["Cara memilih jadwal?", "Kembali ke menu awal"],
-          };
-          break;
+      // Daftar opsi dan respons yang tersedia
+      const responses: { [key: string]: Message } = {
+        Penjadwalan: {
+          sender: "admin",
+          text: "Untuk penjadwalan, pastikan kamu memilih tanggal yang tersedia dan mengikuti panduan di halaman jadwal.",
+          options: ["Cara memilih jadwal?", "Kembali ke menu awal"],
+        },
+        "Pengajuan Reschedule": {
+          sender: "admin",
+          text:
+            "Kamu bisa memilih tanggal pertemuan sebelumnya untuk reschedule pada opsi 'Pilih Tanggal', lalu tekan tombol 'Reschedule'.\n\n" +
+            "Setelah itu, isi formulir reschedule dan tekan tombol 'Reschedule' lagi untuk mengonfirmasi. \n\n" +
+            "*Pastikan kamu melakukan reschedule setidaknya 12 jam sebelum pertemuan yang ingin dijadwalkan ulang.*",
+          options: ["Saya mengerti", "Kembali ke menu awal"],
+        },
+        "Pengajuan Emergency": {
+          sender: "admin",
+          text: "Pengajuan Emergency adalah pengajuan yang bisa dilakukan ketika ingin mereschedule dengan alasan tertentu ketika pertemuan yang sudah dijadwalkan lebih dari 12 jam lalu.",
+          options: ["Cara Pengajuan Emergency?", "Kembali ke menu awal"],
+        },
+        "Chat Admin": {
+          sender: "admin",
+          text: "Silahkan hubungi nomor admin di: *+62 812-3456-7890* 📞",
+          options: ["Terima kasih", "Kembali ke menu awal"],
+        },
+        "Cara menghubungi admin?": {
+          sender: "admin",
+          text: "📞 *Hubungi Admin:*\n\n📌 *WhatsApp:* +62 812-3456-7890\n📌 *Email:* support@ossbali.com\n\nAdmin siap membantu kamu! 😊",
+          options: ["Kembali ke menu awal"],
+        },
+        "Kembali ke menu awal": {
+          sender: "admin",
+          text: "Halo! Saya Admin Paling Kece OSS, ada pertanyaan seputar melakukan penjadwalan? 😊",
+          options: [
+            "Penjadwalan",
+            "Pengajuan Reschedule",
+            "Pengajuan Emergency",
+            "Chat Admin",
+          ],
+        },
+      };
 
-        case "Pengajuan Reschedule":
-          botResponse = {
-            sender: "admin",
-            text:
-              "Kamu bisa memilih tanggal pertemuan sebelumnya untuk reschedule pada opsi 'Pilih Tanggal', lalu tekan tombol 'Reschedule'.\n\n" +
-              "Setelah itu, isi formulir reschedule dan tekan tombol 'Reschedule' lagi untuk mengonfirmasi. \n\n" +
-              "*Pastikan kamu melakukan reschedule setidaknya 12 jam sebelum pertemuan yang ingin dijadwalkan ulang.*",
-            options: ["Saya mengerti", "Kembali ke menu awal"],
-          };
-          break;
+      // Mencari apakah pesan pengguna mengandung salah satu opsi yang tersedia
+      const matchedKey = Object.keys(responses).find((key) =>
+        userMessage.toLowerCase().includes(key.toLowerCase())
+      );
 
-        case "Pengajuan Emergency":
-          botResponse = {
-            sender: "admin",
-            text: "Pengajuan Emergency adalah pengajuan yang bisa dilakukan ketika ingin mereschedule dengan alasan tertentu ketika pertemuan yang sudah di jadwalkan lebih dari 12 jam lalu. \n\n",
-            options: [
-              "Cara Pengajuan Emergency?",
-              "Kembali ke menu awal",
-            ],
-          };
-          break;
-
-        case "Cara menghubungi admin?":
-          botResponse = {
-            sender: "admin",
-            text:
-              "📞 *Hubungi Admin:*\n\n" +
-              "📌 *WhatsApp:* +62 812-3456-7890\n" +
-              "📌 *Email:* support@ossbali.com\n\n" +
-              "Admin siap membantu kamu! 😊",
-            options: ["Kembali ke menu awal"],
-          };
-          break;
-
-        case "Chat Admin":
-          botResponse = {
-            sender: "admin",
-            text: "Silahkan hubungi nomor admin di: *+62 812-3456-7890* 📞",
-            options: ["Terima kasih", "Kembali ke menu awal"],
-          };
-          break;
-
-        case "Kembali ke menu awal":
-          botResponse = {
-            sender: "admin",
-            text: "Halo! Saya Admin Paling Kece OSS, ada pertanyaan seputar melakukan penjadwalan? 😊",
-            options: [
-              "Penjadwalan",
-              "Pengajuan Reschedule",
-              "Pengajuan Emergency",
-              "Chat Admin",
-            ],
-          };
-          break;
-
-        default:
-          botResponse = {
-            sender: "admin",
-            text: "Mohon maaf, saya tidak mengerti. Bisa jelaskan lebih lanjut?",
-            options: ["Kembali ke menu awal"],
-          };
+      if (matchedKey) {
+        botResponse = responses[matchedKey];
+      } else {
+        botResponse = {
+          sender: "admin",
+          text: "Mohon maaf, saya tidak mengerti. Bisa jelaskan lebih lanjut?",
+          options: ["Kembali ke menu awal"],
+        };
       }
 
       setMessages((prevMessages) => [...prevMessages, botResponse]);
       setIsTyping(false);
     }, 1000);
   };
+
 
   return (
     <>

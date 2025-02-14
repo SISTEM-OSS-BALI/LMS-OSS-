@@ -175,7 +175,7 @@ export async function PUT(
           platform || "-"
         }\n🔗 *Link:* ${meetLink || "-"}\n\nHarap periksa jadwal terbaru.`,
       },
-      { 
+      {
         phone: formattedStudentPhone,
         text: `🔄 *Update Pertemuan!*\n\n👨‍🎓 *Siswa:* ${studentName}\n👨‍🏫 *Guru:* ${teacherName}\n📅 *Tanggal Baru:* ${formattedDate}\n📝 *Metode:* ${method}\n📍 *Platform:* ${
           platform || "-"
@@ -192,7 +192,7 @@ export async function PUT(
     return NextResponse.json({
       status: 200,
       error: false,
-      data: updatedMeeting,
+      data: "Success",
     });
   } catch (error) {
     console.error("Error updating meeting:", error);

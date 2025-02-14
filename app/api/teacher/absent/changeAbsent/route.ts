@@ -159,14 +159,13 @@ export async function POST(request: NextRequest) {
       await prisma.user.update({
         where: { user_id: student_id },
         data: { is_completed: true, is_active: false },
-
       });
 
       await sendWhatsAppMessage(
         apiKey,
         numberKey,
         formatPhoneNumber(studentData.no_phone ?? ""),
-        `🎉 *Selamat ${studentData.username}!* \n\nAnda telah menyelesaikan *${programData.name}* dengan total ${updatedCountProgramStudent} sesi.\n👏 Terima kasih telah menyelesaikan program ini!`
+        `🎉 *Selamat ${studentData.username}!* \n\nAnda telah menyelesaikan *${programData.name}* dengan total ${updatedCountProgramStudent} sesi. Anda dapat mengunduh sertifikat pada sistem \n👏 Terima kasih telah menyelesaikan program ini!`
       );
 
       await sendWhatsAppMessage(

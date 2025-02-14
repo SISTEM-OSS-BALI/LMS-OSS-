@@ -93,6 +93,7 @@ model User {
   rescheduleMeetingsStudent RescheduleMeeting[] @relation("StudentReschedules")
   Certificate               Certificate[]       @relation("StudentCertificate")
   Section                   Section[]           @relation("StudentSection")
+  Testimoni                 Testimoni[]         @relation("StudentTestimoni")
 }
 
 model Consultant {
@@ -459,7 +460,6 @@ model Certificate {
   student_id             String
   is_complated_meeting   Boolean?  @default(false)
   is_complated_testimoni Boolean?  @default(false)
-  overall                String?
   is_download            Boolean?  @default(false)
   section                Section[]
 }
@@ -473,4 +473,22 @@ model Section {
   student_id     String
   certificate    Certificate @relation(fields: [certificate_id], references: [certificate_id])
   certificate_id String
+}
+
+model Testimoni {
+  testimonial_id                    String @id @default(uuid())
+  student                           User   @relation("StudentTestimoni", fields: [student_id], references: [user_id], onDelete: Cascade)
+  student_id                        String
+  lesson_satisfaction               Int // Seberapa puas dengan materi pelajaran
+  teaching_method_effectiveness     Int // Apakah metode pengajaran memudahkan pemahaman
+  exercise_and_assignment_relevance Int // Apakah jumlah latihan dan tugas sudah sesuai
+  material_relevance                Int // Seberapa relevan materi dengan kebutuhan bahasa Inggris
+  teacher_identity                  String // Identitas guru yang mengajar
+  teaching_delivery                 Int // Cara guru menyampaikan materi
+  teacher_attention                 Int // Apakah guru memberikan perhatian kepada siswa yang kesulitan
+  teacher_ethics                    Int // Sikap dan etika guru selama mengajar
+  teacher_motivation                Int // Apakah guru memberikan motivasi dalam belajar
+  class_experience                  String @db.LongText // Pengalaman siswa dalam kelas (Plus & Minus serta saran)
+  favorite_part                     String @db.LongText // Bagian yang paling disukai dari pembelajaran
+  improvement_suggestions           String @db.LongText // Hal yang perlu ditingkatkan dalam pengajaran 
 }

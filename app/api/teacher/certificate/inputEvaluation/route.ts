@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
           no_certificate: await generateCertificateNumber(),
           is_complated_meeting: true,
           is_complated_testimoni: false,
-          overall: null,
           is_download: false,
         },
       });

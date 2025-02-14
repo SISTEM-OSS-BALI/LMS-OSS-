@@ -46,17 +46,17 @@ export default function CoursesFollowedComponent() {
     return courses;
   };
 
-  const handleGenerateCertificate = (
-    courseName: string,
-    completionDate: any
-  ) => {
-    generateCertificate(
-      username,
-      courseName,
-      formatDate(completionDate),
-      "/assets/images/certificate.png"
-    );
-  };
+  // const handleGenerateCertificate = (
+  //   courseName: string,
+  //   completionDate: any
+  // ) => {
+  //   generateCertificate(
+  //     username,
+  //     courseName,
+  //     formatDate(completionDate),
+  //     "/assets/images/certificate.png"
+  //   );
+  // };
 
   if (error) return <CustomAlert type="error" message={error.message} />;
   if (!courseData) return <Loading />;
@@ -146,10 +146,10 @@ export default function CoursesFollowedComponent() {
                         type="primary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleGenerateCertificate(
-                            enrollment.course.name,
-                            progress.createdAt
-                          );
+                          // handleGenerateCertificate(
+                          //   enrollment.course.name,
+                          //   progress.createdAt
+                          // );
                         }}
                       >
                         Cetak Sertifikat

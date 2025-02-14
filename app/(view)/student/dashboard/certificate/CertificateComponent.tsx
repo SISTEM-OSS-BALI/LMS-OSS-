@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useCertificateViewModel } from "./useCertificateViewModel";
 import {
   Col,
@@ -10,80 +10,41 @@ import {
   Card,
   Skeleton,
   Typography,
+  Tag,
+  Space,
+  Modal,
+  Form,
+  Rate,
+  Input,
 } from "antd";
-import { jsPDF } from "jspdf";
+const { Text } = Typography;
 import generateCertificate from "@/app/lib/utils/generateCertificate";
+import Link from "next/link";
 
 const { Title } = Typography;
 
-interface Certificate {
-  certificate_id: string;
-  no_certificate: string;
-  student_id: string;
-  is_complated_meeting: boolean;
-  is_complated_testimoni: boolean;
-  overall: string | null;
-  is_download: boolean;
-  student_name: string;
-  program_name: string;
-}
-
 export default function CertificateComponent() {
-  const { certificateData, isLoading } = useCertificateViewModel();
-  const certificate: Certificate | null = certificateData?.data ?? null;
-  const [certificatePreview, setCertificatePreview] = useState<string | null>(
-    null
-  );
-
-  // Fungsi untuk membuat pratinjau sertifikat
-  const generateCertificatePreview = async () => {
-    if (certificate) {
-      const { student_name, program_name } = certificate;
-      const completionDate = new Date().toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
-
-      const doc = new jsPDF("landscape", "px", "a4");
-      const canvas = document.createElement("canvas");
-
-      const img: HTMLImageElement = document.createElement("img");
-      img.src = "/assets/images/certificate.png"; //
-
-      await new Promise((resolve) => {
-        img.onload = () => resolve(null);
-      });
-
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const context = canvas.getContext("2d");
-
-      if (context) {
-        context.drawImage(img, 0, 0);
-        context.fillStyle = "black";
-
-        context.font = "bold 70px Montserrat";
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(student_name, canvas.width / 2, 670);
-
-        context.font = "45px Montserrat";
-        context.fillText(program_name, canvas.width / 2, 830);
-
-        context.font = "40px Montserrat";
-        context.fillText(completionDate, canvas.width / 2, 950);
-      }
-
-      setCertificatePreview(canvas.toDataURL("image/png"));
-    }
-  };
+  const {
+    isLoading,
+    evaluationData,
+    evaluationLoading,
+    certificateBackPreview,
+    certificateFrontPreview,
+    generateCertificatePreview,
+    certificate,
+    handleCancelModalTestimoni,
+    handleOpenModalTestimoni,
+    isModalTestimoniVisible,
+    form,
+    handleSubmit,
+    loading,
+  } = useCertificateViewModel();
 
   useEffect(() => {
-    if (certificate) {
+    if (certificate && evaluationData) {
       generateCertificatePreview();
     }
-  }, [certificate]);
+  }, [certificate, evaluationData]);
 
   return (
     <div style={{ padding: "24px", textAlign: "center" }}>
@@ -91,7 +52,7 @@ export default function CertificateComponent() {
         Cetak Sertifikat
       </Title>
 
-      {isLoading ? (
+      {isLoading || evaluationLoading ? (
         <Card style={{ borderRadius: "10px", padding: "24px" }}>
           <Skeleton active paragraph={{ rows: 4 }} />
         </Card>
@@ -99,51 +60,107 @@ export default function CertificateComponent() {
         <Spin tip="Memuat sertifikat..." />
       ) : (
         <Row gutter={[24, 24]} justify="center">
-          <Col xs={24} md={12}>
+          <Col xs={24} md={8}>
             <Card
               title="Status Sertifikat"
               style={{
                 borderRadius: "10px",
                 textAlign: "left",
                 height: "100%",
+                padding: "16px",
+                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
               }}
             >
-              <Checkbox
-                checked={certificate.is_complated_meeting ?? false}
-                disabled
+              <Space
+                direction="vertical"
+                size="middle"
+                style={{ width: "100%" }}
               >
-                Pertemuan Selesai
-              </Checkbox>
-              <br />
-              <Checkbox
-                checked={certificate.is_complated_testimoni ?? false}
-                disabled
-              >
-                Testimoni Selesai
-              </Checkbox>
-              <br />
+                <Tag
+                  color={certificate.is_complated_meeting ? "green" : "red"}
+                  style={{
+                    fontSize: "16px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    textAlign: "center",
+                    width: "100%",
+                  }}
+                >
+                  <Text strong>Melakukan Jadwal Pertemuan: </Text>
+                  {certificate.is_complated_meeting ? (
+                    "Selesai"
+                  ) : (
+                    <Link
+                      href="/student/dashboard/meeting"
+                      style={{ color: "#1890ff" }}
+                    >
+                      Selesaikan
+                    </Link>
+                  )}
+                </Tag>
+
+                <Tag
+                  color={certificate.is_complated_testimoni ? "green" : "red"}
+                  style={{
+                    fontSize: "16px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    textAlign: "center",
+                    width: "100%",
+                  }}
+                >
+                  <Text strong>Melakukan Testimoni: </Text>
+                  {certificate.is_complated_testimoni ? (
+                    "Selesai"
+                  ) : (
+                    <Button danger onClick={() => handleOpenModalTestimoni()}>
+                      Selesaikan
+                    </Button>
+                  )}
+                </Tag>
+              </Space>
             </Card>
           </Col>
-
           <Col xs={24} md={12}>
             <Card
               title="Pratinjau Sertifikat"
               style={{ borderRadius: "10px", textAlign: "center" }}
             >
-              {certificatePreview ? (
-                <Image
-                  src={certificatePreview}
-                  alt="Sertifikat Preview"
-                  width={300}
-                  preview={true}
-                  style={{
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                  }}
-                />
-              ) : (
-                <Spin tip="Membuat pratinjau sertifikat..." />
-              )}
+              <Row gutter={[16, 16]} justify="center">
+                <Col xs={24} md={16}>
+                  {certificateFrontPreview ? (
+                    <Image
+                      src={certificateFrontPreview}
+                      alt="Sertifikat Depan"
+                      width={300}
+                      preview={true}
+                      style={{
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                      }}
+                    />
+                  ) : (
+                    <Spin tip="Membuat pratinjau sertifikat depan..." />
+                  )}
+                </Col>
+                <Col xs={24} md={16}>
+                  {certificateBackPreview ? (
+                    <Image
+                      src={certificateBackPreview}
+                      alt="Sertifikat Belakang"
+                      width={300}
+                      preview={true}
+                      style={{
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                      }}
+                    />
+                  ) : (
+                    <Spin tip="Membuat pratinjau sertifikat belakang..." />
+                  )}
+                </Col>
+              </Row>
+
               <br />
               <Button
                 type="primary"
@@ -151,9 +168,16 @@ export default function CertificateComponent() {
                 onClick={() =>
                   generateCertificate(
                     certificate.student_name,
-                    certificate.program_name,
-                    new Date().toLocaleDateString("id-ID"),
-                    "/assets/images/certificate.png"
+                    certificate.no_certificate,
+                    (evaluationData?.data ?? []).map(
+                      ({ section_type, level, comment }) => ({
+                        section_type,
+                        level,
+                        comment,
+                      })
+                    ),
+                    "/assets/images/certificate_front.png",
+                    "/assets/images/certificate_back.png"
                   )
                 }
                 style={{ marginTop: 20, width: "100%" }}
@@ -164,6 +188,139 @@ export default function CertificateComponent() {
           </Col>
         </Row>
       )}
+      <Modal
+        open={isModalTestimoniVisible}
+        onCancel={handleCancelModalTestimoni}
+        title="Testimoni"
+        footer={null}
+        width={900} // Lebih lebar agar cukup untuk dua kolom
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Row gutter={[16, 16]}>
+            {/* Kolom 1 */}
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Seberapa puas dengan materi pelajaran?"
+                name="lesson_satisfaction"
+                rules={[{ required: true, message: "Harap berikan rating" }]}
+              >
+                <Rate />
+              </Form.Item>
+
+              <Form.Item
+                label="Apakah metode pengajaran memudahkan pemahaman?"
+                name="teaching_method_effectiveness"
+                rules={[{ required: true, message: "Harap berikan rating" }]}
+              >
+                <Rate />
+              </Form.Item>
+
+              <Form.Item
+                label="Apakah jumlah latihan dan tugas sudah sesuai?"
+                name="exercise_and_assignment_relevance"
+                rules={[{ required: true, message: "Harap berikan rating" }]}
+              >
+                <Rate />
+              </Form.Item>
+
+              <Form.Item
+                label="Seberapa relevan materi dengan kebutuhan bahasa Inggris?"
+                name="material_relevance"
+                rules={[{ required: true, message: "Harap berikan rating" }]}
+              >
+                <Rate />
+              </Form.Item>
+
+              <Form.Item
+                label="Identitas Guru yang Mengajar"
+                name="teacher_identity"
+                rules={[
+                  { required: true, message: "Harap isi identitas guru" },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                label="Bagaimana cara guru menyampaikan materi?"
+                name="teaching_delivery"
+                rules={[{ required: true, message: "Harap berikan rating" }]}
+              >
+                <Rate />
+              </Form.Item>
+            </Col>
+
+            {/* Kolom 2 */}
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Apakah guru memberikan perhatian kepada siswa yang kesulitan?"
+                name="teacher_attention"
+                rules={[{ required: true, message: "Harap berikan rating" }]}
+              >
+                <Rate />
+              </Form.Item>
+
+              <Form.Item
+                label="Bagaimana sikap dan etika guru selama mengajar?"
+                name="teacher_ethics"
+                rules={[{ required: true, message: "Harap berikan rating" }]}
+              >
+                <Rate />
+              </Form.Item>
+
+              <Form.Item
+                label="Apakah guru memberikan motivasi dalam belajar?"
+                name="teacher_motivation"
+                rules={[{ required: true, message: "Harap berikan rating" }]}
+              >
+                <Rate />
+              </Form.Item>
+
+              <Form.Item
+                label="Ceritakan pengalaman Anda dalam kelas (Plus & Minus serta saran)"
+                name="class_experience"
+                rules={[
+                  { required: true, message: "Harap isi pengalaman Anda" },
+                ]}
+              >
+                <Input.TextArea rows={3} />
+              </Form.Item>
+
+              <Form.Item
+                label="Apa yang paling Anda sukai dari pembelajaran ini?"
+                name="favorite_part"
+                rules={[
+                  { required: true, message: "Harap isi bagian favorit" },
+                ]}
+              >
+                <Input.TextArea rows={3} />
+              </Form.Item>
+
+              <Form.Item
+                label="Apa yang perlu ditingkatkan dalam pembelajaran?"
+                name="improvement_suggestions"
+                rules={[
+                  { required: true, message: "Harap isi saran perbaikan" },
+                ]}
+              >
+                <Input.TextArea rows={3} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Tombol Submit */}
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ width: "100%" }}
+              loading={loading}
+            >
+              Kirim Testimoni
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }
