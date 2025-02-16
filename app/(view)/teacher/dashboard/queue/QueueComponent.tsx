@@ -125,14 +125,15 @@ export default function QueueComponent() {
               disabled={record.absent == true || record.teacherAbsence}
               style={{
                 cursor: record.absent == true ? "not-allowed" : "pointer",
-                backgroundColor: record.absent == true ? "green" : "transparent",
+                backgroundColor:
+                  record.absent == true ? "green" : "transparent",
                 color: record.absent == true ? "white" : "black",
               }}
               onClick={() =>
                 updateAbsentStatus(record.meeting_id, record.student_id, true)
               }
             >
-              <Icon component={AddIcon} />
+              Hadir
             </Button>
           </Tooltip>
           <Tooltip title="Tidak Hadir">
@@ -148,7 +149,7 @@ export default function QueueComponent() {
                 updateAbsentStatus(record.meeting_id, record.student_id, false)
               }
             >
-              <Icon component={MinusIcon} />
+              Tidak Hadir
             </Button>
           </Tooltip>
         </Space>

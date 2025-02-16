@@ -20,8 +20,13 @@ export async function GET(request: NextRequest) {
         select: {
           user_id: true,
           username: true,
-          email: true,
+          no_phone: true,
+          count_program: true,
+          program_id: true,
           imageUrl: true,
+          region: true,
+          is_evaluation: true,
+          target: true,
         },
       },
       "findMany"

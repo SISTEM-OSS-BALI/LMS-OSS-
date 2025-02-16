@@ -1,11 +1,11 @@
-import React from "react";
+import React  from "react";
 import { Card, Modal, Input, Button, Form, Flex, Image, Divider } from "antd";
 import Link from "next/link";
 import Title from "antd/es/typography/Title";
 import Meta from "antd/es/card/Meta";
 import CustomAlert from "@/app/components/CustomAlert";
-import randomBgCourse from "@/app/lib/utils/useRandomBgCourse";
 import { useCourseViewModel } from "./useCourseViewModel";
+import { useRandomBgCourse } from "@/app/lib/utils/useRandomBgCourse";
 
 export default function CoursesStudentComponent() {
   const {
@@ -19,7 +19,7 @@ export default function CoursesStudentComponent() {
     handleSearch,
   } = useCourseViewModel();
 
-  const backgroundImages = randomBgCourse();
+  const backgroundImages = useRandomBgCourse();
 
   return (
     <div>
@@ -48,11 +48,13 @@ export default function CoursesStudentComponent() {
               key={course.course_id}
               style={{ width: 300, margin: 20 }}
               cover={
-                <Image
-                  alt="default"
-                  src={backgroundImages[index % backgroundImages.length]}
-                  preview={false}
-                />
+                backgroundImages && (
+                  <Image
+                    alt="default"
+                    src={backgroundImages[index % backgroundImages.length]}
+                    preview={false}
+                  />
+                )
               }
               hoverable
               onClick={() => handleCardClick(course)}

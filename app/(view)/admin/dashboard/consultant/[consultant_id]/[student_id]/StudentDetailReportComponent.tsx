@@ -1,3 +1,9 @@
+import { useParams } from "next/navigation";
+import { useStudentDetailReportViewModel } from "./useStudentDetailReport";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
 import {
   Avatar,
   Button,
@@ -5,21 +11,11 @@ import {
   Col,
   Flex,
   Row,
-  Table,
-  Tooltip,
-  Typography,
   Skeleton,
-  Modal,
-  Form,
-  Select,
-  Space,
-  Input,
-  Tag,
+  Table,
+  Typography,
+  Tag
 } from "antd";
-import { useDetailStudentViewModel } from "./useDetailStudentViewModel";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import TextArea from "antd/es/input/TextArea";
 import {
   UserOutlined,
   PhoneOutlined,
@@ -27,59 +23,34 @@ import {
   BookOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
-dayjs.extend(utc);
 
+dayjs.extend(utc);
 const { Title, Text } = Typography;
 
-export default function StudentDetailComponent() {
+export default function StudentDetailReportComponent() {
   const {
-    filteredStudent,
     filteredMeetings,
     filteredPrograms,
+    filteredStudent,
     isLoadingStudent,
     isLoadingMeeting,
     isLoadingProgram,
-    handleOpenModal,
-    isModalCertificate,
-    handleCancel,
-    form,
-    handleFinish,
-    sectionTypes,
-    loading,
-  } = useDetailStudentViewModel();
+  } = useStudentDetailReportViewModel();
+
+  const query = useParams();
+  const student_id = query.student_id;
 
   const columns: any = [
-    {
-      title: "No",
-      dataIndex: "no",
-      key: "no",
-      render: (_: any, __: any, index: number) => index + 1,
-    },
-    {
-      title: "Tanggal",
-      dataIndex: "dateTime",
-      key: "dateTime",
-      render: (text: any) => dayjs.utc(text).format("YYYY-MM-DD HH:mm"),
-    },
+    { title: "No", dataIndex: "no", key: "no", render: (_: any, __: any, index: number) => index + 1 },
+    { title: "Tanggal", dataIndex: "dateTime", key: "dateTime", render: (text: any) => dayjs.utc(text).format("YYYY-MM-DD HH:mm") },
     { title: "Metode", dataIndex: "method", key: "method" },
-    {
-      title: "Skala Kemampuan",
-      dataIndex: "abilityScale",
-      key: "abilityScale",
-    },
-    {
-      title: "Kinerja Siswa",
-      dataIndex: "studentPerformance",
-      key: "studentPerformance",
-    },
-    {
-      title: "Hasil Inputan Guru",
-      dataIndex: "progress_student",
-      key: "progress_student",
-    },
+    { title: "Skala Kemampuan", dataIndex: "abilityScale", key: "abilityScale" },
+    { title: "Kinerja Siswa", dataIndex: "studentPerformance", key: "studentPerformance" },
+    { title: "Hasil Inputan Guru", dataIndex: "progress_student", key: "progress_student" },
   ];
 
-  const data = filteredMeetings?.map((meeting) => ({
+  const data = filteredMeetings?.map((meeting, index) => ({
+    no: index + 1,
     key: meeting.meeting_id,
     method: meeting.method,
     progress_student: meeting.progress_student,
@@ -88,6 +59,7 @@ export default function StudentDetailComponent() {
     dateTime: meeting.dateTime,
   }));
 
+  
   const columnsInfo = [
     {
       title: "Informasi",
@@ -158,15 +130,41 @@ export default function StudentDetailComponent() {
     },
   ];
 
+  const handleDownloadExcel = () => {
+    if (!filteredMeetings?.length) {
+      alert("Tidak ada data pertemuan yang dapat diekspor.");
+      return;
+    }
+
+    // 1️⃣ Siapkan Data untuk Excel
+    const excelData = filteredMeetings.map((meeting, index) => ({
+      "No": index + 1,
+      "Tanggal": dayjs.utc(meeting.dateTime).format("YYYY-MM-DD HH:mm"),
+      "Metode": meeting.method,
+      "Skala Kemampuan": meeting.abilityScale,
+      "Kinerja Siswa": meeting.studentPerformance,
+      "Hasil Inputan Guru": meeting.progress_student,
+    }));
+
+    // 2️⃣ Buat WorkSheet & WorkBook
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Pertemuan");
+
+    // 3️⃣ Konversi ke Blob & Simpan sebagai File `.xlsx`
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const dataBlob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+    saveAs(dataBlob, `Riwayat_Pertemuan_${filteredStudent?.username || "Siswa"}.xlsx`);
+  };
+
   return (
     <div style={{ padding: "24px" }}>
       <Row gutter={[24, 24]}>
         {/* Student Details */}
         <Col md={16}>
           <Card style={{ borderRadius: "12px", padding: "20px" }}>
-            <Title level={3} style={{ marginBottom: "24px" }}>
-              Detail Siswa
-            </Title>
+            <Title level={3} style={{ marginBottom: "24px" }}>Detail Siswa</Title>
             <Row
               gutter={[16, 16]}
               style={{
@@ -235,9 +233,7 @@ export default function StudentDetailComponent() {
               flexDirection: "column",
             }}
           >
-            <Title level={3} style={{ marginBottom: "16px" }}>
-              Total Pertemuan
-            </Title>
+            <Title level={3} style={{ marginBottom: "16px" }}>Total Pertemuan</Title>
             {isLoadingStudent ? (
               <Skeleton.Input active size="large" style={{ width: "80px" }} />
             ) : (
@@ -250,124 +246,18 @@ export default function StudentDetailComponent() {
       </Row>
 
       {/* Meeting History */}
-      <Card
-        style={{ marginTop: "24px", borderRadius: "12px", padding: "24px" }}
-      >
+      <Card style={{ marginTop: "24px", borderRadius: "12px", padding: "24px" }}>
         <Flex justify="space-between" style={{ marginBlock: "10px" }}>
           <Title level={3}>Riwayat Pertemuan</Title>
-          <Flex justify="space-between" gap={10}>
-            <Button type="primary" disabled={isLoadingProgram}>
-              Riwayat Placement Test
-            </Button>
-            {isLoadingProgram ? (
-              <Skeleton.Button active />
-            ) : (
-              <>
-                {filteredPrograms &&
-                filteredPrograms.length > 0 &&
-                filteredStudent?.count_program ===
-                  filteredPrograms[0]?.count_program ? (
-                  <Button
-                    type="primary"
-                    onClick={
-                      filteredStudent?.is_evaluation
-                        ? undefined
-                        : handleOpenModal
-                    }
-                    disabled={filteredStudent?.is_evaluation === true}
-                  >
-                    {filteredStudent?.is_evaluation
-                      ? "Sudah Menilai Sertifikat"
-                      : "Isi Nilai Sertifikat"}
-                  </Button>
-                ) : (
-                  <Tooltip title="Pertemuan belum selesai">
-                    <Button type="primary" disabled>
-                      Nilai Sertifikat
-                    </Button>
-                  </Tooltip>
-                )}
-              </>
-            )}
-          </Flex>
+          <Button type="primary" onClick={handleDownloadExcel}>Cetak Pertemuan</Button>
         </Flex>
 
         {isLoadingMeeting ? (
           <Skeleton active paragraph={{ rows: 5 }} />
         ) : (
-          <Table
-            columns={columns}
-            dataSource={data}
-            pagination={{ pageSize: 5 }}
-          />
+          <Table columns={columns} dataSource={data} pagination={{ pageSize: 5 }} />
         )}
       </Card>
-
-      <Modal
-        open={isModalCertificate}
-        onCancel={handleCancel}
-        title="Nilai Sertifikat"
-        footer={null}
-      >
-        <Form
-          layout="vertical"
-          form={form}
-          onFinish={handleFinish}
-          initialValues={{
-            sections: sectionTypes.map((type) => ({
-              section_type: type,
-              level: "",
-              comment: "",
-            })),
-          }}
-        >
-          <Row gutter={[16, 16]}>
-            {sectionTypes.map((type, index) => (
-              <Col xs={24} sm={12} key={type}>
-                <Typography.Text strong>{type}</Typography.Text>
-
-                {/* Input Level */}
-                <Form.Item
-                  name={["sections", index, "level"]}
-                  label="Level"
-                  rules={[
-                    {
-                      required: true,
-                      message: `Masukkan level untuk ${type}!`,
-                    },
-                  ]}
-                >
-                  <Input placeholder={`Masukkan level untuk ${type}`} />
-                </Form.Item>
-
-                {/* Input Komentar (Menggunakan TextArea) */}
-                <Form.Item
-                  name={["sections", index, "comment"]}
-                  label="Komentar"
-                  rules={[
-                    {
-                      required: true,
-                      message: `Masukkan komentar untuk ${type}!`,
-                    },
-                  ]}
-                >
-                  <TextArea
-                    placeholder={`Masukkan komentar untuk ${type}`}
-                    autoSize={{ minRows: 2, maxRows: 4 }}
-                  />
-                </Form.Item>
-              </Col>
-            ))}
-          </Row>
-
-          {/* Tombol Simpan */}
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block loading={loading}>
-              Simpan
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 }

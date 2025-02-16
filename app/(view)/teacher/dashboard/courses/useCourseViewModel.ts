@@ -1,6 +1,7 @@
 import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { Course } from "@/app/model/course";
+import { User } from "@prisma/client";
 import { Form, notification } from "antd";
 import { useState } from "react";
 import useSWR from "swr";
@@ -24,6 +25,7 @@ export const useCourseViewModel = () => {
   const handleCancel = () => {
     setIsModalVisible(false);
   };
+
 
   const handleOk = async (values: any) => {
     setLoading(true);

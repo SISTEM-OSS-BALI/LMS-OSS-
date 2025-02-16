@@ -1,9 +1,8 @@
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { User } from "@/app/model/user";
 import { Meeting } from "@/app/model/meeting";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
-import { Program } from "@prisma/client";
+import { Program, User } from "@prisma/client";
 import { useState } from "react";
 import { useForm } from "antd/es/form/Form";
 import { crudService } from "@/app/lib/services/crudServices";

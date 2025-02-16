@@ -1,10 +1,18 @@
 import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { Course } from "@/app/model/course";
-import { Form, message, notification } from "antd";
+import { Program, User } from "@prisma/client";
+import { Form, notification } from "antd";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
+
+interface UserResponse {
+  data: User[];
+}
+
+interface ProgramResponse {
+  data: Program[];
+}
 
 export const useCourseViewModel = () => {
   const query = useParams();
@@ -22,6 +30,11 @@ export const useCourseViewModel = () => {
     `/api/teacher/studentEnrolled/${course_id}/show`,
     fetcher
   );
+  const { data: dataStudentResponse, error: studentError } =
+    useSWR<UserResponse>("/api/admin/student/show", fetcher);
+
+  const { data: programDataAll, isLoading: isLoadingProgram } =
+    useSWR<ProgramResponse>("/api/teacher/student/showProgram", fetcher);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isChoosingType, setIsChoosingType] = useState(true);
@@ -29,6 +42,9 @@ export const useCourseViewModel = () => {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [searchTermStudent, setSearchTermStudent] = useState<string>("");
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [isModalAccessVisible, setIsModalAccessVisible] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const detailCourse = courseData?.data || {};
@@ -38,6 +54,26 @@ export const useCourseViewModel = () => {
 
   const studentEnrolledList = Array.isArray(studentEnrolled?.data)
     ? studentEnrolled.data
+    : [];
+
+  const handleSearchStudent = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTermStudent(e.target.value.toLowerCase());
+  };
+
+  const mergedData = dataStudentResponse?.data.map((student) => {
+    const program = programDataAll?.data.find(
+      (program) => program.program_id === student.program_id
+    );
+    return {
+      ...student,
+      program_name: program?.name,
+    };
+  });
+
+  const filteredStudent = Array.isArray(dataStudentResponse?.data)
+    ? mergedData?.filter((student) =>
+        student.username.toLowerCase().includes(searchTermStudent)
+      )
     : [];
 
   const handleCancel = () => {
@@ -81,6 +117,14 @@ export const useCourseViewModel = () => {
   const handleCreate = () => {
     setIsChoosingType(true);
     setIsModalVisible(true);
+  };
+
+  const handleOpenModalAccess = () => {
+    setIsModalAccessVisible(true);
+  };
+
+  const handleCancelModalAccess = () => {
+    setIsModalAccessVisible(false);
   };
 
   const handleTypeSelection = (type: "material" | "assignment") => {
@@ -132,6 +176,26 @@ export const useCourseViewModel = () => {
       setLoading(false);
     }
   };
+
+  const handleSubmitAccess = async () => {
+    try {
+      setLoading(true);
+      const payload = {
+        student_id: selectedStudent,
+        course_id: course_id,
+      };
+
+      await crudService.post(`/api/teacher/course/access/create`, payload);
+
+      notification.success({ message: "Berhasil memberikan akses" });
+      handleCancelModalAccess();
+    } catch (error) {
+      console.error(error);
+      notification.error({ message: "Gagal memberikan akses" });
+    } finally {
+      setLoading(false);
+    }
+  };
   return {
     detailCourse,
     materialsList,
@@ -156,6 +220,14 @@ export const useCourseViewModel = () => {
     materialsData,
     studentEnrolled,
     setIsDrawerVisible,
-    course_id
+    course_id,
+    handleSearchStudent,
+    filteredStudent,
+    setSelectedStudent,
+    selectedStudent,
+    handleCancelModalAccess,
+    handleOpenModalAccess,
+    isModalAccessVisible,
+    handleSubmitAccess,
   };
 };

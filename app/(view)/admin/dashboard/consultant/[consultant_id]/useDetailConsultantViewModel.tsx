@@ -1,6 +1,6 @@
 import { fetcher } from "@/app/lib/utils/fetcher";
 import useSWR from "swr";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Program, User } from "@prisma/client";
 
 interface Consultant {
@@ -21,7 +21,7 @@ interface DetailConsultantResponse {
 export const useDetailConsultantViewModel = () => {
   const query = useParams();
   const consultant_id = query.consultant_id;
-  const { data: detailConsultantData } = useSWR<DetailConsultantResponse>(
+  const { data: detailConsultantData, isLoading: isLoadingConsultant } = useSWR<DetailConsultantResponse>(
     `/api/admin/consultant/${consultant_id}`,
     fetcher
   );
@@ -30,6 +30,7 @@ export const useDetailConsultantViewModel = () => {
     mutate: programDataMutate,
     isLoading,
   } = useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
+  const router = useRouter();
 
   const studentData = detailConsultantData?.data.students ?? [];
   const programDataList = programData?.data ?? [];
@@ -60,9 +61,17 @@ export const useDetailConsultantViewModel = () => {
     };
   });
   const countStudent = detailConsultantData?.data.students.length;
+
+  const handlePushDetail = (student_id: string) => {
+    router.push(`/admin/dashboard/consultant/${consultant_id}/${student_id}`);
+  };
+
   return {
     detailConsultantData,
     mergedDataStudent,
     countStudent,
+    handlePushDetail,
+    isLoadingConsultant,
+    isLoading
   };
 };

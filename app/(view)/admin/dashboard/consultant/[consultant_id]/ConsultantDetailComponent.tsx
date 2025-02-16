@@ -8,11 +8,15 @@ import {
   Typography,
   Spin,
   Flex,
+  Button,
 } from "antd";
 import { useDetailConsultantViewModel } from "./useDetailConsultantViewModel";
 import { ColumnsType } from "antd/es/table";
 import { User } from "@prisma/client";
-import { LoadingOutlined } from "@ant-design/icons";
+import Icon, { LoadingOutlined } from "@ant-design/icons";
+import { EyeIcon } from "@/app/components/Icon";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 // ✅ Interface untuk Student dengan Program
 interface StudentWithProgram extends User {
@@ -20,10 +24,17 @@ interface StudentWithProgram extends User {
 }
 
 export default function ConsultantDetailComponent() {
-  const { detailConsultantData, mergedDataStudent, countStudent } =
-    useDetailConsultantViewModel();
+  const {
+    detailConsultantData,
+    mergedDataStudent,
+    countStudent,
+    handlePushDetail,
+  } = useDetailConsultantViewModel();
 
   const { Title, Text } = Typography;
+  useEffect(() => {
+    console.log(mergedDataStudent);
+  }, [mergedDataStudent]);
 
   // ✅ Konfigurasi tabel
   const columns: ColumnsType<StudentWithProgram> = [
@@ -39,7 +50,7 @@ export default function ConsultantDetailComponent() {
       key: "imageUrl",
       render: (text) => (
         <Image
-          src={text || "/default-avatar.png"} // Gambar default jika null
+          src={text || "/default-avatar.png"}
           alt="gambar"
           width={50}
           height={50}
@@ -79,6 +90,21 @@ export default function ConsultantDetailComponent() {
         } else {
           return <Tag color="red"></Tag>;
         }
+      },
+    },
+    {
+      title: "Detail",
+      dataIndex: "detail",
+      key: "detail",
+      render: (_, record) => {
+        return (
+          <Button
+            type="primary"
+            onClick={() => handlePushDetail(record.user_id)}
+          >
+            <Icon component={EyeIcon} />
+          </Button>
+        );
       },
     },
   ];

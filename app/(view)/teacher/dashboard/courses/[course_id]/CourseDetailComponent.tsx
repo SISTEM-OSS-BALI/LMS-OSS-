@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Button,
   Card,
   Divider,
@@ -23,7 +24,6 @@ import Link from "next/link";
 import { DeleteIcon, EditIcon } from "@/app/components/Icon";
 import { formatDate } from "@/app/lib/utils/formatDate";
 import { useCourseViewModel } from "./useCourseViewModel";
-import { Suspense, use } from "react";
 import { useRandomBgCourse } from "@/app/lib/utils/useRandomBgCourse";
 
 export default function DetailCourseTeacherComponent() {
@@ -53,6 +53,14 @@ export default function DetailCourseTeacherComponent() {
     studentEnrolled,
     setIsDrawerVisible,
     course_id,
+    handleSearchStudent,
+    filteredStudent,
+    setSelectedStudent,
+    selectedStudent,
+    handleCancelModalAccess,
+    handleOpenModalAccess,
+    isModalAccessVisible,
+    handleSubmitAccess
   } = useCourseViewModel();
 
   if (courseError || studentEnrolledError || materialsError)
@@ -69,7 +77,7 @@ export default function DetailCourseTeacherComponent() {
   if (!courseData || !materialsData || !studentEnrolled) return <Loading />;
 
   return (
-    <Suspense fallback={<Loading />}>
+    <div>
       <div>
         <div
           style={{
@@ -79,9 +87,14 @@ export default function DetailCourseTeacherComponent() {
           }}
         >
           <Title level={4}>{detailCourse.name}</Title>
-          <Button type="primary" onClick={handleCreate}>
-            Tambah Materi / Assignment
-          </Button>
+          <Flex justify="space-between" gap={20}>
+            <Button type="primary" onClick={handleCreate}>
+              Tambah Materi / Assignment
+            </Button>
+            <Button type="primary" onClick={() => handleOpenModalAccess()}>
+              Akses
+            </Button>
+          </Flex>
         </div>
         <Divider />
         <div style={{ display: "flex", flexWrap: "wrap" }}>
@@ -236,6 +249,81 @@ export default function DetailCourseTeacherComponent() {
           )}
         </Modal>
       </div>
-    </Suspense>
+
+      <Modal
+        title="Pilih Siswa"
+        open={isModalAccessVisible}
+        onCancel={handleCancelModalAccess}
+        footer={null}
+        bodyStyle={{ maxHeight: "500px", overflowY: "hidden" }}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmitAccess}>
+          <Input
+            placeholder="Cari Siswa"
+            style={{ marginBottom: 10 }}
+            onChange={handleSearchStudent}
+          />
+
+          <div
+            style={{
+              maxHeight: "400px",
+              overflowY: "auto",
+              paddingRight: "5px",
+            }}
+          >
+            <List
+              dataSource={filteredStudent || []}
+              renderItem={(student) => {
+                const isSelected = selectedStudent === student.user_id;
+
+                return (
+                  <List.Item key={student.user_id}>
+                    <Card
+                      onClick={() => setSelectedStudent(student.user_id)}
+                      style={{
+                        width: "100%",
+                        cursor: "pointer",
+                        border: isSelected
+                          ? "2px solid #1890ff"
+                          : "1px solid #d9d9d9",
+                        borderRadius: "10px",
+                        boxShadow: isSelected
+                          ? "0 4px 12px rgba(24, 144, 255, 0.3)"
+                          : "none",
+                        padding: "12px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        <Avatar src={student.imageUrl} size={64} />
+                        <Title level={5} style={{ margin: 0 }}>
+                          {student.username} - {student.program_name}
+                        </Title>
+                      </div>
+                    </Card>
+                  </List.Item>
+                );
+              }}
+            />
+          </div>
+
+          <Form.Item style={{ marginTop: 16, textAlign: "right" }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              disabled={!selectedStudent}
+            >
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 }

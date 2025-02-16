@@ -5,6 +5,7 @@ import {
   Flex,
   FloatButton,
   Form,
+  Image,
   Input,
   Modal,
   notification,
@@ -15,13 +16,13 @@ import Icon from "@ant-design/icons";
 import Title from "antd/es/typography/Title";
 import Link from "next/link";
 import { AddIcon, CopyIcon, DeleteIcon, EditIcon } from "@/app/components/Icon";
-import randomBgCourse from "@/app/lib/utils/useRandomBgCourse";
+import { useRandomBgCourse } from "@/app/lib/utils/useRandomBgCourse";
 import { useCourseViewModel } from "./useCourseViewModel";
 import CustomAlert from "@/app/components/CustomAlert";
 import Meta from "antd/es/card/Meta";
 
 export default function CoursesTeacherComponent() {
-  const backgroundImages = randomBgCourse();
+  const backgroundImages = useRandomBgCourse();
 
   const {
     loading,
@@ -53,7 +54,7 @@ export default function CoursesTeacherComponent() {
         <Input
           placeholder="Cari nama modul"
           onChange={handleSearch}
-          style={{ width: 300 }}
+          style={{ width: "30%" }}
         />
       </Flex>
       <Divider />
@@ -63,11 +64,14 @@ export default function CoursesTeacherComponent() {
             <Card
               key={course.course_id}
               cover={
-                <img
-                  alt="default"
-                  src={backgroundImages[index % backgroundImages.length]}
-                  style={{ height: "150px", objectFit: "cover" }}
-                />
+                backgroundImages && (
+                  <Image
+                    alt="default"
+                    style={{ width: "100%", height: 200 }}
+                    src={backgroundImages[index % backgroundImages.length]}
+                    preview={false}
+                  />
+                )
               }
               hoverable
             >
@@ -79,15 +83,16 @@ export default function CoursesTeacherComponent() {
                 }
               />
               <Divider />
-              <Flex justify="space-between" style={{ marginTop: 10 }}>
+              <Flex justify="space-between" style={{ marginTop: 10 }} gap={20}>
                 <Tooltip title="Edit Modul">
                   <Button
+                    style={{ width: "100%" }}
                     type="primary"
                     onClick={() => handleUpdate(course.course_id)}
                     icon={<Icon component={EditIcon} />}
                   />
                 </Tooltip>
-                <Tooltip title="Salin Kode">
+                {/* <Tooltip title="Salin Kode">
                   <Button
                     type="primary"
                     onClick={() => {
@@ -98,7 +103,7 @@ export default function CoursesTeacherComponent() {
                     }}
                     icon={<Icon component={CopyIcon} />}
                   />
-                </Tooltip>
+                </Tooltip> */}
                 <Tooltip title="Hapus Modul">
                   <Popconfirm
                     title="Yakin ingin menghapus modul ini?"
@@ -106,7 +111,11 @@ export default function CoursesTeacherComponent() {
                     okText="Ya"
                     cancelText="Tidak"
                   >
-                    <Button danger icon={<Icon component={DeleteIcon} />} />
+                    <Button
+                      danger
+                      icon={<Icon component={DeleteIcon} />}
+                      style={{ width: "100%" }}
+                    />
                   </Popconfirm>
                 </Tooltip>
               </Flex>

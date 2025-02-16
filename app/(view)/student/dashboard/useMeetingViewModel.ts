@@ -6,8 +6,9 @@ import { User } from "@/app/model/user";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AccessCourse,
   AccessPlacementTest,
-  MultipleChoicePlacementTest,
+  Course,
   PlacementTest,
 } from "@prisma/client";
 
@@ -24,6 +25,16 @@ interface PlacementTestResponse {
 interface AccessPlacementTestResponse {
   data: AccessPlacementTest[];
 }
+
+interface AccessCourseResponse {
+  data: AccessCourse[];
+}
+
+interface CourseResponse {
+  data: Course[];
+}
+
+
 
 export const useMeetings = () => {
   const router = useRouter();
@@ -47,10 +58,17 @@ export const useMeetings = () => {
       fetcher
     );
 
+  const { data: accessCourseData } = useSWR<AccessCourseResponse>(
+    "/api/student/accessCourse/show",
+    fetcher
+  );
+
   const { data: placemenetTestData } = useSWR<PlacementTestResponse>(
     "/api/teacher/placementTest/show",
     fetcher
   );
+
+  const { data: courseData } = useSWR<CourseResponse>("/api/student/course/show", fetcher);
 
   const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(
     null
@@ -72,6 +90,16 @@ export const useMeetings = () => {
       }
     }
   }, [accessPlacemenetTestData, placemenetTestData]);
+
+  const mergedDataCourse = courseData?.data.map((course) => {
+    const accessCourse = accessCourseData?.data.find(
+      (access) => access.course_id === course.course_id
+    );
+    return {
+      ...course,
+      ...accessCourse,
+    };
+  })
 
   const formatDateTimeToUTC = (dateTime: string) => {
     return dayjs.utc(dateTime).toISOString();
@@ -143,5 +171,6 @@ export const useMeetings = () => {
     count_program,
     mergedData,
     startQuiz,
+    mergedDataCourse
   };
 };

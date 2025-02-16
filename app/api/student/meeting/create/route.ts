@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
           no_phone: true,
           consultant_id: true,
           count_program: true,
+          is_active: true,
         },
       }),
       prisma.user.findUnique({
@@ -87,6 +88,17 @@ export async function POST(request: NextRequest) {
 
     if (!studentData || !teacherData || !programData)
       throw new Error("Data tidak ditemukan");
+
+    if (studentData.is_active == false) {
+      return NextResponse.json(
+        {
+          status: 403,
+          error: true,
+          message: "User tidak aktif",
+        },
+        { status: 403 }
+      );
+    }
 
     let meetLink = null;
     if (method === "ONLINE") {

@@ -52,7 +52,7 @@ function getItem(
 
 const menuMap: { [key: string]: string } = {
   "/student/dashboard": "/student/dashboard",
-  "/student/dashboard/courses": "/student/dashboard/courses",
+  "/student/dashboard/course-followed": "/student/dashboard/course-followed",
   "/student/dashboard/meeting": "/student/dashboard/meeting",
   "/student/dashboard/try-out": "/student/dashboard/try-out",
   "/student/dashboard/work-sheet": "/student/dashboard/work-sheet",
@@ -81,8 +81,8 @@ const items: MenuItem[] = [
     <CalendarOutlined />
   ),
   getItem(
-    <Link href="/student/dashboard/courses">Modul</Link>,
-    "/student/dashboard/courses",
+    <Link href="/student/dashboard/course-followed">Modul</Link>,
+    "/student/dashboard/course-followed",
     <DesktopOutlined />
   ),
   getItem(

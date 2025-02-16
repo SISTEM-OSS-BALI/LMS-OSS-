@@ -20,5 +20,7 @@ export function useCourseFollowedViewModel() {
     `/api/student/material/showCourseProgress`,
     fetcher
   );
+
+  
   return { courseData, progressData, error };
 }

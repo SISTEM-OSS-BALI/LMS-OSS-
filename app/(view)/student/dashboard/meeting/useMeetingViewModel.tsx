@@ -141,20 +141,25 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     if (date) params.append("date", date);
     return `${url}?${params.toString()}`;
   }, [date]);
-  const { data: showMeeting, mutate: mutateShowMeeting, isLoading: isLoadingMeeting } =
-    useSWR<MeetingResponse>("/api/student/meeting/show", fetcher);
-  const { data: showMeetingByDate, mutate: mutateShowMeetingByDate, isLoading: isLoadingMeetingByDate } =
-    useSWR<MeetingResponse>(fetchUrl, fetcher);
+  const {
+    data: showMeeting,
+    mutate: mutateShowMeeting,
+    isLoading: isLoadingMeeting,
+  } = useSWR<MeetingResponse>("/api/student/meeting/show", fetcher);
+  const {
+    data: showMeetingByDate,
+    mutate: mutateShowMeetingByDate,
+    isLoading: isLoadingMeetingByDate,
+  } = useSWR<MeetingResponse>(fetchUrl, fetcher);
 
-  const { data: showMeetingById, mutate: mutateShowMeetingById, isLoading: isLoadingMeetingById } = useSWR(
-    "/api/student/meeting/showById",
-    fetcher
-  );
+  const {
+    data: showMeetingById,
+    mutate: mutateShowMeetingById,
+    isLoading: isLoadingMeetingById,
+  } = useSWR("/api/student/meeting/showById", fetcher);
 
-  const { data: showScheduleAllTeacher, isLoading: isLoadingScheduleAll } = useSWR(
-    "/api/admin/schedule/showScheduleAll",
-    fetcher
-  );
+  const { data: showScheduleAllTeacher, isLoading: isLoadingScheduleAll } =
+    useSWR("/api/admin/schedule/showScheduleAll", fetcher);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [fileList, setFileList] = useState<any[]>([]);
@@ -361,7 +366,27 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         platform: values.platform,
       };
 
-      await crudService.post("/api/student/meeting/create", payload);
+      const response = await fetch(`/api/student/meeting/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Cookies.get("token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.status == 403) {
+        notification.error({
+          message: "Gagal Menambahkan Jadwal",
+          description: "Jatah Pertemuan Kamu Sudah Habis",
+        });
+        handleCancel();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Terjadi kesalahan saat menambahkan jadwal");
+      }
 
       notification.success({ message: "Jadwal Berhasil Ditambahkan" });
       setCurrentStep(4);
@@ -372,7 +397,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       setSelectedTeacher(null);
       handleCancel();
     } catch (error) {
-      message.error("Terjadi kesalahan saat menambahkan jadwal");
+      if (error instanceof Error) {
+        message.error(
+          error.message || "Terjadi kesalahan saat menambahkan jadwal"
+        );
+      } else {
+        message.error("Terjadi kesalahan saat menambahkan jadwal");
+      }
     } finally {
       setLoading(false);
     }
@@ -558,6 +589,14 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
               Pengajuan Emergency
             </Button>
           ),
+        });
+
+        handleCancelReschedule();
+        return;
+      } else if (response.status === 403) {
+        notification.error({
+          message: "Tidak Bisa Melakukan Reschedule",
+          description: "Jatah Pertemuan Kamu Sudah Habis",
         });
         handleCancelReschedule();
         return;

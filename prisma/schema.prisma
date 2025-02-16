@@ -70,6 +70,7 @@ model User {
   end_date      DateTime?
   is_completed  Boolean   @default(false)
   is_evaluation Boolean?
+  target        String?   @db.LongText
   role          Role      @default(STUDENT)
 
   consultant_id String?
@@ -94,6 +95,7 @@ model User {
   Certificate               Certificate[]       @relation("StudentCertificate")
   Section                   Section[]           @relation("StudentSection")
   Testimoni                 Testimoni[]         @relation("StudentTestimoni")
+  AccessCourse              AccessCourse[]
 }
 
 model Consultant {
@@ -165,7 +167,17 @@ model Course {
   materialsAssigmentBase MaterialAssigmentBase[] @relation("CourseMaterials")
   progressCourse         CourseProgress[]
 
-  students CourseEnrollment[] @relation("StudentCourses")
+  students     CourseEnrollment[] @relation("StudentCourses")
+  AccessCourse AccessCourse[]
+}
+
+model AccessCourse {
+  access_id String   @id @default(uuid())
+  course    Course   @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+  user      User     @relation(fields: [user_id], references: [user_id])
+  user_id   String
+  createdAt DateTime @default(now())
+  course_id String
 }
 
 model CourseEnrollment {

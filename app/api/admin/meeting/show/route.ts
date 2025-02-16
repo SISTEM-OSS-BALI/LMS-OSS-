@@ -10,6 +10,7 @@ dayjs.extend(utc);
 export async function GET(request: NextRequest) {
   const user = authenticateRequest(request);
 
+
   if (user instanceof NextResponse) {
     return user;
   }
@@ -18,9 +19,6 @@ export async function GET(request: NextRequest) {
     const getMeeting = await getData(
       "meeting",
       {
-        where: {
-          absent: true,
-        },
         orderBy: {
           dateTime: "asc",
         },

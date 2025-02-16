@@ -13,6 +13,7 @@ import {
   formatPhoneNumber,
   sendWhatsAppMessage,
 } from "@/app/lib/utils/notificationHelper";
+import { get } from "http";
 
 dayjs.extend(utc);
 
@@ -23,7 +24,7 @@ export async function PUT(
   const user = authenticateRequest(request);
 
   if (user instanceof NextResponse) {
-    return user; // Mengembalikan respon jika autentikasi gagal
+    return user;
   }
 
   const meetingId = params.meeting_id;
@@ -51,6 +52,18 @@ export async function PUT(
         { status: 400, error: "Data tidak lengkap" },
         { status: 400 }
       );
+    }
+
+    const getUser = await getData(
+      "user",
+      {
+        where: { user_id: user.user_id },
+      },
+      "findFirst"
+    );
+
+    if (getUser.is_active === false) {
+      return NextResponse.json({ status: 403, error: "User tidak aktif" });
     }
 
     // Format tanggal dan waktu

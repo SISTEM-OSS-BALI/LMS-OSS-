@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUsername } from "@/app/lib/auth/useLogin";
 import {
   Typography,
@@ -35,7 +35,12 @@ export default function HomeStudent() {
     events,
     mergedData,
     startQuiz,
+    mergedDataCourse
   } = useMeetings();
+
+  useEffect(() => {
+    console.log(mergedDataCourse)
+  }, [mergedDataCourse]);
 
   // State untuk modal Placement Test
   const [isTestModalVisible, setIsTestModalVisible] = useState(false);
@@ -107,9 +112,13 @@ export default function HomeStudent() {
         <Col md={8}>
           <Title level={4}>To Do List</Title>
           <Card style={{ marginTop: "20px", padding: "10px" }}>
-            {!!mergedData && mergedData.length > 0 ? (
+            {(!!mergedData && mergedData.length > 0) ||
+            (!!mergedDataCourse && mergedDataCourse.length > 0) ? (
               <List
-                dataSource={mergedData}
+                dataSource={[
+                  ...(mergedData || []),
+                  ...(mergedDataCourse || []),
+                ]}
                 renderItem={(item: any) => (
                   <List.Item>
                     <Card
@@ -119,28 +128,42 @@ export default function HomeStudent() {
                         backgroundColor: "#FAFAFA",
                       }}
                     >
-                      <Text strong>{item.name}</Text>
-                      <p style={{ margin: "5px 0" }}>
-                        <Text>{item.description}</Text>
-                      </p>
-                      {item.is_completed ? (
-                        <Space>
-                          <Button
-                            type="primary"
-                            onClick={() => handleStartTest(item)}
-                            disabled
-                          >
-                            Tes Telah Dilakukan
-                          </Button>
-                          <Button type="primary">Riwayat</Button>
-                        </Space>
+                      {/* Jika Item adalah Placement Test */}
+                      {item.timeLimit ? (
+                        <>
+                          <Text strong>{item.name}</Text>
+                          <p style={{ margin: "5px 0" }}>
+                            <Text>{item.description}</Text>
+                          </p>
+                          {item.is_completed ? (
+                            <Space>
+                              <Button type="primary" disabled>
+                                Tes Telah Dilakukan
+                              </Button>
+                              <Button type="primary">Riwayat</Button>
+                            </Space>
+                          ) : (
+                            <Button
+                              type="primary"
+                              onClick={() => handleStartTest(item)}
+                            >
+                              Mulai
+                            </Button>
+                          )}
+                        </>
                       ) : (
-                        <Button
-                          type="primary"
-                          onClick={() => handleStartTest(item)}
-                        >
-                          Mulai
-                        </Button>
+                        <>
+                          {/* Jika Item adalah Course */}
+                          <Text strong>{item.name}</Text>
+                          <br />
+                          <Button type="primary">
+                            <Link
+                              href={`/student/dashboard/course-followed`}
+                            >
+                              Lihat Detail
+                            </Link>
+                          </Button>
+                        </>
                       )}
                     </Card>
                   </List.Item>

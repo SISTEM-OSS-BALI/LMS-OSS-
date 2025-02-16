@@ -67,7 +67,7 @@ export default function CoursesFollowedComponent() {
     <div>
       <Flex justify="space-between">
         <Title level={4} style={{ marginBlock: 0 }}>
-          Kursus yang diikuti
+          Kursus
         </Title>
         <Input
           placeholder="Cari nama kursus"
@@ -83,9 +83,9 @@ export default function CoursesFollowedComponent() {
           style={{ marginBottom: 16 }}
         >
           <Radio.Button value="all">Semua</Radio.Button>
-          <Radio.Button value="completed">modul yang diselesaikan</Radio.Button>
+          <Radio.Button value="completed">Modul yang diselesaikan</Radio.Button>
           <Radio.Button value="not-completed">
-            modul yang belum diselesaikan
+            Modul yang belum diselesaikan
           </Radio.Button>
         </Radio.Group>
         <div style={{ display: "flex", flexWrap: "wrap" }}>
@@ -137,9 +137,8 @@ export default function CoursesFollowedComponent() {
                 >
                   <Meta
                     title={enrollment.course.name}
-                    description={enrollment.course.teacher.username}
                   />
-                  {progress?.completed && (
+                  {/* {progress?.completed && (
                     <>
                       <Divider />
                       <Button
@@ -155,7 +154,7 @@ export default function CoursesFollowedComponent() {
                         Cetak Sertifikat
                       </Button>
                     </>
-                  )}
+                  )} */}
                 </Card>
               );
             })

@@ -60,6 +60,8 @@ const menuMap: { [key: string]: string } = {
   "/admin/dashboard/teacher/data-teacher":
     "/admin/dashboard/teacher/data-teacher",
   "/admin/dashboard/student/reschedule": "/admin/dashboard/student/reschedule",
+  "/admin/dashboard/student/data-student":
+    "/admin/dashboard/student/data-student",
 };
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
@@ -106,7 +108,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         "lastCheckedTeacherAbsence",
         setNewTeacherAbsance
       );
-    }, 30000);
+    }, 20000);
 
     return () => clearInterval(intervalId);
   }, [newRescheduleCount]);

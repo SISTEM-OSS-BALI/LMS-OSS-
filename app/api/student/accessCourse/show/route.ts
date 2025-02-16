@@ -15,20 +15,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const getMeeting = await getData(
-      "meeting",
+    const getAccessCourse = await getData(
+      "accessCourse",
       {
         where: {
-          absent: true,
-        },
-        orderBy: {
-          dateTime: "asc",
+          user_id: user.user_id,
         },
       },
       "findMany"
     );
 
-    return NextResponse.json({ status: 200, error: false, data: getMeeting });
+    return NextResponse.json({
+      status: 200,
+      error: false,
+      data: getAccessCourse,
+    });
   } catch (error) {
     console.error("Error accessing database:", error);
     return new NextResponse(

@@ -3,12 +3,13 @@
 import Loading from "@/app/components/Loading";
 import { Suspense, lazy } from "react";
 
-const CourseFollowedComponent = lazy(() => import("./CourseFollowedComponent"));
-
-export default function CourseFollowed() {
+const StudentDetailReportComponent = lazy(
+  () => import("./StudentDetailReportComponent")
+);
+export default function StudentDetail() {
   return (
     <Suspense fallback={<Loading />}>
-      <CourseFollowedComponent />
+      <StudentDetailReportComponent />
     </Suspense>
   );
 }

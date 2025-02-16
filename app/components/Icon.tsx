@@ -4,6 +4,7 @@ import {
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
+  EyeOutlined,
   IdcardOutlined,
   InfoCircleOutlined,
   LeftCircleOutlined,
@@ -75,4 +76,8 @@ export const CertificateSvg = () => {
         />
       </svg>
   );
+}
+
+export const EyeIcon = () => {
+  return <EyeOutlined />;
 }
