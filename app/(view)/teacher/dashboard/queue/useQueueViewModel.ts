@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { crudService } from "@/app/lib/services/crudServices";
-import { useDashboardViewModel } from "../useDashboardViewModel";
+import { useDashboardViewModel } from "../home/useDashboardViewModel";
 import { Program } from "@/app/model/program";
 dayjs.extend(utc);
 

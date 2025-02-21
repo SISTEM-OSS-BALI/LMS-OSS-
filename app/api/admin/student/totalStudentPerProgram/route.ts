@@ -23,47 +23,46 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const getStudent = await prisma.user.findMany({
+    // 🔹 Ambil semua program yang tersedia
+    const allPrograms = await prisma.program.findMany({
+      select: {
+        program_id: true,
+        name: true,
+      },
+    });
+
+    // 🔹 Ambil total siswa berdasarkan program
+    const studentsByProgram = await prisma.user.groupBy({
+      by: ["program_id"],
       where: {
         role: "STUDENT",
-        start_date: {
-          not: null,
-          gte: new Date(`${year}-01-01T00:00:00Z`), 
-          lt: new Date(`${year + 1}-01-01T00:00:00Z`), 
+        createdAt: {
+          gte: new Date(`${year}-01-01T00:00:00Z`),
+          lt: new Date(`${year + 1}-01-01T00:00:00Z`),
         },
       },
-      select: {
-        start_date: true,
+      _count: {
+        user_id: true,
       },
     });
 
-    // Inisialisasi objek total siswa per bulan
-    const studentPerMonth: Record<number, number> = Array.from(
-      { length: 12 },
-      (_, i) => [i + 1, 0]
-    ).reduce((acc, [month, count]) => ({ ...acc, [month]: count }), {});
-
-    // Hitung jumlah siswa per bulan
-    getStudent.forEach((item) => {
-      if (item.start_date) {
-        const month = dayjs(item.start_date).month() + 1; // Bulan dalam format 1-12
-        studentPerMonth[month] += 1;
-      }
+    // 🔹 Gabungkan data agar semua program tetap muncul dengan total 0 jika tidak ada siswa
+    const formattedData = allPrograms.map((program) => {
+      const studentData = studentsByProgram.find(
+        (s) => s.program_id === program.program_id
+      );
+      return {
+        program_id: program.program_id,
+        program_name: program.name,
+        total_students: studentData ? studentData._count.user_id : 0,
+      };
     });
-
-    // Format data untuk response API
-    const formattedData = Object.entries(studentPerMonth).map(
-      ([month, total]) => ({
-        month: parseInt(month),
-        total_students: total,
-      })
-    );
 
     return NextResponse.json({
       status: 200,
       error: false,
       data: formattedData,
-      year: year, // Tambahkan informasi tahun
+      year: year,
     });
   } catch (error) {
     console.error("Error accessing database:", error);

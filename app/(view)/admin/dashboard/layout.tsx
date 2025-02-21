@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   BookOutlined,
   CalendarFilled,
@@ -29,7 +29,6 @@ import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { useUsername } from "@/app/lib/auth/useLogin";
 import { crudService } from "@/app/lib/services/crudServices";
 import { useRouter } from "next/navigation";
-import { useDashboard } from "./useDashboardViewModel";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -50,7 +49,7 @@ function getItem(
 }
 
 const menuMap: { [key: string]: string } = {
-  "/admin/dashboard": "/admin/dashboard",
+  "/admin/dashboard/home": "/admin/dashboard/home",
   "/admin/dashboard/consultant": "/admin/dashboard/consultant",
   "/admin/dashboard/teacher": "/admin/dashboard/teacher",
   "/admin/dashboard/teacher/calendar": "/admin/dashboard/teacher/calendar",
@@ -73,15 +72,39 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   } = theme.useToken();
   const pathname = usePathname();
   const username = useUsername();
-  const {
-    newRescheduleCount,
-    setNewRescheduleCount,
-    newTeacherAbsance,
-    setNewTeacherAbsance,
-    fetchDataWithLastChecked,
-    handleRescheduleClick,
-    handleAbsentClick,
-  } = useDashboard();
+  const router = useRouter();
+  const [newRescheduleCount, setNewRescheduleCount] = useState(0);
+  const [newTeacherAbsance, setNewTeacherAbsance] = useState(0);
+
+  const fetchDataWithLastChecked = useCallback(
+    async (
+      endpoint: string,
+      lastCheckedKey: string,
+      setStateCallback: React.Dispatch<React.SetStateAction<number>>
+    ) => {
+      const lastChecked = localStorage.getItem(lastCheckedKey) || "";
+
+      try {
+        const query = lastChecked ? `?lastChecked=${lastChecked}` : "";
+        const response = await crudService.get(`${endpoint}${query}`);
+        setStateCallback(response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    },
+    []
+  );
+  const handleRescheduleClick = () => {
+    localStorage.setItem("lastCheckedRescheduleTime", Date.now().toString());
+    setNewRescheduleCount(0);
+    router.push("/admin/dashboard/student/reschedule");
+  };
+
+  const handleAbsentClick = () => {
+    localStorage.setItem("lastCheckedTeacherAbsence", Date.now().toString());
+    setNewTeacherAbsance(0);
+    router.push("/admin/dashboard/teacher/absent");
+  };
 
   useEffect(() => {
     fetchDataWithLastChecked(
@@ -111,12 +134,18 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     }, 20000);
 
     return () => clearInterval(intervalId);
-  }, [newRescheduleCount]);
+  }, [
+    newRescheduleCount,
+    newTeacherAbsance,
+    setNewRescheduleCount,
+    setNewTeacherAbsance,
+    fetchDataWithLastChecked,
+  ]);
 
   const items: MenuItem[] = [
     getItem(
-      <Link href="/admin/dashboard">Dashboard</Link>,
-      "/admin/dashboard",
+      <Link href="/admin/dashboard/home">Dashboard</Link>,
+      "/admin/dashboard/home",
       <PieChartOutlined />
     ),
     getItem(
@@ -301,7 +330,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           </div>
           <Menu
             mode="inline"
-            defaultSelectedKeys={["/student/dashboard"]}
+            defaultSelectedKeys={["/student/dashboard/home"]}
             selectedKeys={selectedKeys}
             items={items}
           />

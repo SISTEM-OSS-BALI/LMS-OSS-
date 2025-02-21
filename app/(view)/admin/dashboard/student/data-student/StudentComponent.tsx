@@ -112,14 +112,14 @@ export default function StudentComponent() {
               {/** Tabel untuk daftar pertemuan */}
               <Table
                 columns={[
-                //   {
-                //     title: "Metode",
-                //     dataIndex: "method",
-                //     key: "method",
-                //     render: (text: string | null) => (
-                //       <Tag color="cyan">{text ?? "Tidak Diketahui"}</Tag>
-                //     ),
-                //   },
+                  //   {
+                  //     title: "Metode",
+                  //     dataIndex: "method",
+                  //     key: "method",
+                  //     render: (text: string | null) => (
+                  //       <Tag color="cyan">{text ?? "Tidak Diketahui"}</Tag>
+                  //     ),
+                  //   },
                   {
                     title: "Pengajar",
                     dataIndex: "teacherName",
@@ -166,7 +166,7 @@ export default function StudentComponent() {
         return Object.entries(teacherMeetings).map(([teacher, count], i) => (
           <Col>
             <Tag key={i} color="geekblue">
-              👨‍🏫 {teacher}: {count} Pertemuan
+              {teacher}: {count} Pertemuan
             </Tag>
           </Col>
         ));
@@ -176,7 +176,7 @@ export default function StudentComponent() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Title level={3}>Daftar Pertemuan Siswa</Title>
+      <Title level={3}>Data Siswa</Title>
       <Card>
         <Table
           columns={columns}

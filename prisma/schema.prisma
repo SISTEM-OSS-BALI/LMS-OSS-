@@ -72,6 +72,7 @@ model User {
   is_evaluation Boolean?
   target        String?   @db.LongText
   role          Role      @default(STUDENT)
+  createdAt     DateTime  @default(now())
 
   consultant_id String?
   consultant    Consultant? @relation(name: "ConsultantUsers", fields: [consultant_id], references: [consultant_id], onDelete: SetNull)
@@ -391,30 +392,86 @@ model PlacementTest {
   description       String @db.LongText
   timeLimit         Int
 
-  multipleChoices            MultipleChoicePlacementTest[]
-  AccessPlacementTest        AccessPlacementTest[]
-  StudentAnswerPlacementTest StudentAnswerPlacementTest[]
+  basePlacementTests   BasePlacementTest[]
+  accessPlacementTests AccessPlacementTest[]
+  studentAnswers       StudentAnswerPlacementTest[]
+}
+
+model BasePlacementTest {
+  base_id String @id @default(uuid())
+  name    String
+
+  placementTest   PlacementTest @relation(fields: [placementTestId], references: [placement_test_id])
+  placementTestId String
+
+  multipleChoices  MultipleChoicePlacementTest[]
+  trueFalseGroups  TrueFalseGroupPlacementTest[]
+  writingQuestions WritingPlacementTest[]
 }
 
 model MultipleChoicePlacementTest {
-  mcq_id            String        @id @default(uuid())
-  question          String        @db.LongText
-  options           Json
-  correctAnswer     String
-  placementTest     PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
-  placement_test_id String
+  mc_id         String @id @default(uuid())
+  question      String @db.LongText
+  options       Json
+  correctAnswer String
 
-  studentAnswersPlacementTest StudentAnswerPlacementTest[] @relation("MCQAnswerPlacementTest")
+  basePlacementTest   BasePlacementTest @relation(fields: [basePlacementTestId], references: [base_id])
+  basePlacementTestId String
+
+  studentAnswers StudentAnswerPlacementTest[]
+}
+
+model TrueFalseGroupPlacementTest {
+  group_id String @id @default(uuid())
+  passage  String @db.LongText
+
+  basePlacementTest   BasePlacementTest @relation(fields: [basePlacementTestId], references: [base_id])
+  basePlacementTestId String
+
+  trueFalseQuestions TrueFalseQuestion[]
+  studentAnswers     StudentAnswerPlacementTest[]
+}
+
+model TrueFalseQuestion {
+  tf_id         String  @id @default(uuid())
+  question      String  @db.LongText
+  correctAnswer Boolean
+
+  trueFalseGroup TrueFalseGroupPlacementTest @relation(fields: [group_id], references: [group_id])
+  group_id       String
+
+  studentAnswers StudentAnswerPlacementTest[]
+}
+
+model WritingPlacementTest {
+  writing_id String @id @default(uuid())
+  question   String @db.LongText
+  marks      Int?
+
+  basePlacementTest   BasePlacementTest @relation(fields: [basePlacementTestId], references: [base_id])
+  basePlacementTestId String
+
+  studentAnswers StudentAnswerPlacementTest[]
 }
 
 model StudentAnswerPlacementTest {
-  answer_id         String                       @id @default(uuid())
-  student           User                         @relation("StudentAnswersPlacementTest", fields: [student_id], references: [user_id])
+  answer_id         String        @id @default(uuid())
+  student           User          @relation("StudentAnswersPlacementTest", fields: [student_id], references: [user_id])
   student_id        String
-  placementTest     PlacementTest                @relation(fields: [placement_test_id], references: [placement_test_id])
+  placementTest     PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
   placement_test_id String
-  multipleChoice    MultipleChoicePlacementTest? @relation("MCQAnswerPlacementTest", fields: [mcq_id], references: [mcq_id])
-  mcq_id            String?
+
+  multipleChoice MultipleChoicePlacementTest? @relation(fields: [mcq_id], references: [mc_id])
+  mcq_id         String?
+
+  trueFalseGroup TrueFalseGroupPlacementTest? @relation(fields: [group_id], references: [group_id])
+  group_id       String?
+
+  trueFalseQuestion TrueFalseQuestion? @relation(fields: [tf_id], references: [tf_id])
+  tf_id             String?
+
+  writingQuestion WritingPlacementTest? @relation(fields: [writing_id], references: [writing_id])
+  writing_id      String?
 
   studentAnswer String   @db.LongText
   isCorrect     Boolean?

@@ -7,8 +7,8 @@ const { Title } = Typography;
 
 interface MultipleChoiceProps {
   data: MultipleChoicePlacementTest[];
-  onEdit: (mcq_id: string) => void;
-  onDelete: (mcq_id: string) => void;
+  onEdit: (mc_id: string) => void;
+  onDelete: (mc_id: string) => void;
 }
 
 const MultipleChoiceTeacherPlacementDisplay: React.FC<MultipleChoiceProps> = ({
@@ -16,18 +16,15 @@ const MultipleChoiceTeacherPlacementDisplay: React.FC<MultipleChoiceProps> = ({
   onEdit,
   onDelete,
 }) => {
-  if (!data) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div>
-      {data.map(({ mcq_id, question, options, correctAnswer }) => {
+      {data.map(({ mc_id, question, options, correctAnswer }) => {
         // Pastikan `options` adalah array string
         const validOptions = Array.isArray(options) ? options.map(String) : [];
 
         return (
-          <Card key={mcq_id} style={{ marginBottom: "20px" }}>
+          <Card key={mc_id} style={{ marginBottom: "20px" }}>
             <Title level={4}>
               <div dangerouslySetInnerHTML={{ __html: question }} />
             </Title>
@@ -54,14 +51,14 @@ const MultipleChoiceTeacherPlacementDisplay: React.FC<MultipleChoiceProps> = ({
               <Button
                 type="primary"
                 icon={<EditOutlined />}
-                onClick={() => onEdit(mcq_id)}
+                onClick={() => onEdit(mc_id)}
                 style={{ marginRight: "10px" }}
               >
                 Edit
               </Button>
               <Popconfirm
                 title="Yakin menghapus soal ini?"
-                onConfirm={() => onDelete(mcq_id)}
+                onConfirm={() => onDelete(mc_id)}
               >
                 <Button type="primary" danger icon={<DeleteOutlined />}>
                   Hapus

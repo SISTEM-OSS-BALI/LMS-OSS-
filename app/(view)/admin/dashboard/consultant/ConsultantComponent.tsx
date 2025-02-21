@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import {
   Table,
   Button,
-  Popconfirm,
   Modal,
   Form,
   Input,
@@ -27,23 +25,39 @@ import {
 import Title from "antd/es/typography/Title";
 
 const { useBreakpoint } = Grid;
+const { confirm } = Modal;
 
 export default function ConsultantComponent() {
   const {
     consultantData,
     handleDetail,
     handleEdit,
-    handleUpdate,
     handleDelete,
     isModalVisible,
-    setIsModalVisible,
     selectedConsultant,
     setSelectedConsultant,
     form,
     isLoadingConsultant,
+    handleOpenModal,
+    handleCancelModal,
+    handleSubmit,
+    loading,
   } = useConsultantViewModel();
 
   const screens = useBreakpoint();
+
+  const showDeleteConfirm = (consultantId: string) => {
+    confirm({
+      title: "Apakah Anda yakin ingin menghapus konsultan ini?",
+      content: "Tindakan ini tidak dapat dibatalkan.",
+      okText: "Ya, Hapus",
+      okType: "danger",
+      cancelText: "Batal",
+      onOk() {
+        handleDelete(consultantId);
+      },
+    });
+  };
 
   // 🔹 Table Columns
   const columns = [
@@ -51,7 +65,7 @@ export default function ConsultantComponent() {
       title: "No",
       dataIndex: "no",
       key: "no",
-      render: (text: any, record: any, index: number) => index + 1,
+      render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: "Nama",
@@ -59,7 +73,7 @@ export default function ConsultantComponent() {
       key: "name",
     },
     {
-      title: "No Telpun",
+      title: "No Telpon",
       dataIndex: "no_phone",
       key: "no_phone",
     },
@@ -71,7 +85,11 @@ export default function ConsultantComponent() {
           <Button type="primary" onClick={() => handleEdit(record)}>
             <Icon component={EditIcon} />
           </Button>
-          <Button type="default" danger>
+          <Button
+            type="default"
+            danger
+            onClick={() => showDeleteConfirm(record.consultant_id)}
+          >
             <Icon component={DeleteIcon} />
           </Button>
           <Button
@@ -89,11 +107,12 @@ export default function ConsultantComponent() {
     <div style={{ padding: screens.xs ? "10px" : "20px" }}>
       <Flex justify="space-between" wrap={screens.xs ? "wrap" : "nowrap"}>
         <Title level={screens.xs ? 4 : 3}>Daftar Konsultan</Title>
-        <Button type="primary">
+        <Button type="primary" onClick={handleOpenModal}>
           <Icon component={AddIcon} />
           Tambah Konsultan
         </Button>
       </Flex>
+
       <Card>
         {isLoadingConsultant ? (
           <Skeleton active paragraph={{ rows: 6 }} />
@@ -109,21 +128,38 @@ export default function ConsultantComponent() {
       </Card>
 
       <Modal
-        title="Edit Consultant"
+        title={selectedConsultant ? "Edit Konsultan" : "Tambah Konsultan"}
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        onOk={handleUpdate}
+        onCancel={handleCancelModal}
+        footer={null}
       >
         <Spin spinning={isLoadingConsultant}>
-          <Form form={form} layout="vertical">
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
             <Form.Item
-              label="Name"
+              label="Nama"
               name="name"
+              rules={[{ required: true, message: "Masukan Nama Konsultan" }]}
+            >
+              <Input placeholder="Masukan Nama" />
+            </Form.Item>
+            <Form.Item
+              label="No Telpon"
+              name="no_phone"
               rules={[
-                { required: true, message: "Please enter consultant name" },
+                { required: true, message: "Masukan No Telpon Konsultan" },
               ]}
             >
-              <Input />
+              <Input placeholder="Masukan No Telpon" />
+            </Form.Item>
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                style={{ width: "100%" }}
+              >
+                Submit
+              </Button>
             </Form.Item>
           </Form>
         </Spin>

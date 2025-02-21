@@ -23,8 +23,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
-import { useCount, useUsername } from "@/app/lib/auth/useLogin";
-import { useMeetings } from "./useMeetingViewModel";
+import {  useUsername } from "@/app/lib/auth/useLogin";
+import { useMeetings } from "./home/useMeetingViewModel";
 import { CertificateSvg } from "@/app/components/Icon";
 
 const { Content, Footer, Sider } = Layout;
@@ -32,9 +32,10 @@ const { Content, Footer, Sider } = Layout;
 type MenuItem = Required<MenuProps>["items"][number];
 type CustomIconComponentProps = GetProps<typeof Icon>;
 
-const CertificateIcon = ({ ...props }: CustomIconComponentProps) => (
+const CertificateIcon = (props: CustomIconComponentProps) => (
   <Icon component={CertificateSvg} {...props} />
 );
+
 
 function getItem(
   label: React.ReactNode,
@@ -51,7 +52,7 @@ function getItem(
 }
 
 const menuMap: { [key: string]: string } = {
-  "/student/dashboard": "/student/dashboard",
+  "/student/dashboard/home": "/student/dashboard/home",
   "/student/dashboard/course-followed": "/student/dashboard/course-followed",
   "/student/dashboard/meeting": "/student/dashboard/meeting",
   "/student/dashboard/try-out": "/student/dashboard/try-out",
@@ -61,8 +62,8 @@ const menuMap: { [key: string]: string } = {
 
 const items: MenuItem[] = [
   getItem(
-    <Link href="/student/dashboard">Dashboard</Link>,
-    "/student/dashboard",
+    <Link href="/student/dashboard/home">Dashboard</Link>,
+    "/student/dashboard/home",
     <PieChartOutlined />
   ),
   getItem(
@@ -88,11 +89,9 @@ const items: MenuItem[] = [
   getItem(
     <Link href={"/student/dashboard/certificate"}>Sertifikat</Link>,
     "/student/dashboard/certificate",
-    <CertificateIcon style={{ fontSize: "16px" }} />
+    <CertificateIcon style={{ fontSize: "5px" }} />
   ),
 ];
-
-
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -213,7 +212,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
             </div>
             <Menu
               mode="inline"
-              defaultSelectedKeys={["/student/dashboard"]}
+              defaultSelectedKeys={["/student/dashboard/home"]}
               selectedKeys={selectedKeys}
               items={items}
             />

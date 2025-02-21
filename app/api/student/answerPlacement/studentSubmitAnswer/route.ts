@@ -1,66 +1,120 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import { getData } from "@/app/lib/db/getData";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   const user = authenticateRequest(request);
   const body = await request.json();
   const { selectedData, placement_test_id, access_id } = body;
-  console.log(selectedData, placement_test_id, access_id);
 
   if (user instanceof NextResponse) {
     return user;
   }
 
   try {
-    // Get the total number of questions for the current assignment
-    const totalQuestions = await prisma.multipleChoicePlacementTest.count({
+    // 🔹 Ambil jumlah total soal dalam placement test
+    const totalQuestions = await prisma.basePlacementTest.findMany({
       where: {
-        placement_test_id,
+        placementTestId: placement_test_id,
+      },
+      include: {
+        multipleChoices: true,
+        trueFalseGroups: {
+          include: {
+            trueFalseQuestions: true,
+          },
+        },
+        writingQuestions: true,
       },
     });
 
-    // Looping for each answer submitted by the student
+    const totalQuestionsCount = totalQuestions.reduce(
+      (count, section) =>
+        count +
+        section.multipleChoices.length +
+        section.trueFalseGroups.reduce(
+          (subCount, group) => subCount + group.trueFalseQuestions.length,
+          0
+        ) +
+        section.writingQuestions.length,
+      0
+    );
+
+    if (totalQuestionsCount === 0) {
+      return NextResponse.json({
+        status: 400,
+        error: true,
+        message: "Placement test tidak memiliki soal.",
+      });
+    }
+
+    // 🔹 Loop setiap jawaban yang dikirimkan siswa
     await Promise.all(
       selectedData.map(async (answer: any) => {
-        const { mcq_id, selectedAnswer } = answer;
+        const { id, selectedAnswer } = answer;
 
-        // Fetching the multiple-choice question
-        const multipleChoice = await getData(
-          "multipleChoicePlacementTest",
-          {
-            where: {
-              mcq_id,
-            },
-          },
-          "findUnique"
-        );
+        // 🔹 Cek apakah soal ini Multiple Choice, True/False, atau Writing
+        const multipleChoice =
+          await prisma.multipleChoicePlacementTest.findUnique({
+            where: { mc_id: id },
+          });
 
-        if (!multipleChoice) {
-          throw new Error("Multiple Choice not found");
-        }
-
-        // Check if the answer is correct
-        const isCorrect = multipleChoice.correctAnswer === selectedAnswer;
-
-        // Calculate score
-        const score = isCorrect ? 1 : 0;
-
-        // Create a new answer if not found
-        await prisma.studentAnswerPlacementTest.create({
-          data: {
-            student_id: user.user_id,
-            placement_test_id,
-            mcq_id,
-            studentAnswer: selectedAnswer,
-            isCorrect,
-            score,
-            submittedAt: new Date(),
-          },
+        const trueFalseQuestion = await prisma.trueFalseQuestion.findUnique({
+          where: { tf_id: id },
         });
+
+        const writingQuestion = await prisma.writingPlacementTest.findUnique({
+          where: { writing_id: id },
+        });
+
+        let isCorrect = null;
+        let score = 0;
+
+        if (multipleChoice) {
+          isCorrect = multipleChoice.correctAnswer === selectedAnswer;
+          score = isCorrect ? 1 : 0;
+          await prisma.studentAnswerPlacementTest.create({
+            data: {
+              student_id: user.user_id,
+              placement_test_id,
+              mcq_id: id,
+              studentAnswer: selectedAnswer,
+              isCorrect,
+              score,
+              submittedAt: new Date(),
+            },
+          });
+        } else if (trueFalseQuestion) {
+          isCorrect =
+            trueFalseQuestion.correctAnswer.toString() === selectedAnswer;
+          score = isCorrect ? 1 : 0;
+          await prisma.studentAnswerPlacementTest.create({
+            data: {
+              student_id: user.user_id,
+              placement_test_id,
+              tf_id: id,
+              studentAnswer: selectedAnswer,
+              isCorrect,
+              score,
+              submittedAt: new Date(),
+            },
+          });
+        } else if (writingQuestion) {
+          // Writing tidak memiliki isCorrect, skor bisa dihitung manual nanti
+          await prisma.studentAnswerPlacementTest.create({
+            data: {
+              student_id: user.user_id,
+              placement_test_id,
+              writing_id: id,
+              studentAnswer: selectedAnswer,
+              score: 0, // Writing biasanya dinilai manual
+              submittedAt: new Date(),
+            },
+          });
+        }
       })
     );
 
+    // 🔹 Tandai bahwa siswa telah menyelesaikan test
     await prisma.accessPlacementTest.update({
       where: {
         access_placement_test_id: access_id,
@@ -70,7 +124,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Recalculate the total score for the current assignment
+    // 🔹 Hitung skor akhir siswa
     const updatedScores = await prisma.studentAnswerPlacementTest.findMany({
       where: {
         student_id: user.user_id,
@@ -85,55 +139,31 @@ export async function POST(request: NextRequest) {
       (sum, answer) => sum + answer.score,
       0
     );
+    const percentageScore = (totalScore / totalQuestionsCount) * 100 || 0;
 
-    // Calculate the percentage score
-    const percentageScore = (totalScore / totalQuestions) * 100 || 0;
-
-    // Determine if the assignment is completed
+    
+    let newLevel = "BASIC";
     if (percentageScore >= 80) {
-      await prisma.user.update({
-        where: {
-          user_id: user.user_id,
-        },
-        data: {
-          level: "ADVANCED",
-        },
-      });
-    } else if (percentageScore < 80 && percentageScore >= 50) {
-      await prisma.user.update({
-        where: {
-          user_id: user.user_id,
-        },
-        data: {
-          level: "INTERMEDIATE",
-        },
-      });
-    } else {
-      await prisma.user.update({
-        where: {
-          user_id: user.user_id,
-        },
-        data: {
-          level: "BASIC",
-        },
-      });
+      newLevel = "ADVANCED";
+    } else if (percentageScore >= 50) {
+      newLevel = "INTERMEDIATE";
     }
+
+    await prisma.user.update({
+      where: { user_id: user.user_id },
+      data: { level: newLevel },
+    });
 
     return NextResponse.json({
       status: 200,
       error: false,
-      data: { totalScore, percentageScore },
+      data: { totalScore, percentageScore, level: newLevel },
     });
   } catch (error) {
     console.error("Error accessing database:", error);
     return new NextResponse(
       JSON.stringify({ error: "Internal Server Error" }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   } finally {
     await prisma.$disconnect();

@@ -33,13 +33,13 @@ export function useLoginViewModel() {
       // Handle role-based navigation
       switch (response.role) {
         case "TEACHER":
-          router.push("/teacher/dashboard");
+          router.push("/teacher/dashboard/home");
           break;
         case "STUDENT":
-          router.push("/student/dashboard");
+          router.push("/student/dashboard/home");
           break;
         case "ADMIN":
-          router.push("/admin/dashboard");
+          router.push("/admin/dashboard/home");
           break;
         default:
           router.push("/");

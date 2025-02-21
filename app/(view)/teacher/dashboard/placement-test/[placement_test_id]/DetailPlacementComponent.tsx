@@ -10,55 +10,43 @@ import {
   Button,
   Input,
   Flex,
+  Row,
+  Col,
+  Space,
+  Divider,
+  Skeleton,
+  Select,
+  Alert,
 } from "antd";
 import { useDetailPlacementTestViewModel } from "./useDetailPlacemetTestViewModel";
 import { useState } from "react";
 import Title from "antd/es/typography/Title";
-import MultipleChoiceTeacherPlacementDisplay from "@/app/components/MultipleChoiceTeacherPlacementDisplay";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import Link from "next/link";
 
 export default function DetailPlacementComponent() {
   const {
     dataDetailPlacementTest,
-    dataDetailMultipleChoice,
     filteredStudent,
     handleSearch,
     handleCancelModalAccess,
+    isModalVisible,
     isModalAccessVisible,
     selectedStudent,
     setSelectedStudent,
     form,
     handleOpenModalAccess,
-    handleSubmit,
+    handleSubmitAccess,
     loading,
+    basePlacementTestData,
+    isLoadingBasePlacementTest,
+    handleCancelModal,
+    handleOpenModal,
+    handleSubmit,
+    handleEdit,
   } = useDetailPlacementTestViewModel();
   const detailPlacement = dataDetailPlacementTest?.data;
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-
-  const renderMultipleChoice = () => {
-    if (!Array.isArray(dataDetailMultipleChoice?.data)) {
-      return <div>Data tidak tersedia</div>;
-    }
-
-    return (
-      <MultipleChoiceTeacherPlacementDisplay
-        data={dataDetailMultipleChoice.data.map((detail: any) => ({
-          mcq_id: detail.mcq_id,
-          question: detail.question,
-          options: Array.isArray(detail.options)
-            ? detail.options.map(String)
-            : [],
-          correctAnswer: detail.correctAnswer,
-          placement_test_id: detail.placement_test_id,
-        }))}
-        onEdit={(mcq_id: string) => {
-          console.log("Edit:", mcq_id);
-        }}
-        onDelete={(mcq_id: string) => {
-          console.log("Delete:", mcq_id);
-        }}
-      />
-    );
-  };
 
   return (
     <div style={{ padding: "24px" }}>
@@ -70,7 +58,91 @@ export default function DetailPlacementComponent() {
       </Flex>
       <FloatButton onClick={() => setIsDrawerVisible(true)} />
 
-      <div>{renderMultipleChoice()}</div>
+      <Divider />
+      <Card>
+        <Flex justify="space-between" style={{ marginBottom: "24px" }}>
+          <Title level={4}>Daftar Section</Title>
+          <Button type="primary" onClick={() => handleOpenModal()}>
+            Tambah Section
+          </Button>
+        </Flex>
+
+        {/* Skeleton Loading untuk Section */}
+        {isLoadingBasePlacementTest ? (
+          <Row gutter={[16, 16]}>
+            {[...Array(6)].map((_, index) => (
+              <Col key={index} xs={24} sm={12} md={8} lg={6} xl={4}>
+                <Skeleton active paragraph={{ rows: 2 }} />
+              </Col>
+            ))}
+          </Row>
+        ) : basePlacementTestData && basePlacementTestData?.data.length > 0 ? (
+          <Row gutter={[16, 16]}>
+            {basePlacementTestData?.data.map((baseTest) => (
+              <Col key={baseTest.base_id} xs={24} sm={12} md={8} lg={6} xl={4}>
+                <Card
+                  hoverable
+                  style={{
+                    textAlign: "center",
+                    borderRadius: "16px",
+                    background: "linear-gradient(to bottom, #ffffff, #f8f8f8)",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    height: "100%",
+                  }}
+                  bodyStyle={{ padding: "24px" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.05)";
+                    e.currentTarget.style.boxShadow =
+                      "0 8px 16px rgba(0, 0, 0, 0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 8px rgba(0, 0, 0, 0.1)";
+                  }}
+                >
+                  {/* Nama */}
+                  <Typography.Title
+                    level={4}
+                    style={{ color: "#333", marginBottom: "12px" }}
+                  >
+                    <Link
+                      href={`/teacher/dashboard/placement-test/${baseTest.placementTestId}/${baseTest.base_id}`}
+                    >
+                      {baseTest.name}
+                    </Link>
+                  </Typography.Title>
+
+                  {/* Tombol Aksi */}
+                  <Space>
+                    <Button
+                      type="primary"
+                      icon={<EditOutlined />}
+                      style={{ borderRadius: "8px", padding: "4px 12px" }}
+                      onClick={() => handleEdit(baseTest.base_id)}
+                    />
+                    <Button
+                      type="primary"
+                      danger
+                      icon={<DeleteOutlined />}
+                      style={{ borderRadius: "8px", padding: "4px 12px" }}
+                    />
+                  </Space>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <Alert
+            message="Informasi"
+            description="Tidak ada data Placement Test tersedia."
+            type="info"
+            showIcon
+            style={{ width: "100%", textAlign: "center", marginTop: "16px" }}
+          />
+        )}
+      </Card>
 
       <Drawer
         title="Detail Placement Test"
@@ -100,6 +172,7 @@ export default function DetailPlacementComponent() {
           )}
         />
       </Drawer>
+
       <Modal
         title="Pilih Siswa"
         open={isModalAccessVisible}
@@ -107,7 +180,7 @@ export default function DetailPlacementComponent() {
         footer={null}
         bodyStyle={{ maxHeight: "500px", overflowY: "hidden" }}
       >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Form form={form} layout="vertical" onFinish={handleSubmitAccess}>
           <Input
             placeholder="Cari Siswa"
             style={{ marginBottom: 10 }}
@@ -168,6 +241,37 @@ export default function DetailPlacementComponent() {
               htmlType="submit"
               loading={loading}
               disabled={!selectedStudent}
+            >
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+      <Modal
+        open={isModalVisible}
+        onCancel={handleCancelModal}
+        title="Tambah Section"
+        footer={null}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item
+            name="name"
+            rules={[{ required: true, message: "Nama harus diisi" }]}
+          >
+            <Select placeholder="Pilih jenis soal">
+              <Select.Option value="MULTIPLE_CHOICE">
+                Multiple Choice
+              </Select.Option>
+              <Select.Option value="WRITING">Writing</Select.Option>
+              <Select.Option value="READING">Reading</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              style={{ width: "100%" }}
+              loading={loading}
+              htmlType="submit"
             >
               Submit
             </Button>

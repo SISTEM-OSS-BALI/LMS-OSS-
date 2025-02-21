@@ -23,8 +23,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
-import { useCount, useUsername } from "@/app/lib/auth/useLogin";
-import { useDashboardViewModel } from "./useDashboardViewModel";
+import { useUsername } from "@/app/lib/auth/useLogin";
+import { useDashboardViewModel } from "./home/useDashboardViewModel";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -45,7 +45,7 @@ function getItem(
 }
 
 const menuMap: { [key: string]: string } = {
-  "/teacher/dashboard": "/teacher/dashboard",
+  "/teacher/dashboard/home": "/teacher/dashboard/home",
   "/teacher/dashboard/courses": "/teacher/dashboard/courses",
   "/teacher/dashboard/queue": "/teacher/dashboard/queue",
   "/teacher/dashboard/student": "/teacher/dashboard/student",
@@ -54,8 +54,8 @@ const menuMap: { [key: string]: string } = {
 
 const items: MenuItem[] = [
   getItem(
-    <Link href="/teacher/dashboard">Dashboard</Link>,
-    "/teacher/dashboard",
+    <Link href="/teacher/dashboard/home">Dashboard</Link>,
+    "/teacher/dashboard/home",
     <PieChartOutlined />
   ),
   getItem(
@@ -195,7 +195,7 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
           </div>
           <Menu
             mode="inline"
-            defaultSelectedKeys={["/teacher/dashboard"]}
+            defaultSelectedKeys={["/teacher/dashboard/home"]}
             items={items}
             selectedKeys={selectedKeys}
           />

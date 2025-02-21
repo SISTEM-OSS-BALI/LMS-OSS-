@@ -35,11 +35,11 @@ export default function HomeStudent() {
     events,
     mergedData,
     startQuiz,
-    mergedDataCourse
+    mergedDataCourse,
   } = useMeetings();
 
   useEffect(() => {
-    console.log(mergedDataCourse)
+    console.log(mergedDataCourse);
   }, [mergedDataCourse]);
 
   // State untuk modal Placement Test
@@ -92,8 +92,13 @@ export default function HomeStudent() {
 
       <Row gutter={20} style={{ marginTop: "20px" }}>
         <Col md={16}>
-          <Title level={4}>Jadwal Pertemuan</Title>
-          <Card style={{ marginTop: "20px" }}>
+          <Card
+            title={<Title level={4}>Jadwal Pertemuan</Title>}
+            style={{
+              borderRadius: "10px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+            }}
+          >
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               initialView="dayGridMonth"
@@ -109,9 +114,14 @@ export default function HomeStudent() {
           </Card>
         </Col>
 
-        <Col md={8}>
-          <Title level={4}>To Do List</Title>
-          <Card style={{ marginTop: "20px", padding: "10px" }}>
+        <Col md={8} xs={24}>
+          <Card
+            style={{
+              borderRadius: "10px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+            }}
+            title={<Title level={4}>Daftar Aktivitas</Title>}
+          >
             {(!!mergedData && mergedData.length > 0) ||
             (!!mergedDataCourse && mergedDataCourse.length > 0) ? (
               <List
@@ -128,6 +138,14 @@ export default function HomeStudent() {
                         backgroundColor: "#FAFAFA",
                       }}
                     >
+                      <Title
+                        level={5}
+                        style={{
+                          color: item.timeLimit ? "#FA541C" : "#1890FF",
+                        }}
+                      >
+                        {item.timeLimit ? "Ujian" : "Modul"}
+                      </Title>
                       {/* Jika Item adalah Placement Test */}
                       {item.timeLimit ? (
                         <>
@@ -145,6 +163,7 @@ export default function HomeStudent() {
                           ) : (
                             <Button
                               type="primary"
+                              style={{ width: "100%" }}
                               onClick={() => handleStartTest(item)}
                             >
                               Mulai
@@ -154,15 +173,25 @@ export default function HomeStudent() {
                       ) : (
                         <>
                           {/* Jika Item adalah Course */}
-                          <Text strong>{item.name}</Text>
-                          <br />
-                          <Button type="primary">
-                            <Link
-                              href={`/student/dashboard/course-followed`}
+                          <Space
+                            direction="vertical"
+                            size={15}
+                            style={{ width: "100%" }}
+                          >
+                            <Text
+                              strong
+                              style={{ fontSize: "16px", marginBottom: "10px" }}
+                            >
+                              {item.name}
+                            </Text>
+                            <Button
+                              type="primary"
+                              block
+                              href="/student/dashboard/course-followed"
                             >
                               Lihat Detail
-                            </Link>
-                          </Button>
+                            </Button>
+                          </Space>
                         </>
                       )}
                     </Card>

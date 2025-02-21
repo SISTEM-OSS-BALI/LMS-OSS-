@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { MultipleChoicePlacementTest } from "@prisma/client";
 import useSWR from "swr";
 import { useSearchParams, useRouter } from "next/navigation";
 import { message, Modal } from "antd";
@@ -8,120 +7,160 @@ import { crudService } from "@/app/lib/services/crudServices";
 
 const { confirm } = Modal;
 
-interface MultipleChoicePlacementTestResponse {
-  data: MultipleChoicePlacementTest[];
+// Interfaces
+interface MultipleChoicePlacementTest {
+  mc_id: string;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  basePlacementTestId: string;
+}
+
+interface WritingPlacementTest {
+  writing_id: string;
+  question: string;
+  marks: number | null;
+  basePlacementTestId: string;
+}
+
+interface TrueFalseQuestion {
+  tf_id: string;
+  question: string;
+  correctAnswer: boolean;
+  group_id: string;
+}
+
+interface TrueFalseGroupPlacementTest {
+  group_id: string;
+  passage: string;
+  basePlacementTestId: string;
+  trueFalseQuestions: TrueFalseQuestion[];
+}
+
+interface BasePlacementTest {
+  base_id: string;
+  name: string;
+  placementTestId: string;
+  multipleChoices?: MultipleChoicePlacementTest[];
+  writingQuestions?: WritingPlacementTest[];
+  trueFalseGroups?: TrueFalseGroupPlacementTest[];
+}
+
+interface BasePlacementTestResponse {
+  data: BasePlacementTest[];
 }
 
 export const usePlacementTestViewModel = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Ambil parameter dari URL
   const selectedPlacementId = searchParams.get("testId") || "";
-  const time = searchParams.get("t") || "0"; // Default ke 0 jika tidak ada
+  const time = searchParams.get("t") || "0";
   const access_id = searchParams.get("accessId") || "";
 
-  // Fetch data soal
-  const {
-    data: multipleChoicePlacementTestData,
-    isLoading: multipleChoiceLoading,
-  } = useSWR<MultipleChoicePlacementTestResponse>(
-    selectedPlacementId
-      ? `/api/student/placementTest/showMultipleChoice/${selectedPlacementId}`
-      : null,
-    fetcher
-  );
+  // Fetching soal dari API
+  const { data: basePlacementTestData, isLoading: basePlacementTestLoading } =
+    useSWR<BasePlacementTestResponse>(
+      selectedPlacementId
+        ? `/api/student/placementTest/showBasePlacementTest/${selectedPlacementId}`
+        : null,
+      fetcher
+    );
 
+  // State
+  const [remainingTime, setRemainingTime] = useState(Number(time) * 60 || 0);
+  const [selectedAnswers, setSelectedAnswers] = useState<
+    Record<string, string>
+  >({});
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<{
-    [key: string]: string;
-  }>({});
-  const [remainingTime, setRemainingTime] = useState(0); // Konversi menit ke detik
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Shuffle questions & options **only once**
-  const questions = useMemo(() => {
-    if (!multipleChoicePlacementTestData?.data) return [];
-    return multipleChoicePlacementTestData.data.map((question) => ({
-      ...question,
-      options: Array.isArray(question.options) ? [...question.options] : [],
-    }));
-  }, [multipleChoicePlacementTestData]);
+  // Soal aktif berdasarkan section yang sedang dikerjakan
+  const currentSection = useMemo(() => {
+    return basePlacementTestData?.data[currentSectionIndex] || null;
+  }, [basePlacementTestData, currentSectionIndex]);
 
-  // Start countdown timer only after questions are loaded
-  useEffect(() => {
-    if (questions.length > 0) {
-      setRemainingTime(Number(time) * 60 || 0);
-      setIsLoading(false); // Ensure questions are fully loaded before setting loading to false
+  const currentQuestions = useMemo(() => {
+    if (!currentSection) return [];
+    if (currentSection.multipleChoices?.length)
+      return currentSection.multipleChoices;
+    if (currentSection.writingQuestions?.length)
+      return currentSection.writingQuestions;
+    if (currentSection.trueFalseGroups?.length) {
+      return currentSection.trueFalseGroups.flatMap(
+        (group) => group.trueFalseQuestions
+      );
     }
-  }, [questions, time]);
+    return [];
+  }, [currentSection]);
 
-  useEffect(() => {
-    if (remainingTime === 0 && questions.length > 0 && !isLoading) {
-      handleSubmit();
-    }
-  }, [remainingTime, questions, isLoading]);
-
+  // Timer countdown
   useEffect(() => {
     if (remainingTime > 0) {
       const timer = setInterval(() => {
         setRemainingTime((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(timer);
+    } else if (remainingTime === 0 && currentQuestions.length > 0) {
+      handleSubmit();
     }
   }, [remainingTime]);
 
-  // Format waktu ke MM:SS
+  // Format waktu MM:SS
   const formatTime = useCallback((seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
   }, []);
 
-  // Navigasi soal
+  // Navigasi antar soal
   const handleQuestionClick = useCallback((index: number) => {
     setCurrentQuestionIndex(index);
   }, []);
 
-  // Menyimpan jawaban yang dipilih
-  const handleAnswerChange = useCallback((mcqId: string, answer: string) => {
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [mcqId]: answer,
-    }));
-  }, []);
+  // Simpan jawaban
+  const handleAnswerChange = useCallback(
+    (questionId: string, answer: string) => {
+      setSelectedAnswers((prev) => ({
+        ...prev,
+        [questionId]: answer,
+      }));
+    },
+    []
+  );
 
-  // Konfirmasi sebelum mengirim jawaban
+  // Konfirmasi sebelum mengirim
   const showConfirmSubmit = () => {
-    const allAnswered = questions.every((q) => selectedAnswers[q.mcq_id]);
+    const allAnswered = currentQuestions.every(
+      (q: any) => selectedAnswers[q.mc_id || q.writing_id || q.tf_id]
+    );
+
     if (!allAnswered) {
-      message.warning(
-        "Pastikan Anda telah menjawab semua soal sebelum mengirim!"
-      );
+      message.warning("Pastikan semua soal telah dijawab!");
       return;
     }
+
     confirm({
       title: "Konfirmasi Pengiriman",
       content: "Apakah Anda yakin ingin mengirim jawaban?",
       okText: "Kirim",
       cancelText: "Batal",
-      onOk() {
+      onOk: () => {
         handleSubmit();
       },
     });
   };
 
-  // Mengirim jawaban ke backend
+  // Kirim jawaban ke backend
   const handleSubmit = async () => {
-    const selectedData = Object.keys(selectedAnswers).map((mcq_id) => ({
-      mcq_id,
-      selectedAnswer: selectedAnswers[mcq_id],
+    const selectedData = Object.keys(selectedAnswers).map((id) => ({
+      id,
+      selectedAnswer: selectedAnswers[id],
     }));
 
     const payload = {
       selectedData,
-      placement_test_id:
-        multipleChoicePlacementTestData?.data[0]?.placement_test_id || "",
+      placement_test_id: selectedPlacementId,
       access_id,
     };
 
@@ -146,17 +185,21 @@ export const usePlacementTestViewModel = () => {
   };
 
   return {
-    multipleChoicePlacementTestData,
-    questions,
-    time,
+    basePlacementTestData,
+    basePlacementTestLoading,
+    currentSection,
+    currentQuestions,
+    currentSectionIndex,
+    currentQuestionIndex,
     remainingTime,
     formatTime,
-    currentQuestionIndex,
     selectedAnswers,
     handleQuestionClick,
     handleAnswerChange,
+    setCurrentSectionIndex,
+    setCurrentQuestionIndex,
     showConfirmSubmit,
     handleSubmit,
-    isLoading,
+    time,
   };
 };

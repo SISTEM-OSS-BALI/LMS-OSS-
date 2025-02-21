@@ -7,18 +7,15 @@ import {
   Table,
   Typography,
   Spin,
-  Flex,
+  Skeleton,
   Button,
 } from "antd";
 import { useDetailConsultantViewModel } from "./useDetailConsultantViewModel";
 import { ColumnsType } from "antd/es/table";
 import { User } from "@prisma/client";
-import Icon, { LoadingOutlined } from "@ant-design/icons";
+import Icon from "@ant-design/icons";
 import { EyeIcon } from "@/app/components/Icon";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
-// ✅ Interface untuk Student dengan Program
 interface StudentWithProgram extends User {
   program_name: string;
 }
@@ -29,14 +26,11 @@ export default function ConsultantDetailComponent() {
     mergedDataStudent,
     countStudent,
     handlePushDetail,
+    isLoading,
   } = useDetailConsultantViewModel();
 
   const { Title, Text } = Typography;
-  useEffect(() => {
-    console.log(mergedDataStudent);
-  }, [mergedDataStudent]);
 
-  // ✅ Konfigurasi tabel
   const columns: ColumnsType<StudentWithProgram> = [
     {
       title: "No",
@@ -48,64 +42,62 @@ export default function ConsultantDetailComponent() {
       title: "Gambar",
       dataIndex: "imageUrl",
       key: "imageUrl",
-      render: (text) => (
-        <Image
-          src={text || "/default-avatar.png"}
-          alt="gambar"
-          width={50}
-          height={50}
-          style={{ borderRadius: "50%", objectFit: "cover" }}
-        />
-      ),
+      render: (text) =>
+        isLoading ? (
+          <Skeleton.Avatar active size={50} shape="circle" />
+        ) : (
+          <Image
+            src={text || "/default-avatar.png"}
+            alt="gambar"
+            width={50}
+            height={50}
+            style={{ borderRadius: "50%", objectFit: "cover" }}
+          />
+        ),
     },
     {
       title: "Nama",
       dataIndex: "username",
       key: "username",
+      render: (text) =>
+        isLoading ? <Skeleton.Input active size="small" /> : text,
     },
     {
       title: "Program",
       dataIndex: "program_name",
       key: "program_name",
+      render: (text) =>
+        isLoading ? <Skeleton.Input active size="small" /> : text,
     },
     {
       title: "Region",
       dataIndex: "region",
       key: "region",
+      render: (text) =>
+        isLoading ? <Skeleton.Input active size="small" /> : text,
     },
     {
       title: "Total Pertemuan",
       dataIndex: "count_program",
       key: "count_program",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (text) => {
-        if (text === "DONE") {
-          return <Tag color="blue">DONE</Tag>;
-        } else if (text === "HALF") {
-          return <Tag color="yellow">HALF</Tag>;
-        } else {
-          return <Tag color="red"></Tag>;
-        }
-      },
+      render: (text) =>
+        isLoading ? <Skeleton.Input active size="small" /> : text,
     },
     {
       title: "Detail",
       dataIndex: "detail",
       key: "detail",
-      render: (_, record) => {
-        return (
+      render: (_, record) =>
+        isLoading ? (
+          <Skeleton.Button active size="small" />
+        ) : (
           <Button
             type="primary"
             onClick={() => handlePushDetail(record.user_id)}
           >
             <Icon component={EyeIcon} />
           </Button>
-        );
-      },
+        ),
     },
   ];
 
@@ -117,28 +109,35 @@ export default function ConsultantDetailComponent() {
         <Col xs={24} md={12}>
           <Card bordered={false} style={{ backgroundColor: "#f0f2f5" }}>
             <Title level={4}>Konsultan</Title>
-            <Text strong>
-              {detailConsultantData?.data.name || "Loading..."}
-            </Text>
+            {isLoading ? (
+              <Skeleton.Input active size="small" />
+            ) : (
+              <Text strong>{detailConsultantData?.data.name || "-"}</Text>
+            )}
           </Card>
         </Col>
         <Col xs={24} md={12}>
           <Card bordered={false} style={{ backgroundColor: "#f0f2f5" }}>
             <Title level={4}>Total Siswa</Title>
-            <Text strong>
-              {countStudent ?? <Spin indicator={<LoadingOutlined />} />}
-            </Text>
+            {isLoading ? (
+              <Skeleton.Input active size="small" />
+            ) : (
+              <Text strong>{countStudent ?? "-"}</Text>
+            )}
           </Card>
         </Col>
       </Row>
       <Card>
-        <Table
-          columns={columns}
-          dataSource={mergedDataStudent}
-          rowKey="user_id"
-          pagination={{ pageSize: 5 }}
-          loading={!mergedDataStudent.length}
-        />
+        {isLoading ? (
+          <Skeleton active paragraph={{ rows: 6 }} />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={mergedDataStudent}
+            rowKey="user_id"
+            pagination={{ pageSize: 5 }}
+          />
+        )}
       </Card>
     </div>
   );

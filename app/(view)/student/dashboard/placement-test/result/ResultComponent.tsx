@@ -29,7 +29,7 @@ export default function ResultComponent() {
   
   const handleBack = () => {
     sessionStorage.removeItem("placementTestResult");
-    router.push("/student/dashboard");
+    router.push("/student/dashboard/home");
   };
 
   return result ? (
