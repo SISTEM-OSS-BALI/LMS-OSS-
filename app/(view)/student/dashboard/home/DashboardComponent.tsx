@@ -36,21 +36,15 @@ export default function HomeStudent() {
     mergedData,
     startQuiz,
     mergedDataCourse,
+    handleStartTest,
+    isTestModalVisible,
+    setIsTestModalVisible,
+    selectedTest,
   } = useMeetings();
 
-  useEffect(() => {
-    console.log(mergedDataCourse);
-  }, [mergedDataCourse]);
+
 
   // State untuk modal Placement Test
-  const [isTestModalVisible, setIsTestModalVisible] = useState(false);
-  const [selectedTest, setSelectedTest] = useState<any>(null);
-
-  // Menampilkan modal deskripsi sebelum tes
-  const handleStartTest = (test: any) => {
-    setSelectedTest(test);
-    setIsTestModalVisible(true);
-  };
 
   // Redirect ke halaman Placement Test
 

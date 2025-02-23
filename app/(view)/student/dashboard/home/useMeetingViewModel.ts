@@ -34,8 +34,6 @@ interface CourseResponse {
   data: Course[];
 }
 
-
-
 export const useMeetings = () => {
   const router = useRouter();
   const { data: showMeetingById } = useSWR(
@@ -68,28 +66,13 @@ export const useMeetings = () => {
     fetcher
   );
 
-  const { data: courseData } = useSWR<CourseResponse>("/api/student/course/show", fetcher);
-
-  const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(
-    null
+  const { data: courseData } = useSWR<CourseResponse>(
+    "/api/student/course/show",
+    fetcher
   );
 
-  useEffect(() => {
-    if (accessPlacemenetTestData?.data && placemenetTestData?.data) {
-      const foundPlacement = accessPlacemenetTestData.data
-        .map((access) =>
-          placemenetTestData.data.find(
-            (placement) =>
-              placement.placement_test_id === access.placement_test_id
-          )
-        )
-        .find((placement) => placement !== undefined);
-
-      if (foundPlacement) {
-        setSelectedPlacementId(foundPlacement.placement_test_id);
-      }
-    }
-  }, [accessPlacemenetTestData, placemenetTestData]);
+  const [isTestModalVisible, setIsTestModalVisible] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<any>(null);
 
   const mergedDataCourse = courseData?.data.map((course) => {
     const accessCourse = accessCourseData?.data.find(
@@ -99,7 +82,12 @@ export const useMeetings = () => {
       ...course,
       ...accessCourse,
     };
-  })
+  });
+
+  const handleStartTest = (test: any) => {
+    setSelectedTest(test);
+    setIsTestModalVisible(true);
+  };
 
   const formatDateTimeToUTC = (dateTime: string) => {
     return dayjs.utc(dateTime).toISOString();
@@ -118,7 +106,7 @@ export const useMeetings = () => {
 
   const startQuiz = () => {
     router.push(
-      `/student/dashboard/placement-test?testId=${selectedPlacementId}&t=${mergedData?.[0]?.timeLimit}&accessId=${mergedData?.[0]?.access_placement_test_id}`
+      `/student/dashboard/placement-test?testId=${selectedTest.placement_test_id}&t=${mergedData?.[0]?.timeLimit}&accessId=${mergedData?.[0]?.access_placement_test_id}`
     );
   };
 
@@ -171,6 +159,10 @@ export const useMeetings = () => {
     count_program,
     mergedData,
     startQuiz,
-    mergedDataCourse
+    mergedDataCourse,
+    handleStartTest,
+    isTestModalVisible,
+    setIsTestModalVisible,
+    selectedTest,
   };
 };

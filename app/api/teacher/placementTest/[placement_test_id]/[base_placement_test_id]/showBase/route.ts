@@ -15,6 +15,13 @@ export async function GET(
   try {
     const basePlacementTestId = params.base_placement_test_id;
 
+    const nameBase = await prisma.basePlacementTest.findUnique({
+      where: { base_id: basePlacementTestId },
+      select: {
+        name:true
+      }
+    });
+
     // Fetch semua jenis test secara paralel
     const [multipleChoiceTests, trueFalseTests, writingTests] =
       await Promise.all([
@@ -48,6 +55,7 @@ export async function GET(
       status: 200,
       error: false,
       data: {
+        name: nameBase,
         multipleChoice: multipleChoiceTests,
         trueFalse: trueFalseTests,
         writing: writingTests,

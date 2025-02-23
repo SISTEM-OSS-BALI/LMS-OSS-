@@ -1,4 +1,14 @@
-import { Table, Collapse, Typography, Tag, Space, Card, Col } from "antd";
+import {
+  Table,
+  Collapse,
+  Typography,
+  Tag,
+  Space,
+  Card,
+  Col,
+  Skeleton,
+  Alert,
+} from "antd";
 import { useStudentViewModel } from "./useStudentViewModel";
 import { useEffect } from "react";
 import {
@@ -36,7 +46,21 @@ interface Student {
 }
 
 export default function StudentComponent() {
-  const { mergedStudent }: { mergedStudent: Student[] } = useStudentViewModel();
+  const {
+    mergedStudent,
+    meetingDataLoading,
+    programDataLoading,
+    teacherDataLoading,
+  }: {
+    mergedStudent: Student[];
+    meetingDataLoading: boolean;
+    programDataLoading: boolean;
+    teacherDataLoading: boolean;
+  } = useStudentViewModel();
+
+  const isLoading =
+    meetingDataLoading || programDataLoading || teacherDataLoading;
+  const isDataEmpty = !mergedStudent || mergedStudent.length === 0;
 
   // **🔹 Kolom untuk tabel siswa**
   const columns = [
@@ -164,7 +188,7 @@ export default function StudentComponent() {
         );
 
         return Object.entries(teacherMeetings).map(([teacher, count], i) => (
-          <Col>
+          <Col key={i}>
             <Tag key={i} color="geekblue">
               {teacher}: {count} Pertemuan
             </Tag>
@@ -178,12 +202,27 @@ export default function StudentComponent() {
     <div style={{ padding: "20px" }}>
       <Title level={3}>Data Siswa</Title>
       <Card>
-        <Table
-          columns={columns}
-          dataSource={mergedStudent}
-          rowKey="user_id"
-          scroll={{ x: "max-content" }}
-        />
+        {/* Skeleton Loading */}
+        {isLoading ? (
+          <>
+            <Skeleton active />
+            <Skeleton active paragraph={{ rows: 4 }} />
+          </>
+        ) : isDataEmpty ? (
+          <Alert
+            message="Informasi"
+            description="Tidak ada data siswa tersedia."
+            type="info"
+            showIcon
+          />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={mergedStudent}
+            rowKey="user_id"
+            scroll={{ x: "max-content" }}
+          />
+        )}
       </Card>
     </div>
   );

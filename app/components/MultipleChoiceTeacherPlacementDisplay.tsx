@@ -1,6 +1,6 @@
 import React from "react";
-import { Card, Radio, Typography, Button, Popconfirm } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Card, Radio, Typography, Button, Popconfirm, Flex } from "antd";
+import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { MultipleChoicePlacementTest } from "@prisma/client";
 
 const { Title } = Typography;
@@ -16,58 +16,68 @@ const MultipleChoiceTeacherPlacementDisplay: React.FC<MultipleChoiceProps> = ({
   onEdit,
   onDelete,
 }) => {
-
   return (
     <div>
-      {data.map(({ mc_id, question, options, correctAnswer }) => {
-        // Pastikan `options` adalah array string
-        const validOptions = Array.isArray(options) ? options.map(String) : [];
+      {/* Tombol Tambah Soal di atas */}
 
-        return (
-          <Card key={mc_id} style={{ marginBottom: "20px" }}>
-            <Title level={4}>
-              <div dangerouslySetInnerHTML={{ __html: question }} />
-            </Title>
-            <Radio.Group value={correctAnswer} disabled>
-              {validOptions.map((option, optionIndex) => (
-                <Radio
-                  key={optionIndex}
-                  value={option}
-                  style={{ display: "block" }}
+      {/* Daftar Soal */}
+      {data.length > 0 ? (
+        data.map(({ mc_id, question, options, correctAnswer }) => {
+          const validOptions = Array.isArray(options)
+            ? options.map(String)
+            : [];
+
+          return (
+            <Card key={mc_id} style={{ marginBottom: "20px" }}>
+              <Title level={4}>
+                <div dangerouslySetInnerHTML={{ __html: question }} />
+              </Title>
+              <Radio.Group value={correctAnswer} disabled>
+                {validOptions.map((option, optionIndex) => (
+                  <Radio
+                    key={optionIndex}
+                    value={option}
+                    style={{ display: "block" }}
+                  >
+                    {option}
+                  </Radio>
+                ))}
+              </Radio.Group>
+
+              {/* Tombol Edit dan Delete di bawah pertanyaan */}
+              <div
+                style={{
+                  marginTop: "15px",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => onEdit(mc_id)}
+                  style={{ marginRight: "10px" }}
                 >
-                  {option}
-                </Radio>
-              ))}
-            </Radio.Group>
+                  Edit
+                </Button>
 
-            {/* Tombol Edit dan Delete di bawah pertanyaan */}
-            <div
-              style={{
-                marginTop: "15px",
-                display: "flex",
-                justifyContent: "flex-end",
-              }}
-            >
-              <Button
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => onEdit(mc_id)}
-                style={{ marginRight: "10px" }}
-              >
-                Edit
-              </Button>
-              <Popconfirm
-                title="Yakin menghapus soal ini?"
-                onConfirm={() => onDelete(mc_id)}
-              >
-                <Button type="primary" danger icon={<DeleteOutlined />}>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => onDelete(mc_id)}
+                >
                   Hapus
                 </Button>
-              </Popconfirm>
-            </div>
-          </Card>
-        );
-      })}
+              </div>
+            </Card>
+          );
+        })
+      ) : (
+        <p style={{ textAlign: "center", color: "#888" }}>
+          Belum ada soal multiple choice. Klik Tambah Soal untuk menambahkan.
+        </p>
+      )}
     </div>
   );
 };

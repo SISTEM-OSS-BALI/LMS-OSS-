@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Typography, Button, Popconfirm } from "antd";
+import { Card, Typography, Button, Popconfirm, Flex } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { WritingPlacementTest } from "@prisma/client";
 
@@ -18,39 +18,47 @@ const WritingPlacementTestDisplay: React.FC<WritingPlacementProps> = ({
 }) => {
   return (
     <div>
-      {data.map(({ writing_id, question, marks }) => (
-        <Card key={writing_id} style={{ marginBottom: "20px" }}>
-          <Title level={4}>
-            <div dangerouslySetInnerHTML={{ __html: question }} />
-          </Title>
+      {/* Daftar Soal */}
+      {data.length > 0 ? (
+        data.map(({ writing_id, question, marks }) => (
+          <Card key={writing_id} style={{ marginBottom: "20px" }}>
+            <Title level={4}>
+              <div dangerouslySetInnerHTML={{ __html: question }} />
+            </Title>
 
-          {/* Tombol Edit dan Delete di bawah pertanyaan */}
-          <div
-            style={{
-              marginTop: "15px",
-              display: "flex",
-              justifyContent: "flex-end",
-            }}
-          >
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => onEdit(writing_id)}
-              style={{ marginRight: "10px" }}
+            {/* Tombol Edit dan Delete di bawah pertanyaan */}
+            <div
+              style={{
+                marginTop: "15px",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
             >
-              Edit
-            </Button>
-            <Popconfirm
-              title="Yakin menghapus soal ini?"
-              onConfirm={() => onDelete(writing_id)}
-            >
-              <Button type="primary" danger icon={<DeleteOutlined />}>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => onEdit(writing_id)}
+                style={{ marginRight: "10px" }}
+              >
+                Edit
+              </Button>
+
+              <Button
+                type="primary"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => onDelete(writing_id)}
+              >
                 Hapus
               </Button>
-            </Popconfirm>
-          </div>
-        </Card>
-      ))}
+            </div>
+          </Card>
+        ))
+      ) : (
+        <p style={{ textAlign: "center", color: "#888" }}>
+          Belum ada soal writing. Klik Tambah Soal Writing untuk menambahkan.
+        </p>
+      )}
     </div>
   );
 };

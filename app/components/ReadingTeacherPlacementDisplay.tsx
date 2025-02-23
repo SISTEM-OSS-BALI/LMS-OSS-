@@ -20,9 +20,9 @@ interface ReadingPlacement {
 interface ReadingPlacementProps {
   data: ReadingPlacement[];
   onEditPassage: (group_id: string) => void;
-  onEditQuestion: (tf_id: string) => void;
+  onEditQuestion: (group_id: string, tf_id: string) => void;
   onDeleteQuestion: (tf_id: string) => void;
-  onAddQuestion: (group_id: string) => void;
+  onAddQuestionMore: (group_id: string) => void;
 }
 
 const ReadingPlacementTestDisplay: React.FC<ReadingPlacementProps> = ({
@@ -30,7 +30,7 @@ const ReadingPlacementTestDisplay: React.FC<ReadingPlacementProps> = ({
   onEditPassage,
   onEditQuestion,
   onDeleteQuestion,
-  onAddQuestion,
+  onAddQuestionMore,
 }) => {
   return (
     <div>
@@ -51,7 +51,7 @@ const ReadingPlacementTestDisplay: React.FC<ReadingPlacementProps> = ({
               icon={<EditOutlined />}
               onClick={() => onEditPassage(group_id)}
             >
-              Edit Soal
+              Edit Passage
             </Button>
           </div>
 
@@ -65,18 +65,18 @@ const ReadingPlacementTestDisplay: React.FC<ReadingPlacementProps> = ({
               lineHeight: "1.6",
             }}
           >
-            {passage}
+            <div dangerouslySetInnerHTML={{ __html: passage }} />
           </Paragraph>
 
           {/* Daftar Pertanyaan True/False */}
           <div style={{ marginTop: "20px" }}>
             <Flex justify="space-between" style={{ marginBottom: "24px" }}>
-              <Title level={4} style={{ marginBlock: 0 }}>Pertanyaan</Title>
+              <Title level={4} style={{ marginBlock: 0 }}>
+                Pertanyaan
+              </Title>
               <Button
                 type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => onAddQuestion(group_id)}
-                style={{ marginTop: "10px" }}
+                onClick={() => onAddQuestionMore(group_id)}
               >
                 Tambah Pertanyaan
               </Button>
@@ -94,23 +94,20 @@ const ReadingPlacementTestDisplay: React.FC<ReadingPlacementProps> = ({
                     alignItems: "center",
                   }}
                 >
-                  <Text>{question}</Text>
+                  <Text>
+                    <div dangerouslySetInnerHTML={{ __html: question }} />
+                  </Text>
                   <Space>
                     <Button
                       type="primary"
                       icon={<EditOutlined />}
-                      onClick={() => onEditQuestion(tf_id)}
+                      onClick={() => onEditQuestion(group_id, tf_id)}
                     >
                       Edit
                     </Button>
-                    <Popconfirm
-                      title="Yakin menghapus pertanyaan ini?"
-                      onConfirm={() => onDeleteQuestion(tf_id)}
-                    >
-                      <Button type="primary" danger icon={<DeleteOutlined />}>
+                      <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDeleteQuestion(tf_id)}>
                         Hapus
                       </Button>
-                    </Popconfirm>
                   </Space>
                 </div>
                 <Radio.Group
@@ -123,8 +120,6 @@ const ReadingPlacementTestDisplay: React.FC<ReadingPlacementProps> = ({
                 </Radio.Group>
               </Card>
             ))}
-
-            {/* Tombol Tambah Pertanyaan */}
           </div>
         </Card>
       ))}

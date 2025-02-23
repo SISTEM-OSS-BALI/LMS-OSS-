@@ -121,6 +121,19 @@ export default function PlacementTestComponent() {
     return currentSection?.trueFalseGroups?.[0]?.passage || null;
   };
 
+   const handleNameChange = (name: string) => {
+     switch (name) {
+       case "WRITING":
+         return "Writing";
+       case "MULTIPLE_CHOICE":
+         return "Multiple Choice";
+       case "READING":
+         return "Reading";
+       default:
+         return "";
+     }
+   };
+
   return (
     <div
       style={{
@@ -150,7 +163,7 @@ export default function PlacementTestComponent() {
             >
               <Col>
                 <Title level={screens.xs ? 5 : 4} style={{ marginBottom: 0 }}>
-                  {currentSection?.name || "Loading..."}
+                  {handleNameChange(currentSection?.name ?? "") || "Loading..."}
                 </Title>
               </Col>
               <Col>
@@ -185,7 +198,11 @@ export default function PlacementTestComponent() {
                   padding: "15px",
                 }}
               >
-                <p>{getPassage()}</p>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: getPassage() ?? "",
+                  }}
+                />
               </Card>
             )}
 
@@ -196,13 +213,17 @@ export default function PlacementTestComponent() {
                   level={screens.xs ? 5 : 4}
                   style={{ marginBottom: "15px" }}
                 >
-                  {currentQuestionIndex + 1}.{" "}
-                  {currentQuestions[currentQuestionIndex]?.question ||
-                    "Soal tidak tersedia"}
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        currentQuestions[currentQuestionIndex]?.question ||
+                        "Soal tidak tersedia",
+                    }}
+                  />
                 </Title>
 
                 {/* Multiple Choice */}
-                {currentSection?.name === "Multiple Choice" &&
+                {currentSection?.name === "MULTIPLE_CHOICE" &&
                   currentQuestions[currentQuestionIndex] && (
                     <Radio.Group
                       onChange={(e) =>
@@ -244,7 +265,7 @@ export default function PlacementTestComponent() {
                   )}
 
                 {/* Writing */}
-                {currentSection?.name === "Writing" &&
+                {currentSection?.name === "WRITING" &&
                   currentQuestions[currentQuestionIndex] && (
                     <Input.TextArea
                       rows={5}
@@ -379,7 +400,7 @@ export default function PlacementTestComponent() {
                         color: isSectionCompleted ? "white" : undefined,
                       }}
                     >
-                      {section.name}
+                      {handleNameChange(section.name)}
                     </Button>
                   </Col>
                 );

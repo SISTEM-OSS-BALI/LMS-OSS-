@@ -44,9 +44,21 @@ export default function DetailPlacementComponent() {
     handleOpenModal,
     handleSubmit,
     handleEdit,
+    selectedBase,
+    handleDelete,
   } = useDetailPlacementTestViewModel();
   const detailPlacement = dataDetailPlacementTest?.data;
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+
+  const confirmDelete = (base_id: string) => {
+    Modal.confirm({
+      title: "Yakin menghapus data ini?",
+      content: "Data yang dihapus tidak dapat dikembalikan",
+      onOk() {
+        handleDelete(base_id);
+      },
+    });
+  };
 
   return (
     <div style={{ padding: "24px" }}>
@@ -110,7 +122,7 @@ export default function DetailPlacementComponent() {
                     <Link
                       href={`/teacher/dashboard/placement-test/${baseTest.placementTestId}/${baseTest.base_id}`}
                     >
-                      {baseTest.name}
+                      {baseTest.name == "MULTIPLE_CHOICE" ? "Multiple Choice" : baseTest.name == "WRITING" ? "Writing" : "Reading"}
                     </Link>
                   </Typography.Title>
 
@@ -127,6 +139,7 @@ export default function DetailPlacementComponent() {
                       danger
                       icon={<DeleteOutlined />}
                       style={{ borderRadius: "8px", padding: "4px 12px" }}
+                      onClick={() => confirmDelete(baseTest.base_id)}
                     />
                   </Space>
                 </Card>
@@ -250,7 +263,7 @@ export default function DetailPlacementComponent() {
       <Modal
         open={isModalVisible}
         onCancel={handleCancelModal}
-        title="Tambah Section"
+        title={selectedBase ? "Edit Section" : "Tambah Section"}
         footer={null}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>

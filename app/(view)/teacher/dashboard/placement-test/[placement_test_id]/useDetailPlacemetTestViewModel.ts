@@ -31,7 +31,7 @@ export const useDetailPlacementTestViewModel = () => {
   const query = useParams();
   const placement_test_id = query.placement_test_id;
 
-  const { data: dataDetailPlacementTest, error: detailPlacementError } =
+  const { data: dataDetailPlacementTest, mutate: mutateDetail } =
     useSWR<PlacementTestResponse>(
       `/api/teacher/placementTest/${placement_test_id}/detail`,
       fetcher
@@ -57,7 +57,9 @@ export const useDetailPlacementTestViewModel = () => {
 
   const [isModalAccessVisible, setIsModalAccessVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedBase, setSelectedBase] = useState<BasePlacementTest | null>(null);
+  const [selectedBase, setSelectedBase] = useState<BasePlacementTest | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [form] = Form.useForm();
 
@@ -90,28 +92,7 @@ export const useDetailPlacementTestViewModel = () => {
   const handleCancelModal = () => {
     setIsModalVisible(false);
     form.resetFields();
-  };
-
-  const handleSubmit = async (values: any) => {
-    setLoading(true);
-    const payload = {
-      ...values,
-    };
-    try {
-      await crudService.post(
-        `/api/teacher/placementTest/${placement_test_id}/createBase`,
-        payload
-      );
-
-      notification.success({ message: "Berhasil membuat data" });
-      mutateBasePlacementTest()
-      handleCancelModal();
-    } catch (error) {
-      console.error(error);
-      notification.error({ message: "Gagal membuat placement test" });
-    } finally {
-      setLoading(false);
-    }
+    setSelectedBase(null);
   };
 
   const handleEdit = (base_id: string) => {
@@ -125,12 +106,40 @@ export const useDetailPlacementTestViewModel = () => {
       setSelectedBase(selectBase);
       handleOpenModal();
     }
-  }
+  };
+
+  const handleSubmit = async (values: any) => {
+    setLoading(true);
+    const payload = {
+      ...values,
+    };
+    try {
+      if (selectedBase) {
+        await crudService.put(
+          `/api/teacher/placementTest/${placement_test_id}/${selectedBase.base_id}/updateBase`,
+          payload
+        );
+      } else {
+        await crudService.post(
+          `/api/teacher/placementTest/${placement_test_id}/createBase`,
+          payload
+        );
+      }
+
+      notification.success({ message: "Berhasil membuat data" });
+      mutateBasePlacementTest();
+      handleCancelModal();
+    } catch (error) {
+      console.error(error);
+      notification.error({ message: "Gagal membuat placement test" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmitAccess = async () => {
     try {
       setLoading(true);
-      console.log(selectedStudent);
       const payload = {
         student_id: selectedStudent,
         placement_test_id: placement_test_id,
@@ -148,6 +157,21 @@ export const useDetailPlacementTestViewModel = () => {
       notification.error({ message: "Gagal memberikan akses" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = (base_id: string) => {
+    try {
+      crudService.delete(
+        `/api/teacher/placementTest/${placement_test_id}/${base_id}/deleteBase`,
+        base_id
+      );
+      notification.success({ message: "Berhasil menghapus data" });
+      mutateBasePlacementTest();
+      mutateDetail();
+    } catch (error) {
+      console.error(error);
+      notification.error({ message: "Gagal menghapus data" });
     }
   };
 
@@ -170,6 +194,8 @@ export const useDetailPlacementTestViewModel = () => {
     handleOpenModal,
     handleCancelModal,
     handleSubmit,
-    handleEdit
+    handleEdit,
+    selectedBase,
+    handleDelete,
   };
 };

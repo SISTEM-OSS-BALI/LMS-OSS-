@@ -34,8 +34,8 @@ export default function Loading() {
           <Image
             src="/assets/images/loading.png"
             alt="Loading"
-            width={150}
-            height={150}
+            width={200}
+            height={200}
             priority
           />
         </div>
