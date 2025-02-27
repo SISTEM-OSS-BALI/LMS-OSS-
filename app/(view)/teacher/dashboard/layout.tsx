@@ -3,9 +3,12 @@
 import React, { useState } from "react";
 import {
   DesktopOutlined,
+  ExceptionOutlined,
+  FileOutlined,
   LogoutOutlined,
   PieChartOutlined,
   TableOutlined,
+  UsergroupAddOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
@@ -50,6 +53,7 @@ const menuMap: { [key: string]: string } = {
   "/teacher/dashboard/queue": "/teacher/dashboard/queue",
   "/teacher/dashboard/student": "/teacher/dashboard/student",
   "/teacher/dashboard/placement-test": "/teacher/dashboard/placement-test",
+  "/teacher/dashboard/mock-test": "/teacher/dashboard/mock-test",
 };
 
 const items: MenuItem[] = [
@@ -71,12 +75,17 @@ const items: MenuItem[] = [
   getItem(
     <Link href="/teacher/dashboard/student">Siswa</Link>,
     "/teacher/dashboard/student",
-    <UserOutlined />
+    <UsergroupAddOutlined />
   ),
   getItem(
     <Link href="/teacher/dashboard/placement-test">Placement Test</Link>,
     "/teacher/dashboard/placement-test",
-    <UserOutlined />
+    <ExceptionOutlined />
+  ),
+  getItem(
+    <Link href="/teacher/dashboard/mock-test">Try Out</Link>,
+    "/teacher/dashboard/mock-test",
+    <FileOutlined />
   ),
 ];
 

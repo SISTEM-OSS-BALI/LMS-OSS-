@@ -15,10 +15,6 @@ interface PlacementTestResponse {
   data: PlacementTest;
 }
 
-interface MultipleChoiceResponse {
-  data: MultipleChoicePlacementTest[];
-}
-
 interface UserResponse {
   data: User[];
 }
@@ -36,12 +32,6 @@ export const useDetailPlacementTestViewModel = () => {
       `/api/teacher/placementTest/${placement_test_id}/detail`,
       fetcher
     );
-
-  // const { data: dataDetailMultipleChoice, error: detailMultipleChoiceError } =
-  //   useSWR<MultipleChoiceResponse>(
-  //     `/api/teacher/placementTest/${placement_test_id}/showMultipleChoice`,
-  //     fetcher
-  //   );
 
   const {
     data: basePlacementTestData,
@@ -177,7 +167,6 @@ export const useDetailPlacementTestViewModel = () => {
 
   return {
     dataDetailPlacementTest,
-    // dataDetailMultipleChoice,
     handleOpenModalAccess,
     isModalVisible,
     isModalAccessVisible,

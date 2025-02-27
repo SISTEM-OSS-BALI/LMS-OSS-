@@ -52,6 +52,13 @@ enum SectionType {
   WRITING
 }
 
+enum MockTestType {
+  READING
+  LISTENING
+  SPEAKING
+  WRITING
+}
+
 model User {
   user_id       String    @id @default(uuid())
   username      String
@@ -97,6 +104,7 @@ model User {
   Section                   Section[]           @relation("StudentSection")
   Testimoni                 Testimoni[]         @relation("StudentTestimoni")
   AccessCourse              AccessCourse[]
+  AccessMockTest            AccessMockTest[]
 }
 
 model Consultant {
@@ -560,4 +568,101 @@ model Testimoni {
   class_experience                  String @db.LongText // Pengalaman siswa dalam kelas (Plus & Minus serta saran)
   favorite_part                     String @db.LongText // Bagian yang paling disukai dari pembelajaran
   improvement_suggestions           String @db.LongText // Hal yang perlu ditingkatkan dalam pengajaran 
+}
+
+model AccessMockTest {
+  access_mock_test_id String   @id @default(uuid())
+  user                User     @relation(fields: [user_id], references: [user_id])
+  user_id             String
+  mockTest            MockTest @relation(fields: [mock_test_id], references: [mock_test_id])
+  mock_test_id        String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  is_completed        Boolean? @default(false)
+}
+
+model MockTest {
+  mock_test_id String   @id @default(uuid())
+  name         String
+  description  String?  @db.LongText
+  time_limit   Int?
+  createdAt    DateTime @default(now())
+
+  baseMockTests  BaseMockTest[]
+  AccessMockTest AccessMockTest[]
+}
+
+model BaseMockTest {
+  base_mock_test_id String       @id @default(uuid())
+  mock_test         MockTest     @relation(fields: [mock_test_id], references: [mock_test_id], onDelete: Cascade)
+  mock_test_id      String
+  type              MockTestType
+  createdAt         DateTime     @default(now())
+
+  reading   ReadingMockTest?
+  listening ListeningMockTest?
+  speaking  SpeakingMockTest?
+  writing   WritingMockTest?
+}
+
+model ReadingMockTest {
+  reading_id        String            @id @default(uuid())
+  base_mock_test    BaseMockTest      @relation(fields: [base_mock_test_id], references: [base_mock_test_id], onDelete: Cascade)
+  base_mock_test_id String            @unique
+  passage           String            @db.LongText
+  questions         ReadingQuestion[]
+}
+
+model ReadingQuestion {
+  question_id String          @id @default(uuid())
+  reading     ReadingMockTest @relation(fields: [reading_id], references: [reading_id], onDelete: Cascade)
+  reading_id  String
+  question    String          @db.LongText
+  options     Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
+  answer      String? // Jawaban benar (bisa teks langsung atau indeks opsi)
+}
+
+model ListeningMockTest {
+  listening_id      String       @id @default(uuid())
+  base_mock_test    BaseMockTest @relation(fields: [base_mock_test_id], references: [base_mock_test_id], onDelete: Cascade)
+  base_mock_test_id String       @unique
+  audio_url         String       @db.LongText
+  transcript        String? // Opsional, bisa menyimpan transkrip audio
+
+  questions ListeningQuestion[]
+}
+
+model ListeningQuestion {
+  question_id  String            @id @default(uuid())
+  listening    ListeningMockTest @relation(fields: [listening_id], references: [listening_id], onDelete: Cascade)
+  listening_id String
+  question     String            @db.LongText
+  options      Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
+  answer       String? // Jawaban benar
+}
+
+model SpeakingMockTest {
+  speaking_id       String       @id @default(uuid())
+  base_mock_test    BaseMockTest @relation(fields: [base_mock_test_id], references: [base_mock_test_id], onDelete: Cascade)
+  base_mock_test_id String       @unique
+  prompt            String       @db.LongText
+  recording_url     String? // URL untuk menyimpan rekaman jawaban peserta
+}
+
+model WritingMockTest {
+  writing_id        String       @id @default(uuid())
+  base_mock_test    BaseMockTest @relation(fields: [base_mock_test_id], references: [base_mock_test_id], onDelete: Cascade)
+  base_mock_test_id String       @unique
+  prompt            String       @db.LongText
+
+  questions WritingQuestion[]
+}
+
+model WritingQuestion {
+  question_id String          @id @default(uuid())
+  writing     WritingMockTest @relation(fields: [writing_id], references: [writing_id], onDelete: Cascade)
+  writing_id  String
+  question    String          @db.LongText
+  options     Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
+  answer      String?
 }
