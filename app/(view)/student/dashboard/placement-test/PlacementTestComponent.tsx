@@ -65,6 +65,7 @@ export default function PlacementTestComponent() {
     selectedAnswers,
     handleAnswerChange,
     showConfirmSubmit,
+    loading,
   } = usePlacementTestViewModel();
 
   const isAllSectionsCompleted = useMemo(() => {
@@ -94,7 +95,7 @@ export default function PlacementTestComponent() {
       setCurrentSectionIndex(0);
       setCurrentQuestionIndex(0);
     }
-  }, [basePlacementTestData]);
+  }, [basePlacementTestData, setCurrentSectionIndex, setCurrentQuestionIndex]);
 
   if (basePlacementTestLoading) {
     return <Loading />;
@@ -121,18 +122,18 @@ export default function PlacementTestComponent() {
     return currentSection?.trueFalseGroups?.[0]?.passage || null;
   };
 
-   const handleNameChange = (name: string) => {
-     switch (name) {
-       case "WRITING":
-         return "Writing";
-       case "MULTIPLE_CHOICE":
-         return "Multiple Choice";
-       case "READING":
-         return "Reading";
-       default:
-         return "";
-     }
-   };
+  const handleNameChange = (name: string) => {
+    switch (name) {
+      case "WRITING":
+        return "Writing";
+      case "MULTIPLE_CHOICE":
+        return "Multiple Choice";
+      case "READING":
+        return "Reading";
+      default:
+        return "";
+    }
+  };
 
   return (
     <div
@@ -335,7 +336,11 @@ export default function PlacementTestComponent() {
                       Selanjutnya
                     </Button>
                   ) : isAllSectionsCompleted ? (
-                    <Button type="primary" onClick={showConfirmSubmit}>
+                    <Button
+                      type="primary"
+                      onClick={showConfirmSubmit}
+                      loading={loading}
+                    >
                       Kirim
                     </Button>
                   ) : null}

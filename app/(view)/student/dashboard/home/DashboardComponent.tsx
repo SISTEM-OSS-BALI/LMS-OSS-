@@ -20,7 +20,6 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useMeetings } from "./useMeetingViewModel";
 import Link from "next/link";
-import CustomAlert from "@/app/components/CustomAlert";
 
 const { Title, Text } = Typography;
 
@@ -40,9 +39,13 @@ export default function HomeStudent() {
     isTestModalVisible,
     setIsTestModalVisible,
     selectedTest,
+    mergedDataMockTest,
+    handleModalCloseTest,
   } = useMeetings();
 
-
+  useEffect(() => {
+    console.log(mergedDataMockTest);
+  }, [mergedDataMockTest]);
 
   // State untuk modal Placement Test
 
@@ -116,12 +119,14 @@ export default function HomeStudent() {
             }}
             title={<Title level={4}>Daftar Aktivitas</Title>}
           >
-            {(!!mergedData && mergedData.length > 0) ||
-            (!!mergedDataCourse && mergedDataCourse.length > 0) ? (
+            {!!mergedData?.length ||
+            !!mergedDataCourse?.length ||
+            !!mergedDataMockTest?.length ? (
               <List
                 dataSource={[
                   ...(mergedData || []),
                   ...(mergedDataCourse || []),
+                  ...(mergedDataMockTest || []),
                 ]}
                 renderItem={(item: any) => (
                   <List.Item>
@@ -140,9 +145,34 @@ export default function HomeStudent() {
                       >
                         {item.timeLimit ? "Ujian" : "Modul"}
                       </Title>
-                      {/* Jika Item adalah Placement Test */}
-                      {item.timeLimit ? (
+
+                      {/* Jika Item adalah Mock Test */}
+                      {item.mock_test_id ? (
                         <>
+                          <Text strong>{item.name}</Text>
+                          <p style={{ margin: "5px 0" }}>
+                            <Text>{item.description}</Text>
+                          </p>
+                          {item.is_completed ? (
+                            <Space>
+                              <Button type="primary" disabled>
+                                Tes Telah Dilakukan
+                              </Button>
+                              <Button type="primary">Riwayat</Button>
+                            </Space>
+                          ) : (
+                            <Button
+                              type="primary"
+                              style={{ width: "100%" }}
+                              onClick={() => handleStartTest(item)}
+                            >
+                              Mulai
+                            </Button>
+                          )}
+                        </>
+                      ) : item.timeLimit ? (
+                        <>
+                          {/* Jika Item adalah Placement Test */}
                           <Text strong>{item.name}</Text>
                           <p style={{ margin: "5px 0" }}>
                             <Text>{item.description}</Text>
@@ -195,7 +225,7 @@ export default function HomeStudent() {
             ) : (
               <Alert
                 type="warning"
-                message="Tidak ada to do list yang tersedia."
+                message="Tidak ada aktivitas yang tersedia."
               />
             )}
           </Card>
@@ -206,7 +236,7 @@ export default function HomeStudent() {
       <Modal
         title="Deskripsi Tes"
         open={isTestModalVisible}
-        onCancel={() => setIsTestModalVisible(false)}
+        onCancel={() => handleModalCloseTest()}
         footer={null}
       >
         {selectedTest ? (
@@ -217,7 +247,7 @@ export default function HomeStudent() {
             <p>
               <Text strong>Durasi:</Text> {selectedTest.timeLimit} menit
             </p>
-            <Button type="primary" onClick={startQuiz}>
+            <Button type="primary" onClick={startQuiz} style={{ width: "100%" }}>
               Start
             </Button>
           </div>

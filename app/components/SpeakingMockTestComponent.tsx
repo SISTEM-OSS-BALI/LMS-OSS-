@@ -62,7 +62,6 @@ export default function SpeakingMockTestComponent({
         Speaking Test
       </Title>
 
-      <Text strong>Soal:</Text>
       <Card
         style={{
           backgroundColor: "#f9f9f9",

@@ -7,8 +7,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AccessCourse,
+  AccessMockTest,
   AccessPlacementTest,
   Course,
+  MockTest,
   PlacementTest,
 } from "@prisma/client";
 
@@ -32,6 +34,14 @@ interface AccessCourseResponse {
 
 interface CourseResponse {
   data: Course[];
+}
+
+interface AccessMockTestResponse {
+  data: AccessMockTest[];
+}
+
+interface MockTestResponse {
+  data: MockTest[];
 }
 
 export const useMeetings = () => {
@@ -71,8 +81,19 @@ export const useMeetings = () => {
     fetcher
   );
 
+  const { data: accessMockTestData } = useSWR<AccessMockTestResponse>(
+    "/api/student/accessMockTest/show",
+    fetcher
+  );
+
+  const { data: mockTestData } = useSWR<MockTestResponse>(
+    "/api/teacher/mockTest/show",
+    fetcher
+  );
+
   const [isTestModalVisible, setIsTestModalVisible] = useState(false);
   const [selectedTest, setSelectedTest] = useState<any>(null);
+  // const [selectedMockTest, setSelectedMockTest] = useState<any>(null);
 
   const mergedDataCourse = courseData?.data.map((course) => {
     const accessCourse = accessCourseData?.data.find(
@@ -84,9 +105,25 @@ export const useMeetings = () => {
     };
   });
 
+  const mergedDataMockTest = mockTestData?.data.map((mockTest) => {
+    const accessMockTest = accessMockTestData?.data.find(
+      (access) => access.mock_test_id === mockTest.mock_test_id
+    );
+    return {
+      ...mockTest,
+      ...accessMockTest,
+    };
+  });
+
   const handleStartTest = (test: any) => {
     setSelectedTest(test);
+    console.log(selectedTest);
     setIsTestModalVisible(true);
+  };
+
+  const handleModalCloseTest = () => {
+    setIsTestModalVisible(false);
+    setSelectedTest(null);
   };
 
   const formatDateTimeToUTC = (dateTime: string) => {
@@ -105,9 +142,17 @@ export const useMeetings = () => {
   });
 
   const startQuiz = () => {
-    router.push(
-      `/student/dashboard/placement-test?testId=${selectedTest.placement_test_id}&t=${mergedData?.[0]?.timeLimit}&accessId=${mergedData?.[0]?.access_placement_test_id}`
-    );
+    if (selectedTest.mock_test_id) {
+      router.push(
+        `/student/dashboard/mock-test?testId=${selectedTest.mock_test_id}&accessId=${selectedTest.access_mock_test_id}&t=${selectedTest.timeLimit}`
+      );
+    } else if (selectedTest.placement_test_id) {
+      router.push(
+        `/student/dashboard/placement-test?testId=${selectedTest.placement_test_id}&accessId=${selectedTest.access_placement_test_id}&t=${selectedTest.timeLimit}`
+      );
+    } else {
+      console.error("Jenis tes tidak diketahui:", selectedTest);
+    }
   };
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -164,5 +209,7 @@ export const useMeetings = () => {
     isTestModalVisible,
     setIsTestModalVisible,
     selectedTest,
+    mergedDataMockTest,
+    handleModalCloseTest
   };
 };

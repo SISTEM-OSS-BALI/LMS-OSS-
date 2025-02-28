@@ -99,12 +99,13 @@ model User {
   AccessPlacementTest       AccessPlacementTest[]
   rescheduleMeetingsTeacher RescheduleMeeting[]          @relation("TeacherReschedules")
 
-  rescheduleMeetingsStudent RescheduleMeeting[] @relation("StudentReschedules")
-  Certificate               Certificate[]       @relation("StudentCertificate")
-  Section                   Section[]           @relation("StudentSection")
-  Testimoni                 Testimoni[]         @relation("StudentTestimoni")
+  rescheduleMeetingsStudent RescheduleMeeting[]     @relation("StudentReschedules")
+  Certificate               Certificate[]           @relation("StudentCertificate")
+  Section                   Section[]               @relation("StudentSection")
+  Testimoni                 Testimoni[]             @relation("StudentTestimoni")
   AccessCourse              AccessCourse[]
   AccessMockTest            AccessMockTest[]
+  StudentAnswerMockTest     StudentAnswerMockTest[] @relation("StudentAnswersMockTest")
 }
 
 model Consultant {
@@ -585,11 +586,12 @@ model MockTest {
   mock_test_id String   @id @default(uuid())
   name         String
   description  String?  @db.LongText
-  time_limit   Int?
+  timeLimit    Int?
   createdAt    DateTime @default(now())
 
-  baseMockTests  BaseMockTest[]
-  AccessMockTest AccessMockTest[]
+  baseMockTests         BaseMockTest[]
+  AccessMockTest        AccessMockTest[]
+  StudentAnswerMockTest StudentAnswerMockTest[]
 }
 
 model BaseMockTest {
@@ -599,10 +601,11 @@ model BaseMockTest {
   type              MockTestType
   createdAt         DateTime     @default(now())
 
-  reading   ReadingMockTest?
-  listening ListeningMockTest?
-  speaking  SpeakingMockTest?
-  writing   WritingMockTest?
+  reading               ReadingMockTest?
+  listening             ListeningMockTest?
+  speaking              SpeakingMockTest?
+  writing               WritingMockTest?
+  StudentAnswerMockTest StudentAnswerMockTest[]
 }
 
 model ReadingMockTest {
@@ -614,12 +617,13 @@ model ReadingMockTest {
 }
 
 model ReadingQuestion {
-  question_id String          @id @default(uuid())
-  reading     ReadingMockTest @relation(fields: [reading_id], references: [reading_id], onDelete: Cascade)
-  reading_id  String
-  question    String          @db.LongText
-  options     Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
-  answer      String? // Jawaban benar (bisa teks langsung atau indeks opsi)
+  question_id           String                  @id @default(uuid())
+  reading               ReadingMockTest         @relation(fields: [reading_id], references: [reading_id], onDelete: Cascade)
+  reading_id            String
+  question              String                  @db.LongText
+  options               Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
+  answer                String? // Jawaban benar (bisa teks langsung atau indeks opsi)
+  StudentAnswerMockTest StudentAnswerMockTest[]
 }
 
 model ListeningMockTest {
@@ -633,20 +637,22 @@ model ListeningMockTest {
 }
 
 model ListeningQuestion {
-  question_id  String            @id @default(uuid())
-  listening    ListeningMockTest @relation(fields: [listening_id], references: [listening_id], onDelete: Cascade)
-  listening_id String
-  question     String            @db.LongText
-  options      Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
-  answer       String? // Jawaban benar
+  question_id           String                  @id @default(uuid())
+  listening             ListeningMockTest       @relation(fields: [listening_id], references: [listening_id], onDelete: Cascade)
+  listening_id          String
+  question              String                  @db.LongText
+  options               Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
+  answer                String? // Jawaban benar
+  StudentAnswerMockTest StudentAnswerMockTest[]
 }
 
 model SpeakingMockTest {
-  speaking_id       String       @id @default(uuid())
-  base_mock_test    BaseMockTest @relation(fields: [base_mock_test_id], references: [base_mock_test_id], onDelete: Cascade)
-  base_mock_test_id String       @unique
-  prompt            String       @db.LongText
-  recording_url     String? // URL untuk menyimpan rekaman jawaban peserta
+  speaking_id           String                  @id @default(uuid())
+  base_mock_test        BaseMockTest            @relation(fields: [base_mock_test_id], references: [base_mock_test_id], onDelete: Cascade)
+  base_mock_test_id     String                  @unique
+  prompt                String                  @db.LongText
+  recording_url         String? // URL untuk menyimpan rekaman jawaban peserta
+  StudentAnswerMockTest StudentAnswerMockTest[]
 }
 
 model WritingMockTest {
@@ -659,10 +665,41 @@ model WritingMockTest {
 }
 
 model WritingQuestion {
-  question_id String          @id @default(uuid())
-  writing     WritingMockTest @relation(fields: [writing_id], references: [writing_id], onDelete: Cascade)
-  writing_id  String
-  question    String          @db.LongText
-  options     Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
-  answer      String?
+  question_id           String                  @id @default(uuid())
+  writing               WritingMockTest         @relation(fields: [writing_id], references: [writing_id], onDelete: Cascade)
+  writing_id            String
+  question              String                  @db.LongText
+  options               Json? // JSON berisi opsi jawaban (jika ada pilihan ganda)
+  answer                String?
+  StudentAnswerMockTest StudentAnswerMockTest[]
+}
+
+model StudentAnswerMockTest {
+  answer_id         String       @id @default(uuid())
+  student           User         @relation("StudentAnswersMockTest", fields: [student_id], references: [user_id])
+  student_id        String
+  mockTest          MockTest     @relation(fields: [mock_test_id], references: [mock_test_id])
+  mock_test_id      String
+  baseMockTest      BaseMockTest @relation(fields: [base_mock_test_id], references: [base_mock_test_id])
+  base_mock_test_id String
+
+  // Relasi ke jenis soal
+  readingQuestion     ReadingQuestion? @relation(fields: [reading_question_id], references: [question_id])
+  reading_question_id String?
+
+  listeningQuestion     ListeningQuestion? @relation(fields: [listening_question_id], references: [question_id])
+  listening_question_id String?
+
+  writingQuestion     WritingQuestion? @relation(fields: [writing_question_id], references: [question_id])
+  writing_question_id String?
+
+  speakingTest     SpeakingMockTest? @relation(fields: [speaking_test_id], references: [speaking_id])
+  speaking_test_id String?
+
+  // Penyimpanan jawaban
+  studentAnswer String?  @db.LongText // Jawaban teks untuk reading, writing
+  recording_url String? // Untuk speaking test (URL rekaman)
+  isCorrect     Boolean?
+  score         Int?
+  submittedAt   DateTime @default(now())
 }

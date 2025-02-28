@@ -11,40 +11,29 @@ interface Question {
   options?: string[];
 }
 
-interface ReadingMockTest {
-  reading_id: string;
+interface WritingMockTest {
+  writing_id: string;
   base_mock_test_id: string;
-  passage: string;
+  prompt: string;
   questions: Question[];
 }
 
-interface ReadingMockTestProps {
-  data: ReadingMockTest | null; // ✅ Bisa `null` untuk mencegah error
+interface WritingMockTestProps {
+  data: WritingMockTest;
   selectedQuestion: number;
   onSelectQuestion: (index: number) => void;
   selectedAnswers: Record<string, string>; // 🔹 Jawaban yang sudah dipilih
   onAnswerChange: (questionId: string, answer: string) => void; // 🔹 Fungsi menyimpan jawaban
 }
 
-export default function ReadingMockTestStudent({
+export default function WritingMockTestStudent({
   data,
   selectedQuestion,
   onSelectQuestion,
   selectedAnswers,
   onAnswerChange,
-}: ReadingMockTestProps) {
-  if (!data || !data.questions || data.questions.length === 0) {
-    return (
-      <Card style={{ textAlign: "center", padding: "20px" }}>
-        <Title level={4}>Reading Test</Title>
-        <Text>Tidak ada soal untuk sesi ini.</Text>
-      </Card>
-    );
-  }
-
-  const questionIndex =
-    selectedQuestion >= data.questions.length ? 0 : selectedQuestion;
-  const question = data.questions[questionIndex];
+}: WritingMockTestProps) {
+  const question = data.questions[selectedQuestion];
 
   return (
     <Card
@@ -53,15 +42,14 @@ export default function ReadingMockTestStudent({
         padding: "20px",
         borderRadius: "12px",
         boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-        backgroundColor: "#fff",
       }}
     >
       {/* Header */}
       <Title level={4} style={{ marginBottom: "12px" }}>
-        Reading Test
+        Writing Test
       </Title>
 
-      {/* Passage */}
+      {/* Prompt */}
       <div
         style={{
           background: "#eef7ff",
@@ -70,11 +58,11 @@ export default function ReadingMockTestStudent({
           marginBottom: "20px",
         }}
       >
-        <Text>{data.passage}</Text>
+        <Text>{data.prompt}</Text>
       </div>
 
       {/* Soal */}
-      <Title level={5} style={{ marginBottom: "10px" }}>
+      <Title level={5} style={{ marginBottom: "12px" }}>
         Question
       </Title>
 
@@ -113,15 +101,15 @@ export default function ReadingMockTestStudent({
       {/* Navigasi Soal */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <Button
-          onClick={() => onSelectQuestion(questionIndex - 1)}
-          disabled={questionIndex === 0}
+          onClick={() => onSelectQuestion(selectedQuestion - 1)}
+          disabled={selectedQuestion === 0}
         >
           Sebelumnya
         </Button>
 
         <Button
-          onClick={() => onSelectQuestion(questionIndex + 1)}
-          disabled={questionIndex === data.questions.length - 1}
+          onClick={() => onSelectQuestion(selectedQuestion + 1)}
+          disabled={selectedQuestion === data.questions.length - 1}
         >
           Selanjutnya
         </Button>

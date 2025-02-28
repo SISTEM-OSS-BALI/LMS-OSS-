@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, Radio, Space, Button, Typography } from "antd";
 
 const { Title, Text } = Typography;
@@ -11,40 +11,39 @@ interface Question {
   options?: string[];
 }
 
-interface ReadingMockTest {
-  reading_id: string;
+interface ListeningMockTest {
+  listening_id: string;
   base_mock_test_id: string;
-  passage: string;
+  audio_url: string;
+  transcript?: string | null;
   questions: Question[];
 }
 
-interface ReadingMockTestProps {
-  data: ReadingMockTest | null; // ✅ Bisa `null` untuk mencegah error
+interface ListeningMockTestProps {
+  data: ListeningMockTest;
   selectedQuestion: number;
   onSelectQuestion: (index: number) => void;
-  selectedAnswers: Record<string, string>; // 🔹 Jawaban yang sudah dipilih
-  onAnswerChange: (questionId: string, answer: string) => void; // 🔹 Fungsi menyimpan jawaban
+  selectedAnswers: Record<string, string>; // 🔹 Menyimpan jawaban yang telah dipilih
+  onAnswerChange: (questionId: string, answer: string) => void; // 🔹 Untuk menyimpan jawaban
 }
 
-export default function ReadingMockTestStudent({
+// 🔹 Function untuk mengubah Google Drive URL menjadi direct link
+const getGoogleDriveDirectLink = (url: string): string => {
+  const match = url.match(/\/file\/d\/(.*?)\//);
+  return match
+    ? `https://drive.google.com/file/d/${match[1]}/preview?controls=0`
+    : url;
+};
+
+export default function ListeningMockTestStudent({
   data,
   selectedQuestion,
   onSelectQuestion,
   selectedAnswers,
   onAnswerChange,
-}: ReadingMockTestProps) {
-  if (!data || !data.questions || data.questions.length === 0) {
-    return (
-      <Card style={{ textAlign: "center", padding: "20px" }}>
-        <Title level={4}>Reading Test</Title>
-        <Text>Tidak ada soal untuk sesi ini.</Text>
-      </Card>
-    );
-  }
-
-  const questionIndex =
-    selectedQuestion >= data.questions.length ? 0 : selectedQuestion;
-  const question = data.questions[questionIndex];
+}: ListeningMockTestProps) {
+  const directAudioUrl = getGoogleDriveDirectLink(data.audio_url);
+  const question = data.questions[selectedQuestion];
 
   return (
     <Card
@@ -58,20 +57,52 @@ export default function ReadingMockTestStudent({
     >
       {/* Header */}
       <Title level={4} style={{ marginBottom: "12px" }}>
-        Reading Test
+        Listening Test
       </Title>
 
-      {/* Passage */}
+      {/* Google Drive Embed Player */}
       <div
         style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           background: "#eef7ff",
-          padding: "12px",
-          borderRadius: "8px",
+          borderRadius: "10px",
+          padding: "15px",
           marginBottom: "20px",
+          boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
         }}
       >
-        <Text>{data.passage}</Text>
+        <iframe
+          src={directAudioUrl}
+          width="450"
+          height="60"
+          style={{
+            border: "none",
+            borderRadius: "8px",
+            backgroundColor: "#fff",
+          }}
+          allow="autoplay"
+          sandbox="allow-scripts allow-same-origin"
+        ></iframe>
       </div>
+
+      {/* Transcript (Jika Ada) */}
+      {data.transcript && (
+        <div
+          style={{
+            background: "#eef7ff",
+            padding: "12px",
+            borderRadius: "8px",
+            marginBottom: "20px",
+          }}
+        >
+          <Title level={5} style={{ marginBottom: "8px" }}>
+            📜 Transcript:
+          </Title>
+          <Text>{data.transcript}</Text>
+        </div>
+      )}
 
       {/* Soal */}
       <Title level={5} style={{ marginBottom: "10px" }}>
@@ -113,15 +144,15 @@ export default function ReadingMockTestStudent({
       {/* Navigasi Soal */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <Button
-          onClick={() => onSelectQuestion(questionIndex - 1)}
-          disabled={questionIndex === 0}
+          onClick={() => onSelectQuestion(selectedQuestion - 1)}
+          disabled={selectedQuestion === 0}
         >
           Sebelumnya
         </Button>
 
         <Button
-          onClick={() => onSelectQuestion(questionIndex + 1)}
-          disabled={questionIndex === data.questions.length - 1}
+          onClick={() => onSelectQuestion(selectedQuestion + 1)}
+          disabled={selectedQuestion === data.questions.length - 1}
         >
           Selanjutnya
         </Button>

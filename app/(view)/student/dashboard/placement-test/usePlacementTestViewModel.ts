@@ -57,6 +57,7 @@ export const usePlacementTestViewModel = () => {
   const selectedPlacementId = searchParams.get("testId") || "";
   const time = searchParams.get("t") || "0";
   const access_id = searchParams.get("accessId") || "";
+  const [loading, setLoading] = useState(false);
 
   // Fetching soal dari API
   const { data: basePlacementTestData, isLoading: basePlacementTestLoading } =
@@ -71,7 +72,7 @@ export const usePlacementTestViewModel = () => {
   const [remainingTime, setRemainingTime] = useState(Number(time) * 60 || 0);
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
-  >({});
+  >(() => JSON.parse(localStorage.getItem("answersBySection") || "{}"));
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
@@ -101,7 +102,7 @@ export const usePlacementTestViewModel = () => {
         setRemainingTime((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(timer);
-    } else if (remainingTime === 0 && currentQuestions.length > 0) {
+    } else if (remainingTime === 0) {
       handleSubmit();
     }
   }, [remainingTime]);
@@ -125,9 +126,24 @@ export const usePlacementTestViewModel = () => {
         ...prev,
         [questionId]: answer,
       }));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "answersBySection",
+          JSON.stringify(selectedAnswers)
+        );
+      }
     },
     []
   );
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTime = Number(localStorage.getItem("remainingTime"));
+      if (!isNaN(savedTime) && savedTime > 0) {
+        setRemainingTime(savedTime);
+      }
+    }
+  }, []);
 
   // Konfirmasi sebelum mengirim
   const showConfirmSubmit = () => {
@@ -159,12 +175,14 @@ export const usePlacementTestViewModel = () => {
     }));
 
     const payload = {
+
       selectedData,
       placement_test_id: selectedPlacementId,
       access_id,
     };
 
     try {
+      setLoading(true);
       const response = await crudService.post(
         "/api/student/answerPlacement/studentSubmitAnswer",
         payload
@@ -176,10 +194,17 @@ export const usePlacementTestViewModel = () => {
           JSON.stringify(response.data)
         );
         router.push("/student/dashboard/placement-test/result");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("answersBySection");
+          localStorage.removeItem("remainingTime");
+        }
+        setLoading(false);
       } else {
+        setLoading(false);
         message.error("Terjadi kesalahan saat mengirim jawaban.");
       }
     } catch (error) {
+      setLoading(false);
       message.error("Gagal menghubungi server. Coba lagi.");
     }
   };
@@ -201,5 +226,6 @@ export const usePlacementTestViewModel = () => {
     showConfirmSubmit,
     handleSubmit,
     time,
+    loading
   };
 };

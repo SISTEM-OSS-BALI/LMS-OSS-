@@ -131,8 +131,9 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     const regex = /^\/student\/dashboard\/courses\/[^/]+\/materials\/[^/]+$/;
     const regex2 = /^\/student\/dashboard\/placement-test$/;
     const regex3 = /^\/student\/dashboard\/placement-test\/result$/;
+    const regex4 = /^\/student\/dashboard\/mock-test$/;
     return (
-      regex.test(pathname) || regex2.test(pathname) || regex3.test(pathname)
+      regex.test(pathname) || regex2.test(pathname) || regex3.test(pathname)|| regex4.test(pathname)
     );
   };
 
