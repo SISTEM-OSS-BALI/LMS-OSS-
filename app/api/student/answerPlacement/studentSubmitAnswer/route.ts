@@ -1,8 +1,17 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
+import { GoogleGenerativeAI, Part, Content } from "@google/generative-ai";
+
+const geminiApiKey = process.env.GEMINI_API_KEY;
+if (!geminiApiKey) {
+  throw new Error("GEMINI_API_KEY is not defined");
+}
+
+export const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 export async function POST(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   const body = await request.json();
   const { selectedData, placement_test_id, access_id } = body;
 
@@ -46,6 +55,12 @@ export async function POST(request: NextRequest) {
         message: "Placement test tidak memiliki soal.",
       });
     }
+
+    const writingFeedback: {
+      writing_id: string;
+      score: number;
+      feedback: string;
+    }[] = [];
 
     // 🔹 Loop setiap jawaban yang dikirimkan siswa
     await Promise.all(
@@ -99,16 +114,28 @@ export async function POST(request: NextRequest) {
             },
           });
         } else if (writingQuestion) {
-          // Writing tidak memiliki isCorrect, skor bisa dihitung manual nanti
+          const writingQuestionText = writingQuestion.question;
+          const { aiScore, aiFeedback } = await evaluateWritingWithGemini(
+            writingQuestionText,
+            selectedAnswer
+          );
+
           await prisma.studentAnswerPlacementTest.create({
             data: {
               student_id: user.user_id,
               placement_test_id,
               writing_id: id,
               studentAnswer: selectedAnswer,
-              score: 0, // Writing biasanya dinilai manual
+              score: aiScore,
+              writing_feedback: aiFeedback,
               submittedAt: new Date(),
             },
+          });
+
+          writingFeedback.push({
+            writing_id: id,
+            score: aiScore,
+            feedback: aiFeedback,
           });
         }
       })
@@ -141,7 +168,6 @@ export async function POST(request: NextRequest) {
     );
     const percentageScore = (totalScore / totalQuestionsCount) * 100 || 0;
 
-    
     let newLevel = "BASIC";
     if (percentageScore >= 80) {
       newLevel = "ADVANCED";
@@ -157,7 +183,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       status: 200,
       error: false,
-      data: { totalScore, percentageScore, level: newLevel },
+      data: {
+        totalScore,
+        percentageScore,
+        level: newLevel,
+        writingFeedback,
+      },
     });
   } catch (error) {
     console.error("Error accessing database:", error);
@@ -167,5 +198,37 @@ export async function POST(request: NextRequest) {
     );
   } finally {
     await prisma.$disconnect();
+  }
+}
+
+async function evaluateWritingWithGemini(question: string, answer: string) {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+    const prompt = `
+    Anda adalah penguji bahasa Inggris. Berikan penilaian dari 0-10 berdasarkan tata bahasa, struktur, dan relevansi jawaban.
+    Berikan nilai dalam format berikut: 
+    - Score: (nilai antara 0 hingga 10)
+    - Feedback: (5 kalimat feedback)
+    
+    Soal: ${question}
+    Jawaban: ${answer}
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const textResponse = response.text();
+
+    // Parsing skor dan feedback
+    const scoreMatch = textResponse.match(/\b\d+\b/);
+    const aiScore = scoreMatch ? parseInt(scoreMatch[0], 10) : 0;
+    const aiFeedback = textResponse.replace(/\b\d+\b/, "").trim();
+
+    return {
+      aiScore: Math.min(Math.max(aiScore, 0), 10),
+      aiFeedback,
+    };
+  } catch (error) {
+    console.error("Error evaluating writing:", error);
+    return { aiScore: 0, aiFeedback: "Terjadi kesalahan dalam penilaian." };
   }
 }

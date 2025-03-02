@@ -12,7 +12,7 @@ export async function PATCH(
   request: NextRequest,
   { params: { meeting_id } }: { params: { meeting_id: string } }
 ) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;

@@ -27,6 +27,8 @@ import {
   BookOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
+import { SP } from "next/dist/shared/lib/utils";
+import { SectionType } from "@prisma/client";
 dayjs.extend(utc);
 
 const { Title, Text } = Typography;
@@ -47,6 +49,190 @@ export default function StudentDetailComponent() {
     sectionTypes,
     loading,
   } = useDetailStudentViewModel();
+
+  
+
+  type SectionType = "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+
+  const levelOptions: Record<
+    SectionType,
+    { value: string; label: string; comment: string }[]
+  > = {
+    LISTENING: [
+      {
+        value: "A1",
+        label: "A1",
+        comment: "Student can recognise familiar words and very basic phrases.",
+      },
+      {
+        value: "A2",
+        label: "A2",
+        comment:
+          "Student can understand phrases and the highest frequency vocabulary related to areas of most immediate personal relevance.",
+      },
+      {
+        value: "B1",
+        label: "B1",
+        comment:
+          "Student can understand the main points of clear standard speech on familiar matters regularly encountered.",
+      },
+      {
+        value: "B2",
+        label: "B2",
+        comment:
+          "Student can understand extended speech and lectures and follow even complex lines of argument provided the topic is reasonably familiar.",
+      },
+      {
+        value: "C1",
+        label: "C1",
+        comment:
+          "Student can understand extended speech even when it is not clearly structured.",
+      },
+      {
+        value: "C2",
+        label: "C2",
+        comment:
+          "Student has no difficulty in understanding any kind of spoken language and gets familiar with the accent.",
+      },
+    ],
+    READING: [
+      {
+        value: "A1",
+        label: "A1",
+        comment:
+          "Student can understand familiar names, words and very simple sentences.",
+      },
+      {
+        value: "A2",
+        label: "A2",
+        comment:
+          "Student can read very short and simple texts, find specific, predictable information in simple everyday material.",
+      },
+      {
+        value: "B1",
+        label: "B1",
+        comment:
+          "Student can understand texts that consist mainly of high-frequency everyday or job-related language.",
+      },
+      {
+        value: "B2",
+        label: "B2",
+        comment:
+          "Student can read articles and reports concerned with contemporary problems in which the writers adopt particular attitudes or viewpoints.",
+      },
+      {
+        value: "C1",
+        label: "C1",
+        comment:
+          "Student can understand long and complex factual and literary texts, appreciating distinctions of style.",
+      },
+      {
+        value: "C2",
+        label: "C2",
+        comment:
+          "Student can read with ease virtually all forms of the written language, including abstract, structurally or linguistically complex texts.",
+      },
+    ],
+    WRITING: [
+      {
+        value: "A1",
+        label: "A1",
+        comment:
+          "Student can write a short, simple postcard, for example, sending holiday greetings.",
+      },
+      {
+        value: "A2",
+        label: "A2",
+        comment:
+          "Student can write short, simple notes and messages relating to matters in areas of immediate needs.",
+      },
+      {
+        value: "B1",
+        label: "B1",
+        comment:
+          "Student can write simple connected text on topics which are familiar or of personal interest.",
+      },
+      {
+        value: "B2",
+        label: "B2",
+        comment:
+          "Student can write clear, detailed text on a wide range of subjects related to their interests.",
+      },
+      {
+        value: "C1",
+        label: "C1",
+        comment:
+          "Student can express themselves in clear, well-structured text, expressing points of view at some length.",
+      },
+      {
+        value: "C2",
+        label: "C2",
+        comment:
+          "Student can write clear, smoothly flowing text in an appropriate style and write summaries and reviews of professional or literary works.",
+      },
+    ],
+    SPEAKING: [
+      {
+        value: "A1",
+        label: "A1",
+        comment:
+          "Student can ask and answer simple questions in areas of immediate need or on very familiar topics.",
+      },
+      {
+        value: "A2",
+        label: "A2",
+        comment:
+          "Student can communicate in simple and routine tasks requiring a simple and direct exchange of information on familiar topics and activities.",
+      },
+      {
+        value: "B1",
+        label: "B1",
+        comment:
+          "Student can enter unprepared into conversations on topics that are familiar, of personal interest, or pertinent to everyday life.",
+      },
+      {
+        value: "B2",
+        label: "B2",
+        comment:
+          "Student can interact with a degree of fluency and spontaneity that makes regular interaction with native speakers quite possible.",
+      },
+      {
+        value: "C1",
+        label: "C1",
+        comment:
+          "Student can use language flexibly and effectively for social and professional purposes.",
+      },
+      {
+        value: "C2",
+        label: "C2",
+        comment:
+          "Student can take part effortlessly in any conversation or discussion and have a good familiarity with idiomatic expressions and colloquialisms.",
+      },
+    ],
+  };
+
+
+   const handleLevelChange = (value: string, index: number, type: string) => {
+     // Pastikan type ada dalam levelOptions
+     const selectedLevel = levelOptions[
+       type as keyof typeof levelOptions
+     ]?.find((level) => level.value === value);
+
+     if (selectedLevel) {
+       // Update komentar secara otomatis di Form
+       form.setFieldsValue({
+         sections: form
+           .getFieldValue("sections")
+           .map((section: any, i: number) =>
+             i === index
+               ? { ...section, comment: selectedLevel.comment }
+               : section
+           ),
+       });
+     }
+   };
+
+
 
   const columns: any = [
     {
@@ -326,18 +512,23 @@ export default function StudentDetailComponent() {
               <Col xs={24} sm={12} key={type}>
                 <Typography.Text strong>{type}</Typography.Text>
 
-                {/* Input Level */}
+                {/* Select Level */}
                 <Form.Item
                   name={["sections", index, "level"]}
                   label="Level"
                   rules={[
-                    {
-                      required: true,
-                      message: `Masukkan level untuk ${type}!`,
-                    },
+                    { required: true, message: `Pilih level untuk ${type}!` },
                   ]}
                 >
-                  <Input placeholder={`Masukkan level untuk ${type}`} />
+                  <Select
+                    onChange={(value) => handleLevelChange(value, index, type)}
+                  >
+                    {levelOptions[type as SectionType]?.map((level) => (
+                      <Select.Option key={level.value} value={level.value}>
+                        {level.label}
+                      </Select.Option>
+                    ))}
+                  </Select>
                 </Form.Item>
 
                 {/* Input Komentar (Menggunakan TextArea) */}
@@ -352,7 +543,7 @@ export default function StudentDetailComponent() {
                   ]}
                 >
                   <TextArea
-                    placeholder={`Masukkan komentar untuk ${type}`}
+                    placeholder={`Komentar akan muncul otomatis`}
                     autoSize={{ minRows: 2, maxRows: 4 }}
                   />
                 </Form.Item>

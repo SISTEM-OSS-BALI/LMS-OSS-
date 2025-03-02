@@ -30,7 +30,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { schedule_id: string } }
 ) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   const schedule_id = params.schedule_id;
   const body = await request.json();

@@ -12,10 +12,11 @@ import {
   Modal,
 } from "antd";
 import { useMockTestViewModel } from "./useMockTestViewModel";
-import ReadingMockTestStudent from "@/app/components/ReadingComponentMockTest";
 import ListeningMockTestStudent from "@/app/components/ListeningMockTestStudent";
 import SpeakingMockTestStudent from "@/app/components/SpeakingMockTestStudent";
 import WritingMockTestStudent from "@/app/components/WritingMockTestStudent";
+import ReadingMockTestStudent from "@/app/components/ReadingMockTestStudent";
+import Loading from "@/app/components/Loading";
 
 const { Title, Text } = Typography;
 
@@ -95,7 +96,7 @@ export default function MockTestComponent() {
         {/* 🔹 Soal */}
         <div>
           {baseMockTestDataLoading ? (
-            <p>Loading...</p>
+            <Loading />
           ) : sectionContent ? (
             <div>
               {sectionContent.type === "READING" && sectionContent.reading && (

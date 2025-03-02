@@ -9,7 +9,7 @@ import { formatPhoneNumber, sendWhatsAppMessage } from "@/app/lib/utils/notifica
 dayjs.extend(utc);
 
 export async function POST(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;

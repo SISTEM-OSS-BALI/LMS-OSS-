@@ -1,29 +1,26 @@
 "use client";
 
-import React from "react";
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 
 export default function AuthWrapper({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
   const authRoutes = ["/", "/register"];
-  const shouldWrap = !authRoutes.includes(pathname);
+  const shouldProtect = !authRoutes.includes(pathname);
 
   useEffect(() => {
-    if (shouldWrap) {
-      const token = Cookies.get("token");
-      if (!token) {
-        router.push("/");
-      }
+    if (status === "loading") return; // 🔹 Jangan redirect sebelum sesi dimuat
+
+    if (shouldProtect && !session) {
+      router.push("/"); // 🔹 Redirect jika user belum login
     }
-  }, [router, shouldWrap, pathname]);
+  }, [session, status, router, shouldProtect]);
 
   return <>{children}</>;
 }

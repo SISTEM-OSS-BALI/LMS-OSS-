@@ -11,7 +11,7 @@ export async function GET(
   request: NextRequest,
   params: { params: { mock_test_id: string } }
 ) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;

@@ -10,7 +10,7 @@ export async function PATCH(
   const assignment_id = params.assignment_id;
 
   try {
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {
       return user;
     }

@@ -94,7 +94,7 @@ export async function PUT(
   { params }: { params: { base_id: string; material_id: string } }
 ) {
   const material_id = params.material_id;
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   const body = await request.json();
   const { base_id, contentItems } = body;
 

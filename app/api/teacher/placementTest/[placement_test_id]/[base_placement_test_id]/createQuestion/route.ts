@@ -10,7 +10,7 @@ export async function POST(
     const body = await request.json();
     const { type, basePlacementTestId, questions, passage } = body;
 
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {
       return user;
     }

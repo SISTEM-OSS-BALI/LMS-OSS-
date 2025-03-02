@@ -3,7 +3,7 @@ import { getData } from "@/app/lib/db/getData";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   const body = await request.json();
   const { selectedData, assignment_id, base_id, course_id } = body;
 

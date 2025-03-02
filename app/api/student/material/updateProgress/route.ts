@@ -3,7 +3,7 @@ import prisma from "@/app/lib/prisma";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 
 export async function POST(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   const body = await request.json();
   const { material_id, base_id, course_id, assignment_id } = body;
 

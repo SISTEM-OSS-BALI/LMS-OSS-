@@ -8,7 +8,7 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 
 export async function GET(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   const url = new URL(request.url);
   const date = url.searchParams.get("date");
 

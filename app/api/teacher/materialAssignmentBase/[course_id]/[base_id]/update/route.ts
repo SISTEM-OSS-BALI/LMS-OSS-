@@ -12,7 +12,7 @@ export async function PUT(
   const { title } = body;
 
   try {
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {
       return user;
     }

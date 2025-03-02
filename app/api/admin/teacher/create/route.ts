@@ -5,7 +5,7 @@ import { createData } from "@/app/lib/db/createData";
 import bcrypt from "bcrypt";
 
 export async function POST(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user; // Jika pengguna tidak terautentikasi
@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       no_phone,
       region,
+      is_verified: true,
       color: randomColor,
       role: "TEACHER",
     });

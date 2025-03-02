@@ -12,7 +12,7 @@ export async function PUT(
     const body = await request.json();
     const { name, description, count_program, duration } = body;
 
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
 
     if (user) {
       const updateProgram = await updateData(

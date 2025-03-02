@@ -7,7 +7,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { consultant_id: string } }
 ) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;

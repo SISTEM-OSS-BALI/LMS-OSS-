@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Typography, Row, Col, Button } from "antd";
+import { Card, Typography, Row, Col, Button, List } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -11,6 +11,8 @@ export default function ResultComponent() {
   const [result, setResult] = useState<{
     totalScore: number;
     percentageScore: number;
+    level: string;
+    writingFeedback?: { writing_id: string; score: number; feedback: string }[];
   } | null>(null);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function ResultComponent() {
     if (result.percentageScore >= 50) return "Intermediate";
     return "Basic";
   }, [result]);
-  
+
   const handleBack = () => {
     sessionStorage.removeItem("placementTestResult");
     router.push("/student/dashboard/home");
@@ -96,6 +98,39 @@ export default function ResultComponent() {
               {userLevel}
             </Text>
           </Card>
+
+          {/* 🔹 Writing Feedback */}
+          {result.writingFeedback && result.writingFeedback.length > 0 && (
+            <Card
+              style={{
+                marginTop: "20px",
+                padding: "15px",
+                backgroundColor: "#fffbe6",
+                borderRadius: "8px",
+                border: "1px solid #faad14",
+                textAlign: "left",
+              }}
+            >
+              <Title level={4} style={{ color: "#fa8c16" }}>
+                Writing Feedback
+              </Title>
+              <List
+                itemLayout="vertical"
+                dataSource={result.writingFeedback}
+                renderItem={(item, index) => (
+                  <List.Item key={item.writing_id}>
+                    <Text strong style={{ fontSize: "16px", color: "#722ed1" }}>
+                      ✏️ Writing {index + 1} - Score: {item.score}/10
+                    </Text>
+                    <br />
+                    <Text style={{ fontSize: "14px", color: "#333" }}>
+                      {item.feedback}
+                    </Text>
+                  </List.Item>
+                )}
+              />
+            </Card>
+          )}
 
           {/* 🔹 Tombol Kembali */}
           <Button

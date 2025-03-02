@@ -8,7 +8,7 @@ export async function DELETE(
 ) {
   try {
     const course_id = params.course_id;
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
 
     // Periksa autentikasi pengguna
     if (user instanceof NextResponse) {

@@ -21,7 +21,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { meeting_id: string } }
 ) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;

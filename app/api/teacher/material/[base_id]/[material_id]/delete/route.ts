@@ -69,7 +69,7 @@ export async function DELETE(
   { params }: { params: { material_id: string } }
 ) {
   const material_id = params.material_id;
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   const body = await request.json();
   const { type, index } = body;
 

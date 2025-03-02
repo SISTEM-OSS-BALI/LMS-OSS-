@@ -36,7 +36,7 @@ export async function POST(
   params: { params: { meeting_id: string } }
 ) {
   const meeting_id = params.params.meeting_id;
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;
@@ -74,7 +74,7 @@ export async function POST(
     const adminMessage =
       `🚨 *Pengajuan Absen Guru* 🚨\n\n` +
       `Halo, *${getAdmin.username}*! 👋\n\n` +
-      `Guru *${user.username}* telah mengajukan ketidakhadiran pada jadwal berikut:\n\n` +
+      `Guru *${user.name}* telah mengajukan ketidakhadiran pada jadwal berikut:\n\n` +
       `📅 *Jadwal*: ${dayjs().format("dddd, DD MMMM YYYY HH:mm")}\n` +
       `📢 *Alasan*: ${reason}\n\n` +
       `Mohon segera ditindaklanjuti. Terima kasih! 🙏✨`;

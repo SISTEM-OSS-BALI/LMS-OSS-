@@ -7,13 +7,13 @@ import { fetcher } from "@/app/lib/utils/fetcher";
 import { crudService } from "@/app/lib/services/crudServices";
 import { Teacher } from "@/app/model/course";
 import { Program } from "@/app/model/program";
-import { useProgramId } from "@/app/lib/auth/useLogin";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { Meeting } from "@/app/model/meeting";
 import Cookies from "js-cookie";
 import { color } from "html2canvas/dist/types/css/types/color";
 import { User } from "@/app/model/user";
+import { useAuth } from "@/app/lib/auth/authServices";
 
 dayjs.extend(utc);
 
@@ -104,6 +104,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
   const searchParams = useSearchParams();
   const date = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
+  const {programId} = useAuth()
 
   const {
     data: programData,
@@ -166,9 +167,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const [isModalInfoVisible, setIsModalInfoVisible] = useState(false);
   const [isModalVisibleEmergency, setIsModalVisibleEmergency] = useState(false);
   const [form] = Form.useForm();
-  const program_id = useProgramId();
   const filterProgram = programData?.data.filter(
-    (program) => program.program_id === program_id
+    (program) => program.program_id === programId
   );
 
   // const handleDateClick = (arg: any) => {

@@ -10,7 +10,7 @@ dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
 
 export async function GET(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   if (user instanceof NextResponse) {
     return user;
   }

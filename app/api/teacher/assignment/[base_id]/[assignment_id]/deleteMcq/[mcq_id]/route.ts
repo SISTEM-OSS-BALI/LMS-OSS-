@@ -9,7 +9,7 @@ export async function DELETE(
   const { mcq_id } = params;
 
   try {
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {
       return user;
     }

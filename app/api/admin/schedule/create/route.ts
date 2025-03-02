@@ -44,7 +44,7 @@ function convertDayToEnglish(day: string): DayOfWeek | null {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   if (user instanceof NextResponse) {
     return user;
   }

@@ -26,8 +26,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
-import { useUsername } from "@/app/lib/auth/useLogin";
 import { useDashboardViewModel } from "./home/useDashboardViewModel";
+import { useAuth } from "@/app/lib/auth/authServices";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -97,7 +97,7 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const pathname = usePathname();
-  const username: string = useUsername();
+ const { username } = useAuth();
   const { count_program } = useDashboardViewModel();
   const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
 

@@ -1,14 +1,14 @@
 "use client";
 
 import Loading from "@/app/components/Loading";
-import { useUsername } from "@/app/lib/auth/useLogin";
+import { useAuth } from "@/app/lib/auth/authServices";
 import { Typography, Card, Row, Col } from "antd";
 import { Suspense } from "react";
 
 const { Title, Text } = Typography;
 
 export default function HomeStudent() {
-  const username = useUsername();
+  const {username} = useAuth();
 
   return (
     <Suspense fallback={<Loading />}>

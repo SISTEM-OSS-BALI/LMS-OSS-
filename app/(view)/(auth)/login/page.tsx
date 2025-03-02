@@ -12,10 +12,17 @@ import {
   Image,
   Flex,
 } from "antd";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  LockOutlined,
+  GlobalOutlined,
+  InstagramOutlined,
+  WhatsAppOutlined,
+  LinkedinFilled,
+} from "@ant-design/icons";
 import Link from "next/link";
 import { useLoginViewModel } from "@/app/(view)/(auth)/login/useLoginViewModel";
-import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
+import { Footer } from "antd/es/layout/layout";
 
 export default function Login() {
   const { Content, Header } = Layout;
@@ -23,29 +30,28 @@ export default function Login() {
   const { login, loading } = useLoginViewModel();
 
   const onFinish = (values: any) => {
-    const payload = {
-      email: values.email,
-      password: values.password,
-    };
-    login(payload);
+    login(values);
   };
 
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
       <Row>
-        <Col span={15}>
-          <Header style={{ backgroundColor: "#fff", padding: "1rem 2rem" }}>
+        <Col span={13}>
+          <Header style={{ backgroundColor: "#fff" }}>
             <Row align="middle">
               <Col>
                 <Image
-                  src="/assets/images/logo.png"
+                  src="/assets/images/logo.jpg"
                   alt="Logo"
-                  width={35}
+                  width={45}
                   preview={false}
                 />
               </Col>
               <Col>
-                <Title level={5} style={{ marginBottom: 20, marginLeft: 10, marginBlock: 0}}>
+                <Title
+                  level={5}
+                  style={{ marginBottom: 20, marginLeft: 10, marginBlock: 0 }}
+                >
                   LMS ONE STEP SOLUTION
                 </Title>
               </Col>
@@ -53,23 +59,47 @@ export default function Login() {
           </Header>
         </Col>
 
-        <Col span={9}>
-          <Header style={{ backgroundColor: primaryColor }} />
+        <Col span={11}>
+          <Header
+            style={{
+              backgroundColor: "#578FCA",
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}
+          >
+            <Button type="primary">Try Out Gratis</Button>
+          </Header>
         </Col>
       </Row>
 
-      <Content style={{ height: "calc(100vh - 128px)" }}>
-        <Row style={{ height: "100%" }}>
-          {/* Left column (login form) */}
+      <Content
+        style={{
+          display: "flex",
+          alignItems: "center",
+          backgroundColor: "#fff",
+          justifyContent: "center",
+          padding: "2rem",
+        }}
+      >
+        <Row
+          style={{
+            width: "100%",
+            maxWidth: "900px",
+            backgroundColor: "#fff",
+            borderRadius: "10px",
+            overflow: "hidden",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+          }}
+        >
           <Col
-            span={15}
+            xs={24}
+            md={14}
             style={{
               padding: "2rem",
-              backgroundColor: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              height: "100%",
             }}
           >
             <Space
@@ -77,18 +107,21 @@ export default function Login() {
               size="large"
               style={{ width: "100%", maxWidth: "400px" }}
             >
-              <Title level={2}>Selamat Datang!</Title>
+              <Title level={2} style={{ textAlign: "center" }}>
+                Selamat Datang!
+              </Title>
+              <Title level={4} style={{ textAlign: "center" }}>
+                Login
+              </Title>
               <Form
-                name="normal_login"
+                name="login_form"
                 initialValues={{ remember: true }}
                 onFinish={onFinish}
                 style={{ width: "100%" }}
               >
                 <Form.Item
                   name="email"
-                  rules={[
-                    { required: true, message: "Please input your Email!" },
-                  ]}
+                  rules={[{ required: true, message: "Masukkan Email Anda!" }]}
                 >
                   <Input
                     prefix={<UserOutlined />}
@@ -99,7 +132,7 @@ export default function Login() {
                 <Form.Item
                   name="password"
                   rules={[
-                    { required: true, message: "Please input your Password!" },
+                    { required: true, message: "Masukkan Password Anda!" },
                   ]}
                 >
                   <Input
@@ -116,57 +149,102 @@ export default function Login() {
                     block
                     size="large"
                     loading={loading}
-                    style={{ backgroundColor: secondaryColor, color: "white" }}
+                    style={{ backgroundColor: "#578FCA", color: "white" }}
                   >
                     Login
                   </Button>
                 </Form.Item>
-                <Flex justify="end">
-                  <Link href={"/register"}>Belum punya akun?</Link>
-                </Flex>
+                <Row justify="space-between">
+                  <Link href="/forgot-password">Lupa Password?</Link>
+                  <Link href="/register">Belum Punya Akun?</Link>
+                </Row>
               </Form>
-
-              <Row justify="space-around" gutter={24} style={{ width: "100%" }}>
-                <Col>
-                  <div>
-                    <strong>WhatsApp</strong>
-                    <br />
-                    +6281337373155
-                  </div>
-                </Col>
-                <Col>
-                  <div>
-                    <strong>Email</strong>
-                    <br />
-                    oss@gmail.com
-                  </div>
-                </Col>
-              </Row>
             </Space>
           </Col>
 
-          {/* Right column (additional content) */}
           <Col
-            span={9}
+            xs={24}
+            md={10}
             style={{
-              backgroundColor: primaryColor,
+              backgroundColor: "#578FCA",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              padding: "1rem",
             }}
           >
-            <div>
-              <Image
-                src="/assets/images/logo_login.png"
-                alt="Login Image"
-                width={500}
-                height={500}
-                preview={false}
-              />
-            </div>
+            <Image
+              src="/assets/images/logo_login.png"
+              alt="Login Image"
+              width={300}
+              height={300}
+              preview={false}
+            />
           </Col>
         </Row>
       </Content>
+
+      <Footer
+        style={{
+          textAlign: "center",
+          backgroundColor: "#f0f2f5",
+          padding: "1.5rem 2rem",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Row justify="center" gutter={[16, 16]}>
+          <Col>
+            <div>
+              <WhatsAppOutlined style={{ marginRight: "8px" }} />
+              <strong>WhatsApp:</strong>{" "}
+              <Link
+                href="https://wa.me/+6287705092020"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                +6287705092020
+              </Link>
+            </div>
+          </Col>
+          <Col>
+            <div>
+              <InstagramOutlined style={{ marginRight: "8px" }} />
+              <strong>Instagram:</strong>{" "}
+              <Link
+                href="https://www.instagram.com/oss_bali"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                @oss_bali
+              </Link>
+            </div>
+          </Col>
+          <Col>
+            <div>
+              <GlobalOutlined style={{ marginRight: "8px" }} />
+              <strong>Website:</strong>{" "}
+              <Link href="https://onestepsolutionbali.com/">
+                onestepsolutionbali.com
+              </Link>
+            </div>
+          </Col>
+          <Col>
+            <div>
+              <LinkedinFilled style={{ marginRight: "8px" }} />
+              <strong>Linkedin:</strong>{" "}
+              <Link
+                href="https://www.linkedin.com/company/onestepsolutionbali/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                onestepsolutionbali
+              </Link>
+            </div>
+          </Col>
+        </Row>
+      </Footer>
     </Layout>
   );
 }

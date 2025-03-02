@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const { base_id, contentItems } = body;
 
     // Authenticate the request
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {
       return user;
     }

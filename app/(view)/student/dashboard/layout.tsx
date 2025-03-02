@@ -23,9 +23,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
-import {  useUsername } from "@/app/lib/auth/useLogin";
 import { useMeetings } from "./home/useMeetingViewModel";
 import { CertificateSvg } from "@/app/components/Icon";
+import { useAuth } from "@/app/lib/auth/authServices";
+import { signOut } from "next-auth/react";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -35,7 +36,6 @@ type CustomIconComponentProps = GetProps<typeof Icon>;
 const CertificateIcon = (props: CustomIconComponentProps) => (
   <Icon component={CertificateSvg} {...props} />
 );
-
 
 function getItem(
   label: React.ReactNode,
@@ -101,7 +101,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const pathname = usePathname();
-  const username = useUsername();
+  const { username } = useAuth();
   const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
   const { count_program } = useMeetings();
 
@@ -133,7 +133,10 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     const regex3 = /^\/student\/dashboard\/placement-test\/result$/;
     const regex4 = /^\/student\/dashboard\/mock-test$/;
     return (
-      regex.test(pathname) || regex2.test(pathname) || regex3.test(pathname)|| regex4.test(pathname)
+      regex.test(pathname) ||
+      regex2.test(pathname) ||
+      regex3.test(pathname) ||
+      regex4.test(pathname)
     );
   };
 
@@ -150,8 +153,8 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           key: "logout",
           label: "Keluar",
           icon: <LogoutOutlined />,
-          onClick: () => {
-            console.log("logout");
+          onClick: async () => {
+            await signOut({ callbackUrl: "/" }); // 🔹 Logout dan redirect ke halaman utama
           },
         },
       ]}

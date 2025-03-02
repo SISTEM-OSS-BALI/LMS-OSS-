@@ -10,7 +10,7 @@ dayjs.extend(utc);
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const date = url.searchParams.get("date");
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   const formattedDate = date
     ? dayjs.utc(date).format("YYYY-MM-DD")

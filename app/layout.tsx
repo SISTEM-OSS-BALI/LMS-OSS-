@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import localFont from "next/font/local";
-import DndWrapper from "./lib/utils/dndWrapper";
-import AuthWrapper from "./lib/auth/authWrapper";
-import { AntdRegistry } from "@ant-design/nextjs-registry";
-import "react-quill/dist/quill.snow.css";
+import LayoutClient from "./layout-client"; 
 
 export const metadata: Metadata = {
   title: "LMS OSS",
@@ -23,19 +20,13 @@ const geistMono = localFont({
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthWrapper>
-          <AntdRegistry>
-            <DndWrapper>{children}</DndWrapper>
-          </AntdRegistry>
-        </AuthWrapper>
+        <LayoutClient>{children}</LayoutClient>{" "}
       </body>
     </html>
   );

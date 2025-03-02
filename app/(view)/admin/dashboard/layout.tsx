@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   BookOutlined,
   CalendarFilled,
+  CheckCircleFilled,
   LogoutOutlined,
   PieChartOutlined,
   ScheduleFilled,
@@ -26,9 +27,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
-import { useUsername } from "@/app/lib/auth/useLogin";
 import { crudService } from "@/app/lib/services/crudServices";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/lib/auth/authServices";
+import { signOut } from "next-auth/react";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -61,6 +63,8 @@ const menuMap: { [key: string]: string } = {
   "/admin/dashboard/student/reschedule": "/admin/dashboard/student/reschedule",
   "/admin/dashboard/student/data-student":
     "/admin/dashboard/student/data-student",
+  "/admin/dashboard/student/calendar/confirm-account":
+    "/admin/dashboard/student/calendar/confirm-account",
 };
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
@@ -71,7 +75,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const pathname = usePathname();
-  const username = useUsername();
+  const { username } = useAuth();
   const router = useRouter();
   const [newRescheduleCount, setNewRescheduleCount] = useState(0);
   const [newTeacherAbsance, setNewTeacherAbsance] = useState(0);
@@ -193,6 +197,11 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <UserOutlined />
       ),
       getItem(
+        <Link href="/admin/dashboard/student/confirm-account">Konfirmasi Akun</Link>,
+        "/admin/dashboard/student/calendar/confirm-account",
+        <CheckCircleFilled />
+      ),
+      getItem(
         newRescheduleCount > 0 ? (
           <Badge count={newRescheduleCount} offset={[10, 0]}>
             <Link
@@ -269,8 +278,8 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           key: "logout",
           label: "Keluar",
           icon: <LogoutOutlined />,
-          onClick: () => {
-            console.log("logout");
+          onClick: async () => {
+            await signOut({ callbackUrl: "/" }); // 🔹 Logout dan redirect ke halaman utama
           },
         },
       ]}
@@ -322,7 +331,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
             }}
           >
             <Image
-              src="/assets/images/logo.png"
+              src="/assets/images/logo.jpg"
               alt="Logo"
               width={60}
               preview={false}

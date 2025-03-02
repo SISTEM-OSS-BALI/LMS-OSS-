@@ -107,7 +107,7 @@ export default function SpeakingMockTestStudent({
       </Title>
 
       {/* Prompt */}
-      <Text strong>Soal:</Text>
+      <Text strong>Question:</Text>
       <Card
         style={{
           backgroundColor: "#f9f9f9",
@@ -130,7 +130,7 @@ export default function SpeakingMockTestStudent({
             icon={<AudioOutlined />}
             onClick={startRecording}
           >
-            Mulai Rekam
+            Start Recording
           </Button>
         ) : (
           <Button
@@ -139,7 +139,7 @@ export default function SpeakingMockTestStudent({
             danger
             onClick={stopRecording}
           >
-            Hentikan Rekaman
+            Stop Recording
           </Button>
         )}
       </div>
@@ -148,7 +148,7 @@ export default function SpeakingMockTestStudent({
       {isRecording && (
         <div style={{ marginTop: "20px", textAlign: "center" }}>
           <Text strong style={{ color: "#ff4d4f" }}>
-            Sedang merekam...
+            Recording...
           </Text>
           <br />
           <audio controls autoPlay />
@@ -172,14 +172,14 @@ export default function SpeakingMockTestStudent({
               icon={<UploadOutlined />}
               onClick={() => onSubmitAudio(audioBlob!)}
             >
-              Kirim Jawaban
+              Submit Recording
             </Button>
             <Button
               type="default"
               icon={<RedoOutlined />}
               onClick={restartRecording}
             >
-              Ulangi Rekaman
+              Repeat Recording
             </Button>
           </div>
         </div>

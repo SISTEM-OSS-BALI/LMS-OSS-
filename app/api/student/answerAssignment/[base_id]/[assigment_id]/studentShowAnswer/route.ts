@@ -7,7 +7,7 @@ export async function GET(
   params: { params: { assignment_id: string } }
 ) {
   const assignment_id = params.params.assignment_id;
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;

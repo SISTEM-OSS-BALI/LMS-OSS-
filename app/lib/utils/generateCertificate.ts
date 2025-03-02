@@ -65,36 +65,81 @@ const generateCertificate = async (
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.drawImage(imgBack, 0, 0);
 
-  // Posisi awal untuk evaluasi
-  let startY = 1020;
-  let commentY = 1000;
-  const sectionX = 570;
-  const levelX = 1050;
-  const commentX = 1350;
-  const rowHeight = 250;
+  if (context) {
+    context.drawImage(imgBack, 0, 0);
 
-  context.fillStyle = "black";
-  context.font = "bold 60px Montserrat";
-  context.textAlign = "left";
+    let startY = 1020;
+    const sectionX = 570;
+    const levelX = 1050;
+    const commentX = 1350;
+    const maxWidthComment = 1300;
+    const lineHeight = 50;
+    const rowHeight = 250;
 
-  evaluationData.forEach((evalItem) => {
-    const maxWidthComment = 500;
-    const trimmedComment =
-      evalItem.comment.length > 30
-        ? evalItem.comment.slice(0, 30) + "..."
-        : evalItem.comment;
-
+    context.fillStyle = "black";
     context.font = "bold 60px Montserrat";
-    context.fillText(evalItem.section_type, sectionX, startY);
-    context.font = "bold 60px Montserrat";
-    context.fillText(evalItem.level, levelX, startY);
-    context.font = "bold 40px Montserrat";
-    context.fillText(trimmedComment, commentX, commentY, maxWidthComment);
+    context.textAlign = "left";
 
-    startY += rowHeight;
-    commentY += rowHeight;
-  });
+    // Fungsi untuk membungkus teks dalam beberapa baris secara optimal
+    const wrapText = (
+      ctx: CanvasRenderingContext2D,
+      text: string,
+      x: number,
+      y: number,
+      maxWidth: number,
+      lineHeight: number
+    ): number => {
+      const words = text.split(" ");
+      let line = "";
+      let yOffset = 0;
 
+      words.forEach((word, index) => {
+        const testLine = line + (line ? " " : "") + word;
+        const testWidth = ctx.measureText(testLine).width;
+
+        if (testWidth > maxWidth && line !== "") {
+          ctx.fillText(line, x, y + yOffset);
+          line = word;
+          yOffset += lineHeight;
+        } else {
+          line = testLine;
+        }
+
+        // Gambar kata terakhir
+        if (index === words.length - 1) {
+          ctx.fillText(line, x, y + yOffset);
+        }
+      });
+
+      return yOffset; // Return total height yang digunakan
+    };
+
+    evaluationData.forEach(
+      (evalItem: { section_type: string; level: string; comment: string }) => {
+        let commentStartY = startY;
+
+        // Gambar teks untuk Section dan Level
+        context.font = "bold 60px Montserrat";
+        context.fillText(evalItem.section_type, sectionX, startY);
+        context.fillText(evalItem.level, levelX, startY);
+
+        // Gambar teks untuk Comment dengan wrapping
+        context.font = "bold 40px Montserrat";
+        const commentHeightUsed = wrapText(
+          context,
+          evalItem.comment,
+          commentX,
+          commentStartY,
+          maxWidthComment,
+          lineHeight
+        );
+
+        // Geser ke bawah untuk item berikutnya
+        startY += Math.max(rowHeight, commentHeightUsed + lineHeight);
+      }
+    );
+
+  }
   // Konversi halaman belakang ke gambar dan tambahkan ke PDF
   const backImage = canvas.toDataURL("image/png");
   doc.addImage(

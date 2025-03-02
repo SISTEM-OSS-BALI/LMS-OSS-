@@ -1,18 +1,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
+import { signIn } from "next-auth/react";
 import { notification } from "antd";
-import { crudService } from "@/app/lib/services/crudServices";
 
 interface LoginPayload {
   email: string;
   password: string;
-}
-
-interface LoginResponse {
-  token: string;
-  role: string;
-  status: number;
 }
 
 export function useLoginViewModel() {
@@ -22,16 +15,22 @@ export function useLoginViewModel() {
   const login = async (payload: LoginPayload) => {
     setLoading(true);
     try {
-      const response: LoginResponse = await crudService.post(
-        "/api/auth/login",
-        payload
-      );
+      const response = await signIn("credentials", {
+        redirect: false, 
+        email: payload.email,
+        password: payload.password,
+      });
 
-      // Set token
-      Cookies.set("token", response.token, { expires: 1 });
+      if (!response || response.error) {
+        throw new Error(response?.error || "Login gagal, silakan coba lagi.");
+      }
 
-      // Handle role-based navigation
-      switch (response.role) {
+      
+      const sessionRes = await fetch("/api/auth/session");
+      const session = await sessionRes.json();
+
+      // 🔹 Navigasi berdasarkan peran pengguna
+      switch (session?.user?.role) {
         case "TEACHER":
           router.push("/teacher/dashboard/home");
           break;
@@ -46,13 +45,11 @@ export function useLoginViewModel() {
           break;
       }
 
-      notification.success({
-        message: "Login Berhasil",
-      });
+      notification.success({ message: "Login Berhasil" });
     } catch (error: any) {
       notification.error({
         message: "Login Gagal",
-        description: error.response?.data?.message || "Terjadi kesalahan",
+        description: error.message || "Terjadi kesalahan",
       });
     } finally {
       setLoading(false);

@@ -10,7 +10,7 @@ export async function GET(
   const base_id = params.base_id
 
   try {
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {
       return user;
     }

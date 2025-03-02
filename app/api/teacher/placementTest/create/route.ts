@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description, time_limit } = body;
 
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
 
     if (user instanceof NextResponse) {
       return user;

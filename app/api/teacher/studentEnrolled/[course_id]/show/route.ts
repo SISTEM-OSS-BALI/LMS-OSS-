@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { course_id: string } }
 ) {
   const course_id = params.course_id;
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;

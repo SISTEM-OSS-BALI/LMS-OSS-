@@ -7,7 +7,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { consultant_id: string } }
 ) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   const body = await request.json();
   const { name, no_phone } = body;
 

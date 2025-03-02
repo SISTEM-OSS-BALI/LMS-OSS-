@@ -95,9 +95,9 @@ export const useMeetings = () => {
   const [selectedTest, setSelectedTest] = useState<any>(null);
   // const [selectedMockTest, setSelectedMockTest] = useState<any>(null);
 
-  const mergedDataCourse = courseData?.data.map((course) => {
-    const accessCourse = accessCourseData?.data.find(
-      (access) => access.course_id === course.course_id
+  const mergedDataCourse = accessCourseData?.data.map((course) => {
+    const accessCourse = courseData?.data.find(
+      (course) => course.course_id === course.course_id
     );
     return {
       ...course,
@@ -105,9 +105,9 @@ export const useMeetings = () => {
     };
   });
 
-  const mergedDataMockTest = mockTestData?.data.map((mockTest) => {
-    const accessMockTest = accessMockTestData?.data.find(
-      (access) => access.mock_test_id === mockTest.mock_test_id
+  const mergedDataMockTest = accessMockTestData?.data.map((mockTest) => {
+    const accessMockTest = mockTestData?.data.find(
+      (mockTest) => mockTest.mock_test_id === mockTest.mock_test_id
     );
     return {
       ...mockTest,

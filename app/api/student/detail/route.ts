@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/prisma";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 
-
 export async function GET(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;
@@ -17,7 +16,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ status: 200, error: false, data: getUserDetail });
+    return NextResponse.json({
+      status: 200,
+      error: false,
+      data: getUserDetail,
+    });
   } catch (error) {
     console.error("Error accessing database:", error);
     return new NextResponse(

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUsername } from "@/app/lib/auth/useLogin";
 import {
   Typography,
   Modal,
@@ -20,11 +19,12 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useMeetings } from "./useMeetingViewModel";
 import Link from "next/link";
+import { useAuth } from "@/app/lib/auth/authServices";
 
 const { Title, Text } = Typography;
 
 export default function HomeStudent() {
-  const username = useUsername();
+  const { username } = useAuth();
 
   const {
     isModalVisible,
@@ -42,10 +42,6 @@ export default function HomeStudent() {
     mergedDataMockTest,
     handleModalCloseTest,
   } = useMeetings();
-
-  useEffect(() => {
-    console.log(mergedDataMockTest);
-  }, [mergedDataMockTest]);
 
   // State untuk modal Placement Test
 
@@ -247,7 +243,11 @@ export default function HomeStudent() {
             <p>
               <Text strong>Durasi:</Text> {selectedTest.timeLimit} menit
             </p>
-            <Button type="primary" onClick={startQuiz} style={{ width: "100%" }}>
+            <Button
+              type="primary"
+              onClick={startQuiz}
+              style={{ width: "100%" }}
+            >
               Start
             </Button>
           </div>

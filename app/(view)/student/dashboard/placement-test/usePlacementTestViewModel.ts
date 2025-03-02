@@ -72,7 +72,7 @@ export const usePlacementTestViewModel = () => {
   const [remainingTime, setRemainingTime] = useState(Number(time) * 60 || 0);
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
-  >(() => JSON.parse(localStorage.getItem("answersBySection") || "{}"));
+  >(() => JSON.parse(localStorage.getItem("answersPlacementTest") || "{}"));
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
@@ -105,7 +105,7 @@ export const usePlacementTestViewModel = () => {
     } else if (remainingTime === 0) {
       handleSubmit();
     }
-  }, [remainingTime]);
+  }, [remainingTime,]);
 
   // Format waktu MM:SS
   const formatTime = useCallback((seconds: number) => {
@@ -128,17 +128,17 @@ export const usePlacementTestViewModel = () => {
       }));
       if (typeof window !== "undefined") {
         localStorage.setItem(
-          "answersBySection",
+          "answersPlacementTest",
           JSON.stringify(selectedAnswers)
         );
       }
     },
-    []
+    [selectedAnswers]
   );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedTime = Number(localStorage.getItem("remainingTime"));
+      const savedTime = Number(localStorage.getItem("remainingTimePlacement"));
       if (!isNaN(savedTime) && savedTime > 0) {
         setRemainingTime(savedTime);
       }
@@ -175,7 +175,6 @@ export const usePlacementTestViewModel = () => {
     }));
 
     const payload = {
-
       selectedData,
       placement_test_id: selectedPlacementId,
       access_id,
@@ -195,8 +194,8 @@ export const usePlacementTestViewModel = () => {
         );
         router.push("/student/dashboard/placement-test/result");
         if (typeof window !== "undefined") {
-          localStorage.removeItem("answersBySection");
-          localStorage.removeItem("remainingTime");
+          localStorage.removeItem("answersPlacementTest");
+          localStorage.removeItem("remainingTimePlacement");
         }
         setLoading(false);
       } else {
@@ -226,6 +225,6 @@ export const usePlacementTestViewModel = () => {
     showConfirmSubmit,
     handleSubmit,
     time,
-    loading
+    loading,
   };
 };

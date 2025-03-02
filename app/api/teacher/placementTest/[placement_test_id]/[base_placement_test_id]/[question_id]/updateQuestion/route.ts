@@ -18,7 +18,7 @@ export async function PUT(
     const { type, passage, question, options, correctAnswer } = body;
     const { question_id } = params;
 
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {
       return user;
     }

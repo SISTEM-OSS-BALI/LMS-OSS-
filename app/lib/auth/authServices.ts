@@ -1,37 +1,15 @@
-import { JwtPayload } from "jsonwebtoken";
-import { jwtDecode } from "jwt-decode";
-import Cookies from "js-cookie";
+"use client";
 
-interface MyTokenPayload extends JwtPayload {
-  user_id: string;
-  username: string
-}
+import { useSession } from "next-auth/react";
 
-export const login = (): boolean => {
-  const token = Cookies.get("token");
-  return !!token;
+export const useAuth = () => {
+  const { data: session } = useSession();
+
+  return {
+    isLoggedIn: !!session?.user, 
+    userId: session?.user?.user_id || null,
+    username: session?.user?.name || null,
+    role: session?.user?.role || null,
+    programId: session?.user?.program_id || null,
+  };
 };
-
-export const getUsername = (token: string) => {
-  const decoded = jwtDecode<MyTokenPayload>(token);
-  return decoded.username;
-};
-
-
-
-export const getUserId = (token: string) => {
-  const decoded = jwtDecode<MyTokenPayload>(token);
-  return decoded.user_id;
-};
-
-export const getCountProgram = (token: string) => {
-  const decoded = jwtDecode<MyTokenPayload>(token);
-  return decoded.count_program;
-}
-
-export const getProgramId = (token: string) => {
-  const decoded = jwtDecode<MyTokenPayload>(token);
-  return decoded.program_id;
-}
-
-

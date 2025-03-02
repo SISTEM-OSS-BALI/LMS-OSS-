@@ -32,7 +32,7 @@ const monthTranslation = {
 };
 
 export async function POST(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   if (user instanceof NextResponse) return user;
 
   const apiKey = process.env.API_KEY_WATZAP!;
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         select: { username: true, no_phone: true },
       }),
       prisma.program.findUnique({
-        where: { program_id: user.program_id },
+        where: { program_id: user.program_id ?? "" },
         select: { name: true, duration: true },
       }),
     ]);

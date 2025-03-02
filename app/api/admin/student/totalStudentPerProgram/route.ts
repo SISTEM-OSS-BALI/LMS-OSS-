@@ -4,7 +4,7 @@ import prisma from "@/app/lib/prisma";
 import dayjs from "dayjs";
 
 export async function GET(request: NextRequest) {
-  const user = authenticateRequest(request);
+  const user = await authenticateRequest(request);
   if (user instanceof NextResponse) {
     return user;
   }

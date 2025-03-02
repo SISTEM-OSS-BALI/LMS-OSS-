@@ -21,7 +21,7 @@ export async function DELETE(
 
     const { question_id } = params;
 
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {
       return user;
     }

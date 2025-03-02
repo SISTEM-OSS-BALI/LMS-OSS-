@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, course_id, type } = body;
 
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
 
     if (user instanceof NextResponse) {
       return user;

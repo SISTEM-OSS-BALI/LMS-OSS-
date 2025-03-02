@@ -7,7 +7,7 @@ export async function DELETE(
   params: { params: { base_placement_test_id: string } }
 ) {
   try {
-    const user = authenticateRequest(request);
+    const user = await authenticateRequest(request);
 
     if (user instanceof NextResponse) {
       return user;

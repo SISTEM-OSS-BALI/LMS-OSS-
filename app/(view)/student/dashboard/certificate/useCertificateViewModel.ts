@@ -54,16 +54,16 @@ export const useCertificateViewModel = () => {
 
   const certificate: Certificate | null = certificateData?.data ?? null;
 
-  const generateCertificatePreview = async () => {
+  const generateCertificatePreview = async (): Promise<void> => {
     if (certificate && evaluationData) {
       const { student_name, no_certificate } = certificate;
 
       const doc = new jsPDF("landscape", "px", "a4");
-      const canvas = document.createElement("canvas");
+      const canvas: HTMLCanvasElement = document.createElement("canvas");
       const context = canvas.getContext("2d");
 
       /** ---- Generate Halaman Depan ---- **/
-      const imgFront: HTMLImageElement = document.createElement("img");
+      const imgFront = new Image();
       imgFront.src = "/assets/images/certificate_front.png";
 
       await new Promise((resolve) => {
@@ -91,7 +91,7 @@ export const useCertificateViewModel = () => {
       setCertificateFrontPreview(canvas.toDataURL("image/png"));
 
       /** ---- Generate Halaman Belakang ---- **/
-      const imgBack: HTMLImageElement = document.createElement("img");
+      const imgBack = new Image();
       imgBack.src = "/assets/images/certificate_back.png";
 
       await new Promise((resolve) => {
@@ -105,33 +105,79 @@ export const useCertificateViewModel = () => {
         context.drawImage(imgBack, 0, 0);
 
         let startY = 1020;
-        let commentY = 1000;
         const sectionX = 570;
         const levelX = 1050;
         const commentX = 1350;
+        const maxWidthComment = 1300; 
+        const lineHeight = 50;
         const rowHeight = 250;
 
         context.fillStyle = "black";
         context.font = "bold 60px Montserrat";
         context.textAlign = "left";
 
-        evaluationData.data.forEach((evalItem: any) => {
-          const maxWidthComment = 500;
-          const trimmedComment =
-            evalItem.comment.length > 30
-              ? evalItem.comment.slice(0, 30) + "..."
-              : evalItem.comment;
+        // Fungsi untuk membungkus teks dalam beberapa baris secara optimal
+        const wrapText = (
+          ctx: CanvasRenderingContext2D,
+          text: string,
+          x: number,
+          y: number,
+          maxWidth: number,
+          lineHeight: number
+        ): number => {
+          const words = text.split(" ");
+          let line = "";
+          let yOffset = 0;
 
-          context.font = "bold 60px Montserrat";
-          context.fillText(evalItem.section_type, sectionX, startY);
-          context.font = "bold 60px Montserrat";
-          context.fillText(evalItem.level, levelX, startY);
-          context.font = "bold 40px Montserrat";
-          context.fillText(trimmedComment, commentX, commentY, maxWidthComment);
+          words.forEach((word, index) => {
+            const testLine = line + (line ? " " : "") + word;
+            const testWidth = ctx.measureText(testLine).width;
 
-          startY += rowHeight;
-          commentY += rowHeight;
-        });
+            if (testWidth > maxWidth && line !== "") {
+              ctx.fillText(line, x, y + yOffset);
+              line = word;
+              yOffset += lineHeight;
+            } else {
+              line = testLine;
+            }
+
+            // Gambar kata terakhir
+            if (index === words.length - 1) {
+              ctx.fillText(line, x, y + yOffset);
+            }
+          });
+
+          return yOffset; // Return total height yang digunakan
+        };
+
+        evaluationData.data.forEach(
+          (evalItem: {
+            section_type: string;
+            level: string;
+            comment: string;
+          }) => {
+            let commentStartY = startY;
+
+            // Gambar teks untuk Section dan Level
+            context.font = "bold 60px Montserrat";
+            context.fillText(evalItem.section_type, sectionX, startY);
+            context.fillText(evalItem.level, levelX, startY);
+
+            // Gambar teks untuk Comment dengan wrapping
+            context.font = "bold 40px Montserrat";
+            const commentHeightUsed = wrapText(
+              context,
+              evalItem.comment,
+              commentX,
+              commentStartY,
+              maxWidthComment,
+              lineHeight
+            );
+
+            // Geser ke bawah untuk item berikutnya
+            startY += Math.max(rowHeight, commentHeightUsed + lineHeight);
+          }
+        );
 
         setCertificateBackPreview(canvas.toDataURL("image/png"));
       }
