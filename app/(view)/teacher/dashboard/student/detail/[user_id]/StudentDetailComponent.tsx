@@ -27,8 +27,7 @@ import {
   BookOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
-import { SP } from "next/dist/shared/lib/utils";
-import { SectionType } from "@prisma/client";
+import { useParams } from "next/navigation";
 dayjs.extend(utc);
 
 const { Title, Text } = Typography;
@@ -50,7 +49,8 @@ export default function StudentDetailComponent() {
     loading,
   } = useDetailStudentViewModel();
 
-  
+  const query = useParams();
+  const student_id = query.user_id;
 
   type SectionType = "LISTENING" | "READING" | "WRITING" | "SPEAKING";
 
@@ -442,7 +442,7 @@ export default function StudentDetailComponent() {
         <Flex justify="space-between" style={{ marginBlock: "10px" }}>
           <Title level={3}>Riwayat Pertemuan</Title>
           <Flex justify="space-between" gap={10}>
-            <Button type="primary" disabled={isLoadingProgram}>
+            <Button type="primary" disabled={isLoadingProgram} href={`/teacher/dashboard/history-test/${student_id}`}>
               Riwayat Placement Test
             </Button>
             {isLoadingProgram ? (

@@ -99,6 +99,10 @@ export async function POST(request: NextRequest) {
             },
           });
         } else if (trueFalseQuestion) {
+          const trueFalseGroup =
+            await prisma.trueFalseGroupPlacementTest.findFirst({
+              where: { group_id: trueFalseQuestion.group_id },
+            });
           isCorrect =
             trueFalseQuestion.correctAnswer.toString() === selectedAnswer;
           score = isCorrect ? 1 : 0;
@@ -107,6 +111,7 @@ export async function POST(request: NextRequest) {
               student_id: user.user_id,
               placement_test_id,
               tf_id: id,
+              group_id: trueFalseGroup ? trueFalseGroup.group_id : null,
               studentAnswer: selectedAnswer,
               isCorrect,
               score,
@@ -178,6 +183,16 @@ export async function POST(request: NextRequest) {
     await prisma.user.update({
       where: { user_id: user.user_id },
       data: { level: newLevel },
+    });
+
+    await prisma.scorePlacementTest.create({
+      data: {
+        student_id: user.user_id,
+        placement_test_id,
+        totalScore: totalScore,
+        percentageScore: percentageScore,
+        level: newLevel,
+      },
     });
 
     return NextResponse.json({

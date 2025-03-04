@@ -178,7 +178,12 @@ export default function HomeStudent() {
                               <Button type="primary" disabled>
                                 Tes Telah Dilakukan
                               </Button>
-                              <Button type="primary">Riwayat</Button>
+                              <Button
+                                type="primary"
+                                href={`/student/dashboard/placement-test/history/${item.placement_test_id}`}
+                              >
+                                Riwayat
+                              </Button>
                             </Space>
                           ) : (
                             <Button

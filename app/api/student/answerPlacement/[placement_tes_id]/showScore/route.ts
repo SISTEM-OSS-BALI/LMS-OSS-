@@ -14,23 +14,21 @@ export async function GET(
   }
 
   try {
-    
-    const stundentAnswer = await getData(
-      "studentAnswerPlacementTest",
+    const studentScore = await getData(
+      "scorePlacementTest",
       {
         where: {
-          placement_tes_id: placement_tes_id,
+          placement_test_id: placement_tes_id,
           student_id: user.user_id,
         },
       },
-      "findMany"
+      "findFirst"
     );
-
 
     return NextResponse.json({
       status: 200,
       error: false,
-      data: stundentAnswer,
+      data: studentScore,
     });
   } catch (error) {
     console.error("Error accessing database:", error);

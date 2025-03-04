@@ -97,7 +97,7 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const pathname = usePathname();
- const { username } = useAuth();
+  const { username } = useAuth();
   const { count_program } = useDashboardViewModel();
   const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
 
@@ -124,6 +124,10 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
 
     if (pathname.startsWith("/teacher/dashboard/placement-test/")) {
       return ["/teacher/dashboard/placement-test"];
+    }
+
+    if (pathname.startsWith("/teacher/dashboard/history-test")) {
+      return ["/teacher/dashboard/student"];
     }
 
     return matchedEntry ? [matchedEntry[1]] : [];
@@ -196,7 +200,7 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
             }}
           >
             <Image
-              src="/assets/images/logo.png"
+              src="/assets/images/logo.jpg"
               alt="Logo"
               width={60}
               preview={false}

@@ -132,11 +132,13 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     const regex2 = /^\/student\/dashboard\/placement-test$/;
     const regex3 = /^\/student\/dashboard\/placement-test\/result$/;
     const regex4 = /^\/student\/dashboard\/mock-test$/;
+    const regex5 = /^\/student\/dashboard\/placement-test\/history\/[^/]+$/;
     return (
       regex.test(pathname) ||
       regex2.test(pathname) ||
       regex3.test(pathname) ||
-      regex4.test(pathname)
+      regex4.test(pathname) ||
+      regex5.test(pathname)
     );
   };
 
@@ -208,7 +210,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
               }}
             >
               <Image
-                src="/assets/images/logo.png"
+                src="/assets/images/logo.jpg"
                 alt="Logo"
                 width={60}
                 preview={false}

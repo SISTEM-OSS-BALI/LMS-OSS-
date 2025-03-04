@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import useSWR from "swr";
 import { useSearchParams, useRouter } from "next/navigation";
-import { message, Modal } from "antd";
+import { message, Modal, notification } from "antd";
 import { crudService } from "@/app/lib/services/crudServices";
 
 const { confirm } = Modal;
@@ -105,7 +105,7 @@ export const usePlacementTestViewModel = () => {
     } else if (remainingTime === 0) {
       handleSubmit();
     }
-  }, [remainingTime,]);
+  }, [remainingTime]);
 
   // Format waktu MM:SS
   const formatTime = useCallback((seconds: number) => {
@@ -192,6 +192,7 @@ export const usePlacementTestViewModel = () => {
           "placementTestResult",
           JSON.stringify(response.data)
         );
+        notification.success({ message: "Berhasil mengirim jawaban" });
         router.push("/student/dashboard/placement-test/result");
         if (typeof window !== "undefined") {
           localStorage.removeItem("answersPlacementTest");

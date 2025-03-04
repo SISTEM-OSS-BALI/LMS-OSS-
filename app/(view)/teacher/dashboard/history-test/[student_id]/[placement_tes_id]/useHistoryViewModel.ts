@@ -32,7 +32,6 @@ interface PlacementTestEntry {
   };
 }
 
-
 interface StudentAnswerPlacementTestResponse {
   data: PlacementTestEntry[];
 }
@@ -43,15 +42,16 @@ interface ShowScoreResponse {
 export const useHistoryViewModel = () => {
   const query = useParams();
   const placement_tes_id = query.placement_tes_id as string;
+  const student_id = query.student_id;
   const { data: studentAnsweData, isLoading: studentAnswerLoading } =
     useSWR<StudentAnswerPlacementTestResponse>(
-      `/api/student/answerPlacement/${placement_tes_id}/studentShowAnswer`,
+      `/api/teacher/historyTest/${student_id}/${placement_tes_id}/studentShowAnswer`,
       fetcher
     );
   const { data: showScoreData, isLoading: showScoreDataLoading } =
     useSWR<ShowScoreResponse>(
       `
-    /api/student/answerPlacement/${placement_tes_id}/showScore`,
+    /api/teacher/historyTest/${student_id}/${placement_tes_id}/showScore`,
       fetcher
     );
   return {

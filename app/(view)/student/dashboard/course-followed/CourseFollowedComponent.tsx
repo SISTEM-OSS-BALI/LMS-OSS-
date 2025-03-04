@@ -5,17 +5,15 @@ import Meta from "antd/es/card/Meta";
 import CustomAlert from "@/app/components/CustomAlert";
 import Loading from "@/app/components/Loading";
 import Title from "antd/es/typography/Title";
-import generateCertificate from "@/app/lib/utils/generateCertificate";
-import { formatDate } from "@/app/lib/utils/formatDate";
 import { useCourseFollowedViewModel } from "./useCourseFollowedViewModel";
-import { useUsername } from "@/app/lib/auth/useLogin";
 import { useRandomBgCourse } from "@/app/lib/utils/useRandomBgCourse";
+import { useAuth } from "@/app/lib/auth/authServices";
 
 export default function CoursesFollowedComponent() {
   const { courseData, progressData, error } = useCourseFollowedViewModel();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const username = useUsername();
+  const username = useAuth();
   const router = useRouter();
   const backgroundImages = useRandomBgCourse();
 
@@ -46,17 +44,6 @@ export default function CoursesFollowedComponent() {
     return courses;
   };
 
-  // const handleGenerateCertificate = (
-  //   courseName: string,
-  //   completionDate: any
-  // ) => {
-  //   generateCertificate(
-  //     username,
-  //     courseName,
-  //     formatDate(completionDate),
-  //     "/assets/images/certificate.png"
-  //   );
-  // };
 
   if (error) return <CustomAlert type="error" message={error.message} />;
   if (!courseData) return <Loading />;

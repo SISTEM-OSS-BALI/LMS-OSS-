@@ -1,0 +1,52 @@
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateRequest } from "@/app/lib/auth/authUtils";
+import { getData } from "@/app/lib/db/getData";
+
+export async function GET(
+  request: NextRequest,
+  params: {
+    params: {
+      student_id: string;
+      placement_tes_id: string;
+    };
+  }
+) {
+  const placement_tes_id = params.params.placement_tes_id;
+  const user = await authenticateRequest(request);
+  const student_id = params.params.student_id;
+  if (user instanceof NextResponse) {
+    return user;
+  }
+
+  try {
+    const studentScore = await getData(
+      "scorePlacementTest",
+      {
+        where: {
+          placement_test_id: placement_tes_id,
+          student_id: student_id,
+        },
+      },
+      "findFirst"
+    );
+
+    return NextResponse.json({
+      status: 200,
+      error: false,
+      data: studentScore,
+    });
+  } catch (error) {
+    console.error("Error accessing database:", error);
+    return new NextResponse(
+      JSON.stringify({ error: "Internal Server Error" }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
