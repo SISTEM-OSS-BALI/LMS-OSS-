@@ -20,7 +20,6 @@ export const useBaseViewModel = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
-  const [showQuestionForm, setShowQuestionForm] = useState(false);
 
   const [formType, setFormType] = useState<
     "listening" | "writing" | "reading" | "speaking" | null
@@ -33,31 +32,121 @@ export const useBaseViewModel = () => {
   }>({});
   const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
 
+  const [editType, setEditType] = useState<
+    "passage" | "prompt" | "audio" | "question" | "addQuestionMore" | "editSpeaking" | null
+  >(null);
+
   const handleOpenModal = (
     type: "listening" | "writing" | "reading" | "speaking",
-    question: any = null
+    editType:
+      | "passage"
+      | "prompt"
+      | "audio"
+      | "question"
+      | "addQuestionMore"
+      | "editSpeaking"
+      | null = null,
+    questionId: string | null = null,
+    id: string | null = null
   ) => {
     setFormType(type);
     setIsModalOpen(true);
-    setSelectedQuestion(question);
-    setShowQuestionForm(false);
+    setEditType(editType);
     form.resetFields();
 
-    if (question) {
-      // ✅ Jika mode edit, isi form dengan nilai yang sudah ada
-      setShowQuestionForm(true);
-      setQuestionCount(1);
-      form.setFieldsValue({
-        ...question,
-        options: question.options || [],
-        correctAnswer: question.correctAnswer || "",
-      });
+    let foundBaseData = null;
+    let foundQuestion: {
+      question_id: string;
+      question: string;
+      options: string[];
+      answer: string;
+    } | null = null;
 
-      setOptions({ 0: question.options || [] });
-      setCorrectAnswers({ 0: question.correctAnswer || "" });
+    // ✅ Jika editType adalah "prompt", cari berdasarkan `id`
+    if (editType === "prompt" && id) {
+      foundBaseData = baseDetailData?.data?.writing;
+      if (foundBaseData) {
+        form.setFieldsValue({ prompt: foundBaseData.prompt });
+      }
+      return; // ⛔ STOP! Tak lanjut ke logika lain
+    }
+
+    // ✅ Jika editType adalah "passage", cari berdasarkan ``
+    if (editType === "passage" && id) {
+      foundBaseData = baseDetailData?.data?.reading;
+      if (foundBaseData) {
+        form.setFieldsValue({ passage: foundBaseData.passage });
+      }
+      return;
+    }
+
+    // ✅ Jika editType adalah "audio", cari berdasarkan ``
+    if (editType === "audio" && id) {
+      foundBaseData = baseDetailData?.data?.listening;
+      if (foundBaseData) {
+        form.setFieldsValue({ audio_url: foundBaseData.audio_url });
+      }
+      return;
+    }
+
+    if(editType === "editSpeaking" && id) {
+      foundBaseData = baseDetailData?.data?.speaking;
+      if (foundBaseData) {
+        form.setFieldsValue({ prompt: foundBaseData.prompt });
+      }
+      return;
+    }
+
+    // ✅ Jika mode edit soal (question), cari berdasarkan questionId
+    if (editType === "question" && questionId) {
+      if (type === "writing") {
+        foundQuestion = baseDetailData?.data?.writing?.questions.find(
+          (q: any) => q.question_id === questionId
+        );
+      } else if (type === "reading") {
+        foundQuestion = baseDetailData?.data?.reading?.questions.find(
+          (q: any) => q.question_id === questionId
+        );
+      } else if (type === "listening") {
+        foundQuestion = baseDetailData?.data?.listening?.questions.find(
+          (q: any) => q.question_id === questionId
+        );
+      } else if (type === "speaking") {
+        foundQuestion = baseDetailData?.data?.speaking?.questions.find(
+          (q: any) => q.question_id === questionId
+        );
+      }
+
+      if (foundQuestion) {
+        setSelectedQuestion(foundQuestion);
+        setOptions({ 0: foundQuestion.options || [] });
+        setCorrectAnswers({ 0: foundQuestion.answer || "" });
+
+        setTimeout(() => {
+          form.setFieldsValue({
+            question: foundQuestion?.question,
+            ...foundQuestion?.options.reduce(
+              (acc: any, option: string, index: number) => {
+                acc[`option_${index}`] = option;
+                return acc;
+              },
+              {}
+            ),
+            correctAnswer: foundQuestion?.answer || "",
+          });
+        }, 0);
+      }
+      return;
+    }
+
+    // ✅ Jika menambahkan soal baru (addQuestionMore), reset form
+    if (editType === "addQuestionMore") {
+      setSelectedQuestion(null);
+      setOptions({});
+      setCorrectAnswers({});
+      setQuestionCount(1);
     }
   };
-
 
   const handleQuestionCountChange = (value: number) => {
     setQuestionCount(value || 1);
@@ -106,6 +195,11 @@ export const useBaseViewModel = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditType(null);
+    setFormType(null);
+    setSelectedQuestion(null);
+    setOptions({});
+    setCorrectAnswers({});
   };
 
   const handleSubmit = async (values: any) => {
@@ -227,6 +321,7 @@ export const useBaseViewModel = () => {
     handleEditQuestion,
     handleDeleteQuestion,
     selectedQuestion,
-    showQuestionForm,
+    setOptions,
+    editType,
   };
 };

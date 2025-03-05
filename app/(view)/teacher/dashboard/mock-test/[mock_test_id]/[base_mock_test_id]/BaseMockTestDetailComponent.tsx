@@ -44,7 +44,8 @@ export default function BaseMockTestDetailComponent() {
     handleEditQuestion,
     handleDeleteQuestion,
     selectedQuestion,
-    showQuestionForm,
+    setOptions,
+    editType,
   } = useBaseViewModel();
 
   // Skeleton Loading
@@ -71,36 +72,44 @@ export default function BaseMockTestDetailComponent() {
   return (
     <div>
       <Flex justify="end" align="center" style={{ marginBottom: 16 }}>
-        {baseDetailData.data.type === "READING" && (
-          <Button type="primary" onClick={() => handleOpenModal("reading")}>
-            Tambah Soal Reading
-          </Button>
-        )}
-        {baseDetailData.data.type === "LISTENING" && (
-          <Button type="primary" onClick={() => handleOpenModal("listening")}>
-            Tambah Soal Listening
-          </Button>
-        )}
-        {baseDetailData.data.type === "SPEAKING" && (
-          <Button type="primary" onClick={() => handleOpenModal("speaking")}>
-            Tambah Soal Speaking
-          </Button>
-        )}
-        {baseDetailData.data.type === "WRITING" && (
-          <Button type="primary" onClick={() => handleOpenModal("writing")}>
-            Tambah Soal Writing
-          </Button>
-        )}
+        {baseDetailData.data.type === "READING" &&
+          baseDetailData.data.reading === null && (
+            <Button type="primary" onClick={() => handleOpenModal("reading")}>
+              Tambah Soal Reading
+            </Button>
+          )}
+        {baseDetailData.data.type === "LISTENING" &&
+          baseDetailData.data.listening === null && (
+            <Button type="primary" onClick={() => handleOpenModal("listening")}>
+              Tambah Soal Listening
+            </Button>
+          )}
+        {baseDetailData.data.type === "SPEAKING" &&
+          baseDetailData.data.speaking === null && (
+            <Button type="primary" onClick={() => handleOpenModal("speaking")}>
+              Tambah Soal Speaking
+            </Button>
+          )}
+        {baseDetailData.data.type === "WRITING" &&
+          baseDetailData.data.writing === null && (
+            <Button type="primary" onClick={() => handleOpenModal("writing")}>
+              Tambah Soal Writing
+            </Button>
+          )}
       </Flex>
 
       {baseDetailData.data.type === "READING" ? (
         baseDetailData.data.reading ? (
           <ReadingMockTestComponent
             data={baseDetailData.data.reading}
-            onAddQuestion={() => handleOpenModal("reading")}
-            onEditQuestion={(question) => handleOpenModal("reading", question)}
+            onAddQuestion={() => handleOpenModal("reading", "addQuestionMore")}
+            onEditQuestion={(questionId) =>
+              handleOpenModal("reading", "question", questionId)
+            }
             onDeleteQuestion={handleDeleteQuestion}
-            onEditPassage={(id) => console.log("Edit Passage:", id)}
+            onEditPassage={(id) =>
+              handleOpenModal("reading", "passage", null, id)
+            }
           />
         ) : (
           <Alert
@@ -117,10 +126,16 @@ export default function BaseMockTestDetailComponent() {
         baseDetailData.data.listening ? (
           <ListeningMockTestComponent
             data={baseDetailData.data.listening}
-            onAddQuestion={() => console.log("Add Question")}
-            onDeleteQuestion={(id) => console.log("Delete Question:", id)}
-            onEditAudio={(id) => console.log("Edit Audio:", id)}
-            onEditQuestion={(id) => console.log("Edit Question:", id)}
+            onAddQuestion={() =>
+              handleOpenModal("listening", "addQuestionMore")
+            }
+            onEditQuestion={(questionId) =>
+              handleOpenModal("listening", "question", questionId)
+            }
+            onDeleteQuestion={handleDeleteQuestion}
+            onEditAudio={(id) =>
+              handleOpenModal("listening", "audio", null, id)
+            }
           />
         ) : (
           <Alert
@@ -137,7 +152,9 @@ export default function BaseMockTestDetailComponent() {
         baseDetailData.data.speaking ? (
           <SpeakingMockTestComponent
             data={baseDetailData.data.speaking}
-            onEdit={(id) => console.log("Edit Speaking:", id)}
+            onEdit={(id) =>
+              handleOpenModal("speaking", "editSpeaking", null, id)
+            }
             onDelete={(id) => console.log("Delete Speaking:", id)}
           />
         ) : (
@@ -155,10 +172,14 @@ export default function BaseMockTestDetailComponent() {
         baseDetailData.data.writing ? (
           <WritingMockTestComponent
             data={baseDetailData.data.writing}
-            onAddQuestion={() => console.log("Add Question")}
-            onDeleteQuestion={(id) => console.log("Delete Question:", id)}
-            onEditPrompt={(id) => console.log("Edit Prompt:", id)}
-            onEditQuestion={(id) => console.log("Edit Question:", id)}
+            onAddQuestion={() => handleOpenModal("writing", "addQuestionMore")}
+            onEditQuestion={(questionId) =>
+              handleOpenModal("writing", "question", questionId)
+            }
+            onDeleteQuestion={handleDeleteQuestion}
+            onEditPrompt={(id) =>
+              handleOpenModal("writing", "prompt", null, id)
+            }
           />
         ) : (
           <Alert
@@ -197,34 +218,49 @@ export default function BaseMockTestDetailComponent() {
           </Form.Item>
 
           {/* Form Sesuai Section */}
-          {formType === "writing" && (
+          {formType === "writing" &&
+            selectedQuestion == null &&
+            editType == null && (
+              <Form.Item
+                name="prompt"
+                rules={[{ required: true, message: "Prompt wajib diisi!" }]}
+              >
+                <Input.TextArea placeholder="Masukkan prompt soal writing" />
+              </Form.Item>
+            )}
+
+          {formType === "listening" &&
+            selectedQuestion == null &&
+            editType == null && (
+              <Form.Item
+                name="audio_url"
+                rules={[{ required: true, message: "URL Audio wajib diisi!" }]}
+              >
+                <Input placeholder="Masukkan URL Audio Listening" />
+              </Form.Item>
+            )}
+
+          {formType === "reading" &&
+            selectedQuestion == null &&
+            editType == null && (
+              <Form.Item
+                name="passage"
+                rules={[{ required: true, message: "Passage wajib diisi!" }]}
+              >
+                <Input.TextArea placeholder="Masukkan passage soal reading" />
+              </Form.Item>
+            )}
+
+          {formType === "speaking" && editType === null && (
             <Form.Item
               name="prompt"
               rules={[{ required: true, message: "Prompt wajib diisi!" }]}
             >
-              <Input.TextArea placeholder="Masukkan prompt soal writing" />
+              <Input.TextArea placeholder="Masukkan prompt soal speaking" />
             </Form.Item>
           )}
 
-          {formType === "listening" && (
-            <Form.Item
-              name="audio_url"
-              rules={[{ required: true, message: "URL Audio wajib diisi!" }]}
-            >
-              <Input placeholder="Masukkan URL Audio Listening" />
-            </Form.Item>
-          )}
-
-          {formType === "reading" && (
-            <Form.Item
-              name="passage"
-              rules={[{ required: true, message: "Passage wajib diisi!" }]}
-            >
-              <Input.TextArea placeholder="Masukkan passage soal reading" />
-            </Form.Item>
-          )}
-
-          {formType === "speaking" && (
+          {formType === "speaking" && editType === "editSpeaking" && (
             <Form.Item
               name="prompt"
               rules={[{ required: true, message: "Prompt wajib diisi!" }]}
@@ -234,20 +270,23 @@ export default function BaseMockTestDetailComponent() {
           )}
 
           {/* Input Jumlah Soal untuk Writing, Reading, dan Listening */}
-          {formType !== "speaking" && (
-            <Form.Item label="Jumlah Soal">
-              <InputNumber
-                min={1}
-                max={10}
-                value={questionCount}
-                onChange={(value) => handleQuestionCountChange(value || 1)}
-                style={{ width: "100%" }}
-              />
-            </Form.Item>
-          )}
-
-          {/* Input Soal dan Pilihan Ganda untuk Writing, Reading, dan Listening */}
           {formType !== "speaking" &&
+            selectedQuestion == null &&
+            editType == null && (
+              <Form.Item label="Jumlah Soal">
+                <InputNumber
+                  min={1}
+                  max={10}
+                  value={questionCount}
+                  onChange={(value) => handleQuestionCountChange(value || 1)}
+                  style={{ width: "100%" }}
+                />
+              </Form.Item>
+            )}
+
+          {formType !== "speaking" &&
+            selectedQuestion == null &&
+            editType == null &&
             Array.from({ length: questionCount }).map((_, index) => (
               <div
                 key={index}
@@ -324,7 +363,189 @@ export default function BaseMockTestDetailComponent() {
               </div>
             ))}
 
+          {/* Input Soal dan Pilihan Ganda untuk Writing, Reading, dan Listening */}
+          {formType !== "speaking" &&
+            selectedQuestion == null &&
+            editType == "addQuestionMore" &&
+            Array.from({ length: questionCount }).map((_, index) => (
+              <div
+                key={index}
+                style={{
+                  marginBottom: "16px",
+                  padding: "10px",
+                  border: "1px solid #d9d9d9",
+                  borderRadius: "8px",
+                }}
+              >
+                <h4>Soal {index + 1}</h4>
 
+                <Form.Item
+                  name={`question_${index}`}
+                  rules={[{ required: true, message: "Soal wajib diisi!" }]}
+                >
+                  <Input.TextArea placeholder={`Masukkan soal ${index + 1}`} />
+                </Form.Item>
+
+                {/* Pilihan Ganda */}
+                <h4>Pilihan Ganda</h4>
+                {(options[index] || []).map((option, optIndex) => (
+                  <Space
+                    key={optIndex}
+                    style={{ display: "flex", marginBottom: "8px" }}
+                  >
+                    <Form.Item
+                      name={`option_${index}_${optIndex}`}
+                      rules={[{ required: true, message: "Opsi wajib diisi!" }]}
+                      style={{ flex: 1 }}
+                    >
+                      <Input
+                        placeholder={`Pilihan ${optIndex + 1}`}
+                        value={option}
+                        onChange={(e) =>
+                          handleOptionChange(index, optIndex, e.target.value)
+                        }
+                      />
+                    </Form.Item>
+                    <Button
+                      type="text"
+                      danger
+                      icon={<MinusCircleOutlined />}
+                      onClick={() => handleRemoveOption(index, optIndex)}
+                    />
+                  </Space>
+                ))}
+
+                {/* Tombol Tambah Opsi */}
+                <Button
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={() => handleAddOption(index)}
+                  style={{ width: "100%", marginBottom: "10px" }}
+                >
+                  Tambah Opsi
+                </Button>
+
+                {/* Pilih Jawaban Benar */}
+                <Form.Item label="Jawaban Benar">
+                  <Radio.Group
+                    value={correctAnswers[index]}
+                    onChange={(e) =>
+                      handleCorrectAnswerChange(index, e.target.value)
+                    }
+                  >
+                    {(options[index] || []).map((option, optIndex) => (
+                      <Radio key={optIndex} value={option}>
+                        {option}
+                      </Radio>
+                    ))}
+                  </Radio.Group>
+                </Form.Item>
+              </div>
+            ))}
+
+          {selectedQuestion !== null &&
+            formType !== "speaking" &&
+            editType == "question" && (
+              <>
+                <h4>Soal</h4>
+                <Form.Item
+                  name="question"
+                  rules={[{ required: true, message: "Soal wajib diisi!" }]}
+                >
+                  <Input.TextArea placeholder="Masukkan soal" />
+                </Form.Item>
+                <h4>Pilihan Ganda</h4>
+                {options[0] && options[0].length > 0 ? (
+                  options[0].map((option, optIndex) => (
+                    <Space
+                      key={optIndex}
+                      style={{ display: "flex", marginBottom: "8px" }}
+                    >
+                      <Form.Item
+                        name={`option_${optIndex}`}
+                        rules={[
+                          { required: true, message: "Opsi wajib diisi!" },
+                        ]}
+                        style={{ flex: 1 }}
+                      >
+                        <Input
+                          placeholder={`Pilihan ${optIndex + 1}`}
+                          value={option}
+                          onChange={(e) =>
+                            setOptions((prev) => ({
+                              ...prev,
+                              [0]: prev[0].map((opt, i) =>
+                                i === optIndex ? e.target.value : opt
+                              ),
+                            }))
+                          }
+                        />
+                      </Form.Item>
+                      <Button
+                        type="text"
+                        danger
+                        icon={<MinusCircleOutlined />}
+                        onClick={() => handleRemoveOption(0, optIndex)}
+                      />
+                    </Space>
+                  ))
+                ) : (
+                  <p style={{ color: "gray" }}>
+                    Belum ada opsi. Tambahkan opsi baru.
+                  </p>
+                )}
+
+                {/* Jika tidak ada kondisi yang cocok, modal akan kosong */}
+                <Button
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={() => handleAddOption(0)}
+                  style={{ width: "100%", marginBottom: "10px" }}
+                >
+                  Tambah Opsi
+                </Button>
+                <Form.Item label="Jawaban Benar">
+                  <Radio.Group
+                    value={correctAnswers[0]}
+                    onChange={(e) =>
+                      handleCorrectAnswerChange(0, e.target.value)
+                    }
+                  >
+                    {options[0]?.map((option, optIndex) => (
+                      <Radio key={optIndex} value={option}>
+                        {option}
+                      </Radio>
+                    ))}
+                  </Radio.Group>
+                </Form.Item>
+              </>
+            )}
+
+          {editType === "prompt" ? (
+            // ✅ Jika editType === "prompt", hanya tampilkan form prompt
+            <Form.Item
+              name="prompt"
+              rules={[{ required: true, message: "Prompt wajib diisi!" }]}
+            >
+              <Input.TextArea placeholder="Masukkan prompt soal writing" />
+            </Form.Item>
+          ) : editType === "passage" ? (
+            // ✅ Jika editType === "passage", hanya tampilkan form passage
+            <Form.Item
+              name="passage"
+              rules={[{ required: true, message: "Passage wajib diisi!" }]}
+            >
+              <Input.TextArea placeholder="Masukkan passage soal reading" />
+            </Form.Item>
+          ) : editType === "audio" ? (
+            // ✅ Jika editType === "audio", hanya tampilkan form audio
+            <Form.Item
+              name="audio_url"
+              rules={[{ required: true, message: "URL Audio wajib diisi!" }]}
+            >
+              <Input placeholder="Masukkan URL Audio Listening" />
+            </Form.Item>
+          ) : null}
           <Form.Item>
             <Button
               type="primary"

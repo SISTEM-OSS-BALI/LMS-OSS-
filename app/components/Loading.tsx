@@ -10,7 +10,6 @@ export default function Loading() {
         alignItems: "center",
         height: "100vh",
         backgroundColor: "#f5f5f5",
-        position: "relative",
       }}
     >
       {/* Kontainer Gambar */}
@@ -28,7 +27,6 @@ export default function Loading() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            transform: "translateY(-50px)", 
           }}
         >
           <Image

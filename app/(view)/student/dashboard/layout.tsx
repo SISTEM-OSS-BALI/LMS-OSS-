@@ -293,13 +293,19 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
               </Flex>
             </Flex>
           )}
-          <Content style={{ margin: "40px 16px" }}>
+          <Content
+            style={{
+              margin: "40px 16px",
+              padding: "10px 20px",
+              height: "auto",
+              overflow: "auto",
+            }}
+          >
             <div
               style={{
                 padding: 24,
                 // background: colorBgContainer,
                 // borderRadius: borderRadiusLG,
-                minHeight: "100vh",
               }}
             >
               {children}
@@ -308,6 +314,10 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           {!isSidebarHidden && (
             <Footer
               style={{
+                height: "50px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
                 textAlign: "center",
                 boxShadow: "0px -5px 10px rgba(0, 0, 0, 0.1)",
               }}

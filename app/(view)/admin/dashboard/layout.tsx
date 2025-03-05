@@ -135,7 +135,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         "lastCheckedTeacherAbsence",
         setNewTeacherAbsance
       );
-    }, 20000);
+    }, 50000);
 
     return () => clearInterval(intervalId);
   }, [
@@ -197,7 +197,9 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <UserOutlined />
       ),
       getItem(
-        <Link href="/admin/dashboard/student/confirm-account">Konfirmasi Akun</Link>,
+        <Link href="/admin/dashboard/student/confirm-account">
+          Konfirmasi Akun
+        </Link>,
         "/admin/dashboard/student/calendar/confirm-account",
         <CheckCircleFilled />
       ),
@@ -407,13 +409,19 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
               </Dropdown>
             </Flex>
           </Flex>
-          <Content style={{ margin: "40px 16px" }}>
+          <Content
+            style={{
+              margin: "40px 16px",
+              padding: "10px 20px",
+              height: "auto",
+              overflow: "auto",
+            }}
+          >
             <div
               style={{
                 padding: 24,
                 // background: colorBgContainer,
                 // borderRadius: borderRadiusLG,
-                minHeight: "100vh",
               }}
             >
               {children}
@@ -421,6 +429,10 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           </Content>
           <Footer
             style={{
+              height: "50px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
               textAlign: "center",
               boxShadow: "0px -5px 10px rgba(0, 0, 0, 0.1)",
             }}
