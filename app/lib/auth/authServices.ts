@@ -10,6 +10,6 @@ export const useAuth = () => {
     userId: session?.user?.user_id || null,
     username: session?.user?.name || null,
     role: session?.user?.role || null,
-    programId: session?.user?.program_id || null,
+    program_id: session?.user?.program_id || null,
   };
 };

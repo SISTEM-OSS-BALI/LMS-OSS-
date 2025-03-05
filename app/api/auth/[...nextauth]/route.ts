@@ -64,7 +64,7 @@ export const authOptions: NextAuthOptions = {
         name: token.name as string,
         email: token.email as string,
         role: token.role as string,
-        program_id: token.program as string | null,
+        program_id: token.program_id as string | null,
       };
       return session;
     },

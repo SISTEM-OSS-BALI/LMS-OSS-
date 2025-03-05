@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -104,7 +104,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
   const searchParams = useSearchParams();
   const date = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
-  const {programId} = useAuth()
+  const { program_id } = useAuth();
 
   const {
     data: programData,
@@ -168,82 +168,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const [isModalVisibleEmergency, setIsModalVisibleEmergency] = useState(false);
   const [form] = Form.useForm();
   const filterProgram = programData?.data.filter(
-    (program) => program.program_id === programId
+    (program) => program.program_id === program_id
   );
-
-  // const handleDateClick = (arg: any) => {
-  //   if (!selectedTeacher) {
-  //     message.warning("Silakan pilih guru terlebih dahulu.");
-  //     return;
-  //   }
-
-  //   const selectedDay = dayjs(arg.date)
-  //     .locale("id")
-  //     .format("dddd, DD MMMM YYYY");
-  //   setSelectedDate(selectedDay);
-  //   const dayName = dayjs(arg.date).locale("id").format("dddd");
-  //   const translatedDayName = DAY_TRANSLATION[dayName];
-
-  //   if (showScheduleTeacher?.data) {
-  //     const teacherSchedule = showScheduleTeacher.data[0];
-
-  //     if (Array.isArray(teacherSchedule.days)) {
-  //       const daySchedule = teacherSchedule.days.find(
-  //         (d: any) => d.day === translatedDayName
-  //       );
-
-  //       if (daySchedule) {
-  //         const generatedTimes = generateTimeIntervals(daySchedule.times);
-
-  //         const formatDateTimeToUTC = (dateTime: any) => {
-  //           return dayjs.utc(dateTime).format("YYYY-MM-DD HH:mm");
-  //         };
-
-  //         // **Filter waktu yang sudah dipesan dari showMeeting**
-
-  //         console.log(showMeeting?.data);
-  //         const bookedTimes = showMeeting?.data
-  //           ?.map((meeting) => ({
-  //             ...meeting,
-  //             dateTime: formatDateTimeToUTC(meeting.dateTime), // Konversi dateTime ke UTC
-  //           }))
-  //           ?.filter(
-  //             (meeting) =>
-  //               meeting.teacher_id === selectedTeacher?.user_id && // Pastikan teacher_id sama
-  //               dayjs(meeting.dateTime).isSame(dayjs(date), "day") // Konversi dateTime dan date ke UTC dan cek tanggal yang sama
-  //           )
-  //           ?.map((meeting) => ({
-  //             time: dayjs(meeting.dateTime).format("HH:mm"), // Konversi ke UTC dan format ke HH:mm
-  //           }));
-
-  //         console.log(bookedTimes);
-
-  //         // Filter hanya waktu yang belum dipesan
-  //         const filteredTimes = generatedTimes.filter(
-  //           (time) => !bookedTimes?.some((booked) => booked.time === time) // Pastikan `time` tidak ada di daftar waktu yang sudah dipesan
-  //         );
-  //         console.log(filteredTimes);
-
-  //         if (filteredTimes.length === 0) {
-  //           message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
-  //           return;
-  //         }
-
-  //         setAvailableTimes(filteredTimes);
-  //         setIsModalVisible(true);
-  //       } else {
-  //         setAvailableTimes([]);
-  //         message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
-  //       }
-  //     } else {
-  //       setAvailableTimes([]);
-  //       message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
-  //     }
-  //   } else {
-  //     setAvailableTimes([]);
-  //     message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
-  //   }
-  // };
 
   const handleOpenModalDateClick = () => {
     setIsModalVisible(true);

@@ -393,7 +393,7 @@ model Program {
   program_id    String @id @default(uuid())
   name          String
   count_program Int
-  description   String
+  description   String @db.LongText
   duration      Int
   User          User[]
 }

@@ -1,5 +1,8 @@
+import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { MockTest } from "@prisma/client";
+import { Form, notification } from "antd";
+import { useState } from "react";
 import useSWR from "swr";
 
 interface MockTestResponse {
@@ -7,10 +10,99 @@ interface MockTestResponse {
 }
 
 export const useMockTestViewModel = () => {
-  const { data: mockTestData, isLoading: mockTestDataLoading } =
-    useSWR<MockTestResponse>("/api/teacher/mockTest/show", fetcher);
+  const {
+    data: mockTestData,
+    isLoading: mockTestDataLoading,
+    mutate: mockTestDataMutate,
+  } = useSWR<MockTestResponse>("/api/teacher/mockTest/show", fetcher);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [selectedMockTest, setSelectedMockTest] = useState<
+    MockTest | null | undefined
+  >();
+
+  const handleOpenModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleEdit = (mock_test_id: string) => {
+    const selectMockTest = mockTestData?.data.find(
+      (mock) => mock.mock_test_id === mock_test_id
+    );
+    if (selectMockTest) {
+      form.setFieldsValue({
+        ...selectMockTest,
+      });
+    }
+    setSelectedMockTest(selectMockTest);
+    handleOpenModal();
+  };
+
+  const handleCancelModal = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+    setSelectedMockTest(null);
+  };
+
+  const handleSubmit = async (values: any) => {
+    setLoading(true);
+    const payload = {
+      ...values,
+    };
+
+    try {
+      if (selectedMockTest) {
+        await crudService.put(
+          `/api/teacher/mockTest/${selectedMockTest.mock_test_id}/update`,
+          payload
+        );
+      } else {
+        await crudService.post("/api/teacher/mockTest/create", payload);
+      }
+      notification.success({
+        message: "Sukses",
+        description: selectedMockTest
+          ? "Data berhasil diperbarui"
+          : "Data berhasil ditambahkan",
+      });
+      setLoading(false);
+      mockTestDataMutate();
+      handleCancelModal();
+    } catch (error) {
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (mock_test_id: string) => {
+    try {
+      await crudService.delete(
+        `/api/teacher/mockTest/${mock_test_id}/delete`,
+        mock_test_id
+      );
+      notification.success({
+        message: "Sukses",
+        description: "Data berhasil dihapus",
+      });
+      mockTestDataMutate();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return {
     mockTestData,
     mockTestDataLoading,
+    handleCancelModal,
+    handleOpenModal,
+    isModalVisible,
+    form,
+    handleSubmit,
+    handleEdit,
+    selectedMockTest,
+    loading,
+    handleDelete
   };
 };

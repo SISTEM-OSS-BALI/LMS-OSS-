@@ -21,7 +21,7 @@ export default function QueueComponent() {
       const formattedEvents = queueData.data.map((item: any) => ({
         id: item.meeting_id,
         title: `${item.teacher.username} - ${item.student.username}`,
-        start: item.dateTime,
+        start: dayjs(item.dateTime).toDate(),
         allDay: false,
         backgroundColor: item.absent === true ? "#ff4d4f" : "#52c41a",
         time: dayjs.utc(item.dateTime).format("HH:mm"),

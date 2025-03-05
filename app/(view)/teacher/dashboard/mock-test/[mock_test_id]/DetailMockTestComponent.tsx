@@ -13,6 +13,8 @@ import {
   Form,
   Input,
   Flex,
+  Alert,
+  Select,
 } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import Link from "next/link";
@@ -34,16 +36,52 @@ export default function DetailMockTestComponent() {
     setSelectedStudent,
     form,
     isModalAccessVisible,
+    handleCancelModal,
+    handleOpenModal,
+    isModalVisible,
+    selectedBase,
+    handleDelete,
+    handleSubmit,
+    handleEdit,
   } = useDetailMockTestViewModel();
+
+  const showConfirmDelete = (id: string) => {
+    Modal.confirm({
+      title: "Hapus Data",
+      content: "Apakah Anda yakin ingin menghapus data ini?",
+      okText: "Ya",
+      okType: "danger",
+      cancelText: "Tidak",
+      onOk: () => handleDelete(id),
+    });
+  };
 
   return (
     <div style={{ padding: "20px" }}>
       <Flex justify="space-between" style={{ marginBottom: "20px" }}>
-        <Title level={4}>Daftar Detail Mock Test </Title>
-        <Button type="primary" onClick={() => handleOpenModalAccess()}>
-          Akses
-        </Button>
+        <Title level={4}>Detail Mock Test</Title>
+        <Flex justify="space-between" gap={20}>
+          <Button type="primary" onClick={() => handleOpenModal()}>
+            Tambah Data
+          </Button>
+          <Button type="primary" onClick={() => handleOpenModalAccess()}>
+            Akses
+          </Button>
+        </Flex>
       </Flex>
+      {!mockTestDetailDataLoading &&
+        (!mockTestDetailData || mockTestDetailData?.data.length === 0) && (
+          <Alert
+            message="Tidak ada data tersedia"
+            description="Silakan tambahkan data"
+            type="warning"
+            showIcon
+            style={{
+              marginBottom: "20px",
+              borderRadius: "8px",
+            }}
+          />
+        )}
       <Row gutter={[16, 16]} justify="start">
         {mockTestDetailDataLoading
           ? Array.from({ length: 6 }).map((_, index) => (
@@ -79,18 +117,14 @@ export default function DetailMockTestComponent() {
                       type="primary"
                       shape="circle"
                       icon={<EditOutlined />}
-                      onClick={() =>
-                        console.log("Edit:", item.base_mock_test_id)
-                      }
+                      onClick={() => handleEdit(item.base_mock_test_id)}
                     />
                     <Button
                       type="default"
                       shape="circle"
                       icon={<DeleteOutlined />}
                       danger
-                      onClick={() =>
-                        console.log("Delete:", item.base_mock_test_id)
-                      }
+                      onClick={() => showConfirmDelete(item.base_mock_test_id)}
                     />
                   </Space>
 
@@ -175,6 +209,33 @@ export default function DetailMockTestComponent() {
               htmlType="submit"
               loading={loading}
               disabled={!selectedStudent}
+            >
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+      <Modal
+        open={isModalVisible}
+        onCancel={handleCancelModal}
+        title={selectedBase ? "Edit Data Section" : "Tambah Data Section"}
+        footer={null}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item name="type">
+            <Select placeholder="Pilih Tipe">
+              <Select.Option value="WRITING">Writing</Select.Option>
+              <Select.Option value="READING">Reading</Select.Option>
+              <Select.Option value="LISTENING">Listening</Select.Option>
+              <Select.Option value="SPEAKING">Speaking</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ width: "100%" }}
+              loading={loading}
             >
               Submit
             </Button>

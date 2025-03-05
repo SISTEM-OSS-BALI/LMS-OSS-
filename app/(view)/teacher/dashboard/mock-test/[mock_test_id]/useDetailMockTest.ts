@@ -17,7 +17,7 @@ interface UserResponse {
 export const useDetailMockTestViewModel = () => {
   const query = useParams();
   const mockTestId = query.mock_test_id;
-  const { data: mockTestDetailData, isLoading: mockTestDetailDataLoading } =
+  const { data: mockTestDetailData, isLoading: mockTestDetailDataLoading, mutate: mockTestDetailMutate } =
     useSWR<MockTestDetailResponse>(
       `/api/teacher/mockTest/${mockTestId}/show`,
       fetcher
@@ -27,6 +27,8 @@ export const useDetailMockTestViewModel = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [isModalAccessVisible, setIsModalAccessVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedBase, setSelectedBase] = useState<BaseMockTest | null>(null);
 
   const { data: dataStudentResponse, error: studentError } =
     useSWR<UserResponse>("/api/admin/student/show", fetcher);
@@ -70,6 +72,71 @@ export const useDetailMockTestViewModel = () => {
     }
   };
 
+  const handleOpenModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleEdit = (base_id: string) => {
+    const selectBase = mockTestDetailData?.data.find(
+      (base) => base.base_mock_test_id === base_id
+    );
+    if (selectBase) {
+      form.setFieldsValue({
+        ...selectBase,
+      });
+      setSelectedBase(selectBase);
+      handleOpenModal();
+    }
+  };
+
+  const handleCancelModal = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+  };
+
+  const handleSubmit = async (values: any) => {
+    setLoading(true);
+    const payload = {
+      ...values,
+    };
+    try {
+      if (selectedBase) {
+        await crudService.put(
+          `/api/teacher/mockTest/${mockTestId}/${selectedBase.base_mock_test_id}/updateBase`,
+          payload
+        );
+      } else {
+        await crudService.post(
+          `/api/teacher/mockTest/${mockTestId}/createBase`,
+          payload
+        );
+      }
+
+      notification.success({ message: "Berhasil membuat data" });
+      mockTestDetailMutate();
+      handleCancelModal();
+    } catch (error) {
+      console.error(error);
+      notification.error({ message: "Gagal membuat mock test" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = (base_id: string) => {
+    try {
+      crudService.delete(
+        `/api/teacher/mockTest/${mockTestId}/${base_id}/deleteBase`,
+        base_id
+      );
+      notification.success({ message: "Berhasil menghapus data" });
+      mockTestDetailMutate();
+    } catch (error) {
+      console.error(error);
+      notification.error({ message: "Gagal menghapus data" });
+    }
+  };
+
   return {
     mockTestDetailData,
     mockTestDetailDataLoading,
@@ -83,5 +150,12 @@ export const useDetailMockTestViewModel = () => {
     setSelectedStudent,
     form,
     isModalAccessVisible,
+    handleCancelModal,
+    handleOpenModal,
+    isModalVisible,
+    handleSubmit,
+    handleDelete,
+    selectedBase,
+    handleEdit
   };
 };
