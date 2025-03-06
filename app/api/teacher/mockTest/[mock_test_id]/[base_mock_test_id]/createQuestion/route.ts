@@ -23,9 +23,86 @@ export async function POST(
       });
     }
 
+    let existingMockTest;
     let createdMockTest;
 
-    // 🔹 **Writing Section**
+    // ✅ **Jika hanya menambahkan soal baru (Tanpa prompt, passage, audio_url)**
+    if (!prompt && !passage && !audio_url) {
+      for (const questionObj of questions) {
+        const { question, options, answer } = questionObj;
+
+        if (type === "writing") {
+          // 🔹 **Cari writingMockTest yang sesuai**
+          existingMockTest = await prisma.writingMockTest.findUnique({
+            where: { base_mock_test_id: params.base_mock_test_id },
+          });
+
+          if (!existingMockTest) {
+            return NextResponse.json({
+              status: 404,
+              error: true,
+              message:
+                "Writing section belum ada. Harap buat section lebih dulu.",
+            });
+          }
+
+          await createData("writingQuestion", {
+            writing_id: existingMockTest.writing_id, // ✅ Gunakan ID yang valid
+            question,
+            options,
+            answer,
+          });
+        } else if (type === "reading") {
+          existingMockTest = await prisma.readingMockTest.findUnique({
+            where: { base_mock_test_id: params.base_mock_test_id },
+          });
+
+          if (!existingMockTest) {
+            return NextResponse.json({
+              status: 404,
+              error: true,
+              message:
+                "Reading section belum ada. Harap buat section lebih dulu.",
+            });
+          }
+
+          await createData("readingQuestion", {
+            reading_id: existingMockTest.reading_id,
+            question,
+            options,
+            answer,
+          });
+        } else if (type === "listening") {
+          existingMockTest = await prisma.listeningMockTest.findUnique({
+            where: { base_mock_test_id: params.base_mock_test_id },
+          });
+
+          if (!existingMockTest) {
+            return NextResponse.json({
+              status: 404,
+              error: true,
+              message:
+                "Listening section belum ada. Harap buat section lebih dulu.",
+            });
+          }
+
+          await createData("listeningQuestion", {
+            listening_id: existingMockTest.listening_id,
+            question,
+            options,
+            answer,
+          });
+        }
+      }
+
+      return NextResponse.json({
+        status: 200,
+        error: false,
+        message: "Soal baru berhasil ditambahkan.",
+      });
+    }
+
+    // ✅ **Jika Membuat Section Baru**
     if (type === "writing") {
       if (!prompt) {
         return NextResponse.json({
@@ -41,19 +118,16 @@ export async function POST(
       });
 
       for (const questionObj of questions) {
-        const { question, options, correctAnswer } = questionObj;
+        const { question, options, answer } = questionObj;
 
         await createData("writingQuestion", {
           writing_id: createdMockTest.writing_id,
           question,
           options,
-          answer: correctAnswer,
+          answer,
         });
       }
-    }
-
-    // 🔹 **Reading Section**
-    else if (type === "reading") {
+    } else if (type === "reading") {
       if (!passage) {
         return NextResponse.json({
           status: 400,
@@ -68,19 +142,16 @@ export async function POST(
       });
 
       for (const questionObj of questions) {
-        const { question, options, correctAnswer } = questionObj;
+        const { question, options, answer } = questionObj;
 
         await createData("readingQuestion", {
           reading_id: createdMockTest.reading_id,
           question,
           options,
-          answer: correctAnswer,
+          answer,
         });
       }
-    }
-
-    // 🔹 **Listening Section**
-    else if (type === "listening") {
+    } else if (type === "listening") {
       if (!audio_url) {
         return NextResponse.json({
           status: 400,
@@ -95,19 +166,16 @@ export async function POST(
       });
 
       for (const questionObj of questions) {
-        const { question, options, correctAnswer } = questionObj;
+        const { question, options, answer } = questionObj;
 
         await createData("listeningQuestion", {
           listening_id: createdMockTest.listening_id,
           question,
           options,
-          answer: correctAnswer,
+          answer,
         });
       }
-    }
-
-    // 🔹 **Speaking Section**
-    else if (type === "speaking") {
+    } else if (type === "speaking") {
       if (!prompt) {
         return NextResponse.json({
           status: 400,
@@ -119,15 +187,6 @@ export async function POST(
       await createData("speakingMockTest", {
         base_mock_test_id: params.base_mock_test_id,
         prompt,
-      });
-    }
-
-    // Jika tipe tidak valid
-    else {
-      return NextResponse.json({
-        status: 400,
-        error: true,
-        message: "Tipe soal tidak valid.",
       });
     }
 

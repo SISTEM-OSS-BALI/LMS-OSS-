@@ -41,7 +41,6 @@ export default function BaseMockTestDetailComponent() {
     correctAnswers,
     loading,
     handleAddQuestion,
-    handleEditQuestion,
     handleDeleteQuestion,
     selectedQuestion,
     setOptions,
@@ -55,6 +54,17 @@ export default function BaseMockTestDetailComponent() {
         <Skeleton active paragraph={{ rows: 6 }} />
       </div>
     );
+
+    const showConfirmDelete = (id: string) => {
+      Modal.confirm({
+        title: "Hapus Data",
+        content: "Apakah Anda yakin ingin menghapus data ini?",
+        okText: "Ya",
+        okType: "danger",
+        cancelText: "Tidak",
+        onOk: () => handleDeleteQuestion(id),
+      });
+    };
 
   // Alert jika tidak ada data sama sekali
   if (!baseDetailData)
@@ -106,7 +116,7 @@ export default function BaseMockTestDetailComponent() {
             onEditQuestion={(questionId) =>
               handleOpenModal("reading", "question", questionId)
             }
-            onDeleteQuestion={handleDeleteQuestion}
+            onDeleteQuestion={(id) => showConfirmDelete(id)}
             onEditPassage={(id) =>
               handleOpenModal("reading", "passage", null, id)
             }
@@ -132,7 +142,7 @@ export default function BaseMockTestDetailComponent() {
             onEditQuestion={(questionId) =>
               handleOpenModal("listening", "question", questionId)
             }
-            onDeleteQuestion={handleDeleteQuestion}
+            onDeleteQuestion={(id) => showConfirmDelete(id)}
             onEditAudio={(id) =>
               handleOpenModal("listening", "audio", null, id)
             }
@@ -155,7 +165,7 @@ export default function BaseMockTestDetailComponent() {
             onEdit={(id) =>
               handleOpenModal("speaking", "editSpeaking", null, id)
             }
-            onDelete={(id) => console.log("Delete Speaking:", id)}
+            onDelete={(id) => showConfirmDelete(id)}
           />
         ) : (
           <Alert
@@ -176,7 +186,7 @@ export default function BaseMockTestDetailComponent() {
             onEditQuestion={(questionId) =>
               handleOpenModal("writing", "question", questionId)
             }
-            onDeleteQuestion={handleDeleteQuestion}
+            onDeleteQuestion={(id) => showConfirmDelete(id)}
             onEditPrompt={(id) =>
               handleOpenModal("writing", "prompt", null, id)
             }

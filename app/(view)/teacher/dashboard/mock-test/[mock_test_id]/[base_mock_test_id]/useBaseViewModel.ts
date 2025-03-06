@@ -33,7 +33,13 @@ export const useBaseViewModel = () => {
   const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
 
   const [editType, setEditType] = useState<
-    "passage" | "prompt" | "audio" | "question" | "addQuestionMore" | "editSpeaking" | null
+    | "passage"
+    | "prompt"
+    | "audio"
+    | "question"
+    | "addQuestionMore"
+    | "editSpeaking"
+    | null
   >(null);
 
   const handleOpenModal = (
@@ -89,7 +95,7 @@ export const useBaseViewModel = () => {
       return;
     }
 
-    if(editType === "editSpeaking" && id) {
+    if (editType === "editSpeaking" && id) {
       foundBaseData = baseDetailData?.data?.speaking;
       if (foundBaseData) {
         form.setFieldsValue({ prompt: foundBaseData.prompt });
@@ -203,46 +209,95 @@ export const useBaseViewModel = () => {
   };
 
   const handleSubmit = async (values: any) => {
+    console.log(values);
     setLoading(true);
     try {
+      let url = "";
+      let payload: any = {};
+
+      // 🔹 Konversi soal menjadi array
       const formattedQuestions = Array.from({ length: questionCount }).map(
         (_, index) => ({
-          question: values[`question_${index}`], // Ambil pertanyaan
-          options: options[index] || [], // Ambil daftar pilihan
-          correctAnswer: correctAnswers[index] || "", // Ambil jawaban benar
+          question: values[`question_${index}`],
+          options: options[index] || [],
+          answer: correctAnswers[index] || "",
         })
       );
 
-      const payload = {
-        mock_test_id: values.mock_test_id,
-        type: values.type,
-        ...(formType === "writing" && { prompt: values.prompt }),
-        ...(formType === "listening" && { audio_url: values.audio_url }),
-        ...(formType === "reading" && { passage: values.passage }),
-        ...(formType === "speaking" && { prompt: values.prompt }),
-        questions: formattedQuestions,
-      };
+      // ✅ **Gunakan API `/createQuestion` untuk membuat seluruh section**
+      if (formType && !baseDetailData?.data[formType]) {
+        url = `/api/teacher/mockTest/${mockTestId}/${base_id}/createQuestion`;
+        payload = {
+          mock_test_id: values.mock_test_id,
+          type: values.type,
+          ...(formType === "writing" && { prompt: values.prompt }),
+          ...(formType === "listening" && { audio_url: values.audio_url }),
+          ...(formType === "reading" && { passage: values.passage }),
+          ...(formType === "speaking" && { prompt: values.prompt }),
+          questions: formattedQuestions, // 🔹 Kirim semua data termasuk prompt/passage/audio_url
+        };
 
-      if (selectedQuestion) {
-        await crudService.put(
-          `/api/teacher/mockTest/${mockTestId}/${base_id}/editQuestion/${selectedQuestion.question_id}`,
-          payload
-        );
-        notification.success({ message: "Soal berhasil diperbarui!" });
-      } else {
-        await crudService.post(
-          `/api/teacher/mockTest/${mockTestId}/${base_id}/createQuestion`,
-          payload
-        );
+        // 🔥 Kirim request POST untuk membuat section baru
+        await crudService.post(url, payload);
+        notification.success({ message: "Section dan soal berhasil dibuat!" });
+      }
+
+      // ✅ **Gunakan API `/createQuestion` untuk menambah soal ke section yang sudah ada**
+      else if (editType === "addQuestionMore") {
+        url = `/api/teacher/mockTest/${mockTestId}/${base_id}/createQuestion`;
+        payload = {
+          mock_test_id: values.mock_test_id,
+          type: values.type,
+          questions: formattedQuestions, // ❌ Tidak menyertakan prompt, passage, atau audio_url
+        };
+
+        // 🔥 Kirim request POST hanya untuk menambah soal baru
+        await crudService.post(url, payload);
         notification.success({ message: "Soal berhasil ditambahkan!" });
       }
 
+      // ✅ **Gunakan API universal untuk semua jenis edit**
+      else if (
+        ["prompt", "passage", "audio", "editSpeaking", "question"].includes(
+          editType as string
+        )
+      ) {
+        url = `/api/teacher/mockTest/${mockTestId}/${base_id}/${
+          selectedQuestion?.question_id
+        }/updateQuestion`;
+
+        payload = {
+          mock_test_id: values.mock_test_id,
+          type: values.type,
+          ...(editType === "prompt" && { prompt: values.prompt }),
+          ...(editType === "passage" && { passage: values.passage }),
+          ...(editType === "audio" && { audio_url: values.audio_url }),
+          ...(editType === "editSpeaking" && { prompt: values.prompt }),
+          ...(editType === "question" &&
+            selectedQuestion && {
+              question: values.question,
+              options: options[0] || [],
+              answer: correctAnswers[0] || "",
+            }),
+        };
+
+        // 🔥 Kirim request `PUT` ke API universal untuk mengupdate data
+        await crudService.put(url, payload);
+        notification.success({ message: "Perubahan berhasil disimpan!" });
+      }
+
+      // ⛔ Jika tidak ada aksi yang cocok, hentikan proses
+      if (!url) {
+        throw new Error("Tidak ada tindakan yang cocok!");
+      }
+
+      // 🔹 Refresh data setelah perubahan
       baseDetailMutate();
       handleCloseModal();
     } catch (error) {
       notification.error({
         message: "Gagal",
-        description: "Pertanyaan gagal dibuat",
+        description: "Terjadi kesalahan saat menyimpan data.",
       });
     } finally {
       setLoading(false);
@@ -266,28 +321,13 @@ export const useBaseViewModel = () => {
     }
   };
 
-  const handleEditQuestion = async (questionId: string, values: any) => {
-    setLoading(true);
-    try {
-      await crudService.put(
-        `/api/teacher/mockTest/${base_id}/editQuestion/${questionId}`,
-        values
-      );
-      notification.success({ message: "Soal berhasil diperbarui!" });
-      baseDetailMutate();
-    } catch (error) {
-      notification.error({ message: "Gagal memperbarui soal." });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // 🔹 Fungsi untuk menghapus soal
   const handleDeleteQuestion = async (questionId: string) => {
     setLoading(true);
     try {
       await crudService.delete(
-        `/api/teacher/mockTest/${base_id}/deleteQuestion/${questionId}`,
+        `/api/teacher/mockTest/${mockTestId}/${base_id}/${questionId}/deleteQuestion`,
         questionId
       );
       notification.success({ message: "Soal berhasil dihapus!" });
@@ -318,7 +358,6 @@ export const useBaseViewModel = () => {
     correctAnswers,
     loading,
     handleAddQuestion,
-    handleEditQuestion,
     handleDeleteQuestion,
     selectedQuestion,
     setOptions,
