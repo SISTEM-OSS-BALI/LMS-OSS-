@@ -17,6 +17,7 @@ import {
   Skeleton,
   Select,
   Alert,
+  InputNumber,
 } from "antd";
 import { useDetailPlacementTestViewModel } from "./useDetailPlacemetTestViewModel";
 import { useState } from "react";
@@ -46,9 +47,16 @@ export default function DetailPlacementComponent() {
     handleEdit,
     selectedBase,
     handleDelete,
+    handleEditDescription,
+    handleEditTimeLimit,
+    isEditingDescription,
+    isEditingTimeLimit,
+    handleSave,
+    handleCancelDrawer,
+    setIsDrawerVisible,
+    isDrawerVisible,
   } = useDetailPlacementTestViewModel();
   const detailPlacement = dataDetailPlacementTest?.data;
-  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
 
   const confirmDelete = (base_id: string) => {
     Modal.confirm({
@@ -69,7 +77,6 @@ export default function DetailPlacementComponent() {
         </Button>
       </Flex>
       <FloatButton onClick={() => setIsDrawerVisible(true)} />
-
       <Divider />
       <Card>
         <Flex justify="space-between" style={{ marginBottom: "24px" }}>
@@ -122,7 +129,11 @@ export default function DetailPlacementComponent() {
                     <Link
                       href={`/teacher/dashboard/placement-test/${baseTest.placementTestId}/${baseTest.base_id}`}
                     >
-                      {baseTest.name == "MULTIPLE_CHOICE" ? "Multiple Choice" : baseTest.name == "WRITING" ? "Writing" : "Reading"}
+                      {baseTest.name == "MULTIPLE_CHOICE"
+                        ? "Multiple Choice"
+                        : baseTest.name == "WRITING"
+                        ? "Writing"
+                        : "Reading"}
                     </Link>
                   </Typography.Title>
 
@@ -160,30 +171,116 @@ export default function DetailPlacementComponent() {
       <Drawer
         title="Detail Placement Test"
         placement="right"
-        onClose={() => setIsDrawerVisible(false)}
+        onClose={() => handleCancelDrawer()}
         open={isDrawerVisible}
+        width={450}
       >
-        <List
-          bordered
-          dataSource={[
-            {
-              label: "Deskripsi",
-              value: detailPlacement?.description || "No description available",
-            },
-            {
-              label: "Waktu Pengerjaan",
-              value: detailPlacement?.timeLimit
-                ? `${detailPlacement.timeLimit} menit`
-                : "Waktu belum diatur",
-            },
-          ]}
-          renderItem={(item) => (
-            <List.Item>
-              <Typography.Text strong>{item.label}:</Typography.Text>{" "}
-              {item.value}
-            </List.Item>
-          )}
-        />
+        <div style={{ padding: "10px 16px" }}>
+          <List
+            bordered
+            dataSource={[
+              {
+                label: "Deskripsi",
+                value:
+                  detailPlacement?.description || "No description available",
+                editable: true,
+                onEdit: handleEditDescription,
+              },
+              {
+                label: "Waktu Pengerjaan",
+                value: detailPlacement?.timeLimit
+                  ? `${detailPlacement.timeLimit} menit`
+                  : "Waktu belum diatur",
+                editable: true,
+                onEdit: handleEditTimeLimit,
+              },
+            ]}
+            renderItem={(item) => (
+              <List.Item
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  background: "#FAFAFA",
+                  marginBottom: "8px",
+                  wordBreak: "break-word", // Mencegah teks panjang meluber
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <Typography.Text strong>{item.label}:</Typography.Text>
+                  <Typography.Text
+                    style={{
+                      display: "block",
+                      whiteSpace: "pre-wrap", // Memastikan deskripsi panjang tidak terpotong
+                      marginTop: 4,
+                    }}
+                  >
+                    {item.value}
+                  </Typography.Text>
+                </div>
+                {item.editable && (
+                  <Button
+                    type="default"
+                    shape="circle"
+                    icon={<EditOutlined />}
+                    onClick={item.onEdit}
+                    style={{ marginLeft: "10px", background: "#F5E3C8" }}
+                  />
+                )}
+              </List.Item>
+            )}
+          />
+
+          <Form
+            form={form}
+            onFinish={handleSave}
+            layout="vertical"
+            style={{
+              marginTop: 20,
+              padding: "16px",
+              background: "#FFF",
+              borderRadius: "8px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            }}
+          >
+            {isEditingDescription && (
+              <Form.Item
+                name="description"
+                label="Deskripsi"
+                rules={[{ required: true, message: "Deskripsi wajib diisi!" }]}
+              >
+                <Input.TextArea rows={4} />
+              </Form.Item>
+            )}
+
+            {isEditingTimeLimit && (
+              <Form.Item
+                name="timeLimit"
+                label="Waktu Pengerjaan (menit)"
+                rules={[
+                  { required: true, message: "Waktu pengerjaan wajib diisi!" },
+                ]}
+              >
+                <Input type="number" placeholder="Masukkan Durasi Pengerjaan" />
+              </Form.Item>
+            )}
+
+            {(isEditingDescription || isEditingTimeLimit) && (
+              <Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  style={{ width: "100%" }}
+                >
+                  Save
+                </Button>
+              </Form.Item>
+            )}
+          </Form>
+        </div>
       </Drawer>
 
       <Modal

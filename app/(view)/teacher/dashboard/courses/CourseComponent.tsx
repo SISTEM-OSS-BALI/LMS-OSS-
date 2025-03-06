@@ -8,14 +8,14 @@ import {
   Image,
   Input,
   Modal,
-  notification,
   Popconfirm,
   Tooltip,
+  Skeleton,
 } from "antd";
 import Icon from "@ant-design/icons";
 import Title from "antd/es/typography/Title";
 import Link from "next/link";
-import { AddIcon, CopyIcon, DeleteIcon, EditIcon } from "@/app/components/Icon";
+import { AddIcon, DeleteIcon, EditIcon } from "@/app/components/Icon";
 import { useRandomBgCourse } from "@/app/lib/utils/useRandomBgCourse";
 import { useCourseViewModel } from "./useCourseViewModel";
 import CustomAlert from "@/app/components/CustomAlert";
@@ -38,6 +38,7 @@ export default function CoursesTeacherComponent() {
     form,
     setIsModalVisible,
     handleSearch,
+    isLoadingCourse,
   } = useCourseViewModel();
 
   return (
@@ -58,73 +59,82 @@ export default function CoursesTeacherComponent() {
         />
       </Flex>
       <Divider />
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {filteredCourses && filteredCourses.length > 0 ? (
-          filteredCourses.map((course: any, index: number) => (
-            <Card
-              key={course.course_id}
-              cover={
-                backgroundImages && (
-                  <Image
-                    alt="default"
-                    style={{ width: "100%", height: 200 }}
-                    src={backgroundImages[index % backgroundImages.length]}
-                    preview={false}
-                  />
-                )
-              }
-              hoverable
-            >
-              <Meta
-                title={
-                  <Link href={`/teacher/dashboard/courses/${course.course_id}`}>
-                    {course.name}
-                  </Link>
-                }
-              />
+
+      {/* Skeleton Loading */}
+      {isLoadingCourse ? (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index} style={{ width: 300 }} hoverable>
+              <Skeleton.Image style={{ width: "100%", height: 200 }} />
+              <Skeleton active title={true} paragraph={{ rows: 1 }} />
               <Divider />
-              <Flex justify="space-between" style={{ marginTop: 10 }} gap={20}>
-                <Tooltip title="Edit Modul">
-                  <Button
-                    style={{ width: "100%" }}
-                    type="primary"
-                    onClick={() => handleUpdate(course.course_id)}
-                    icon={<Icon component={EditIcon} />}
-                  />
-                </Tooltip>
-                {/* <Tooltip title="Salin Kode">
-                  <Button
-                    type="primary"
-                    onClick={() => {
-                      navigator.clipboard.writeText(course.code_course);
-                      notification.success({
-                        message: "Kode berhasil disalin",
-                      });
-                    }}
-                    icon={<Icon component={CopyIcon} />}
-                  />
-                </Tooltip> */}
-                <Tooltip title="Hapus Modul">
-                  <Popconfirm
-                    title="Yakin ingin menghapus modul ini?"
-                    onConfirm={() => handleDelete(course.course_id)}
-                    okText="Ya"
-                    cancelText="Tidak"
-                  >
-                    <Button
-                      danger
-                      icon={<Icon component={DeleteIcon} />}
-                      style={{ width: "100%" }}
-                    />
-                  </Popconfirm>
-                </Tooltip>
+              <Flex justify="space-between" gap={20}>
+                <Skeleton.Button active style={{ width: "100%" }} />
+                <Skeleton.Button active style={{ width: "100%" }} />
               </Flex>
             </Card>
-          ))
-        ) : (
-          <CustomAlert type="info" message="Tidak ada data modul" />
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+          {filteredCourses && filteredCourses.length > 0 ? (
+            filteredCourses.map((course: any, index: number) => (
+              <Card
+                key={course.course_id}
+                cover={
+                  backgroundImages && (
+                    <Image
+                      alt="default"
+                      style={{ width: "100%", height: 200 }}
+                      src={backgroundImages[index % backgroundImages.length]}
+                      preview={false}
+                    />
+                  )
+                }
+                hoverable
+                style={{ width: 300 }}
+              >
+                <Meta
+                  title={
+                    <Link
+                      href={`/teacher/dashboard/courses/${course.course_id}`}
+                    >
+                      {course.name}
+                    </Link>
+                  }
+                />
+                <Divider />
+                <Flex justify="space-between" gap={20}>
+                  <Tooltip title="Edit Modul">
+                    <Button
+                      style={{ width: "100%" }}
+                      type="primary"
+                      onClick={() => handleUpdate(course.course_id)}
+                      icon={<Icon component={EditIcon} />}
+                    />
+                  </Tooltip>
+                  <Tooltip title="Hapus Modul">
+                    <Popconfirm
+                      title="Yakin ingin menghapus modul ini?"
+                      onConfirm={() => handleDelete(course.course_id)}
+                      okText="Ya"
+                      cancelText="Tidak"
+                    >
+                      <Button
+                        danger
+                        icon={<Icon component={DeleteIcon} />}
+                        style={{ width: "100%" }}
+                      />
+                    </Popconfirm>
+                  </Tooltip>
+                </Flex>
+              </Card>
+            ))
+          ) : (
+            <CustomAlert type="info" message="Tidak ada data modul" />
+          )}
+        </div>
+      )}
 
       <Modal
         title={selectedId ? "Update Modul" : "Tambah Modul"}

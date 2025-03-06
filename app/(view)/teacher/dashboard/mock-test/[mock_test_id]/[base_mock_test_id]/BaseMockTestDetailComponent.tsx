@@ -16,7 +16,6 @@ import {
   Radio,
   Space,
 } from "antd";
-import { useState } from "react";
 import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 
 export default function BaseMockTestDetailComponent() {

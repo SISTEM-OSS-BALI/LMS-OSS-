@@ -25,6 +25,7 @@ export const useCourseViewModel = () => {
     data: materialsData,
     mutate,
     error: materialsError,
+    isLoading: isLoadingMaterials,
   } = useSWR(`/api/teacher/materialAssignmentBase/${course_id}/show`, fetcher);
   const { data: studentEnrolled, error: studentEnrolledError } = useSWR(
     `/api/teacher/studentEnrolled/${course_id}/show`,
@@ -229,5 +230,6 @@ export const useCourseViewModel = () => {
     handleOpenModalAccess,
     isModalAccessVisible,
     handleSubmitAccess,
+    isLoadingMaterials
   };
 };

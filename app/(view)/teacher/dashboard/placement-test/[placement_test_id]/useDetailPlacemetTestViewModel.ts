@@ -55,6 +55,10 @@ export const useDetailPlacementTestViewModel = () => {
 
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isEditingTimeLimit, setIsEditingTimeLimit] = useState(false);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value.toLowerCase());
@@ -165,6 +169,46 @@ export const useDetailPlacementTestViewModel = () => {
     }
   };
 
+  const handleEditDescription = () => {
+    setIsEditingDescription(true);
+    form.setFieldsValue({
+      description: dataDetailPlacementTest?.data.description,
+    });
+  };
+
+  const handleEditTimeLimit = () => {
+    setIsEditingTimeLimit(true);
+    form.setFieldsValue({ timeLimit: dataDetailPlacementTest?.data.timeLimit });
+  };
+
+  const handleSave = async (values: any) => {
+    setLoading(true);
+    const payload = {
+      description : values.description,
+      time_limit : values.timeLimit
+    };
+    try {
+      await crudService.patch(
+        `/api/teacher/placementTest/${placement_test_id}/handleEditDetail`,
+        payload
+      );
+      notification.success({ message: "Berhasil mengedit data" });
+      mutateDetail();
+      setIsEditingDescription(false);
+      setIsEditingTimeLimit(false);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelDrawer = () => {
+    setIsDrawerVisible(false);
+    setIsEditingDescription(false);
+    setIsEditingTimeLimit(false);
+  };
+
   return {
     dataDetailPlacementTest,
     handleOpenModalAccess,
@@ -186,5 +230,13 @@ export const useDetailPlacementTestViewModel = () => {
     handleEdit,
     selectedBase,
     handleDelete,
+    handleEditDescription,
+    handleEditTimeLimit,
+    isEditingDescription,
+    isEditingTimeLimit,
+    handleSave,
+    handleCancelDrawer,
+    setIsDrawerVisible,
+    isDrawerVisible,
   };
 };

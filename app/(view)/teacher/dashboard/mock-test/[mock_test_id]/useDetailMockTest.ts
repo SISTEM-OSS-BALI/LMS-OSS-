@@ -1,6 +1,6 @@
 import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { BaseMockTest, User } from "@prisma/client";
+import { BaseMockTest, MockTest, User } from "@prisma/client";
 import { Form, notification } from "antd";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -10,6 +10,10 @@ interface MockTestDetailResponse {
   data: BaseMockTest[];
 }
 
+interface MockTestResponse {
+  data: MockTest;
+}
+
 interface UserResponse {
   data: User[];
 }
@@ -17,11 +21,19 @@ interface UserResponse {
 export const useDetailMockTestViewModel = () => {
   const query = useParams();
   const mockTestId = query.mock_test_id;
-  const { data: mockTestDetailData, isLoading: mockTestDetailDataLoading, mutate: mockTestDetailMutate } =
-    useSWR<MockTestDetailResponse>(
-      `/api/teacher/mockTest/${mockTestId}/show`,
+  const { data: dataDetailMockTest, mutate: mutateDetail } =
+    useSWR<MockTestResponse>(
+      `/api/teacher/mockTest/${mockTestId}/detail`,
       fetcher
     );
+  const {
+    data: mockTestDetailData,
+    isLoading: mockTestDetailDataLoading,
+    mutate: mockTestDetailMutate,
+  } = useSWR<MockTestDetailResponse>(
+    `/api/teacher/mockTest/${mockTestId}/show`,
+    fetcher
+  );
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [form] = Form.useForm();
@@ -29,6 +41,9 @@ export const useDetailMockTestViewModel = () => {
   const [isModalAccessVisible, setIsModalAccessVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedBase, setSelectedBase] = useState<BaseMockTest | null>(null);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isEditingTimeLimit, setIsEditingTimeLimit] = useState(false);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
 
   const { data: dataStudentResponse, error: studentError } =
     useSWR<UserResponse>("/api/admin/student/show", fetcher);
@@ -137,6 +152,48 @@ export const useDetailMockTestViewModel = () => {
     }
   };
 
+  const handleEditDescription = () => {
+    setIsEditingDescription(true);
+    form.setFieldsValue({
+      description: dataDetailMockTest?.data.description || "",
+    });
+  };
+
+  const handleEditTimeLimit = () => {
+    setIsEditingTimeLimit(true);
+    form.setFieldsValue({
+      timeLimit: dataDetailMockTest?.data.timeLimit || "",
+    });
+  };
+
+  const handleSave = async (values: any) => {
+    setLoading(true);
+    const payload = {
+      description: values.description,
+      time_limit: values.timeLimit,
+    };
+    try {
+      await crudService.patch(
+        `/api/teacher/mockTest/${mockTestId}/handleEditDetail`,
+        payload
+      );
+      notification.success({ message: "Berhasil mengedit data" });
+      mutateDetail();
+      setIsEditingDescription(false);
+      setIsEditingTimeLimit(false);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelDrawer = () => {
+    setIsDrawerVisible(false);
+    setIsEditingDescription(false);
+    setIsEditingTimeLimit(false);
+  };
+
   return {
     mockTestDetailData,
     mockTestDetailDataLoading,
@@ -156,6 +213,15 @@ export const useDetailMockTestViewModel = () => {
     handleSubmit,
     handleDelete,
     selectedBase,
-    handleEdit
+    handleEdit,
+    dataDetailMockTest,
+    handleEditDescription,
+    handleEditTimeLimit,
+    handleSave,
+    isEditingDescription,
+    isEditingTimeLimit,
+    handleCancelDrawer,
+    setIsDrawerVisible,
+    isDrawerVisible,
   };
 };

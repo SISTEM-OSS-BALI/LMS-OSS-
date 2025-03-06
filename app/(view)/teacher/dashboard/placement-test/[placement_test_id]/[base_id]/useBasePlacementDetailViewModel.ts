@@ -88,6 +88,25 @@ export const useBasePlacementDetailViewModel = () => {
     setQuestions(newQuestions);
   };
 
+  const handleAddOption = (qIndex: number) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].options = [
+      ...(newQuestions[qIndex].options || []),
+      "",
+    ];
+    setQuestions(newQuestions);
+  };
+
+  const handleRemoveOption = (qIndex: number, oIndex: number) => {
+    const newQuestions = [...questions];
+    if (newQuestions[qIndex].options!.length > 2) {
+      newQuestions[qIndex].options!.splice(oIndex, 1);
+      setQuestions(newQuestions);
+    } else {
+      message.warning("Minimal harus ada 2 opsi!");
+    }
+  };
+
   const handleQuestionChange = (
     index: number,
     field: string,
@@ -312,5 +331,7 @@ export const useBasePlacementDetailViewModel = () => {
     setQuestionCount,
     editType,
     handleDelete,
+    handleAddOption,
+    handleRemoveOption
   };
 };

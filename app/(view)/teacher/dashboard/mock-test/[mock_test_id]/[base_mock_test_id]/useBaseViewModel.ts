@@ -209,7 +209,6 @@ export const useBaseViewModel = () => {
   };
 
   const handleSubmit = async (values: any) => {
-    console.log(values);
     setLoading(true);
     try {
       let url = "";

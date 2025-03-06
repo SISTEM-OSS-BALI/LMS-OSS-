@@ -15,6 +15,7 @@ export const useCourseViewModel = () => {
     data: courseData,
     error: courseError,
     mutate: courseMutate,
+    isLoading: isLoadingCourse,
   } = useSWR<CourseResponse>("/api/teacher/course/show", fetcher);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -127,5 +128,6 @@ export const useCourseViewModel = () => {
     setIsModalVisible,
     handleSearch,
     filteredCourses,
+    isLoadingCourse
   };
 };

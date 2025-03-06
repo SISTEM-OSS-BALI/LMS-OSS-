@@ -17,13 +17,14 @@ import {
   Col,
 } from "antd";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   MultipleChoicePlacementTest,
   TrueFalseGroupPlacementTest,
   TrueFalseQuestion,
   WritingPlacementTest,
 } from "@prisma/client";
+import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 
 // Lazy load ReactQuill untuk teks editor
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -57,6 +58,8 @@ export default function BasePlacementDetailComponent() {
     setQuestionCount,
     editType,
     handleDelete,
+    handleAddOption,
+    handleRemoveOption,
   } = useBasePlacementDetailViewModel();
   // State
 
@@ -432,6 +435,7 @@ export default function BasePlacementDetailComponent() {
                       />
                     </Form.Item>
 
+                    {/* Tampilkan opsi dengan tombol tambah/hapus */}
                     {question.options?.map((option, oIndex) => (
                       <Form.Item
                         key={oIndex}
@@ -444,10 +448,27 @@ export default function BasePlacementDetailComponent() {
                           onChange={(e) =>
                             handleOptionChange(qIndex, oIndex, e.target.value)
                           }
+                          style={{ width: "90%" }}
+                        />
+                        <Button
+                          type="text"
+                          danger
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => handleRemoveOption(qIndex, oIndex)}
                         />
                       </Form.Item>
                     ))}
 
+                    <Button
+                      type="dashed"
+                      onClick={() => handleAddOption(qIndex)}
+                      icon={<PlusOutlined />}
+                      style={{ marginBottom: "10px", width: "100%" }}
+                    >
+                      Tambah Opsi
+                    </Button>
+
+                    {/* Pilihan Jawaban Benar */}
                     <Form.Item label="Jawaban Benar">
                       <Radio.Group
                         onChange={(e) =>

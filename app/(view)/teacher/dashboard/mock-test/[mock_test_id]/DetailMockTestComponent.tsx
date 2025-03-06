@@ -15,10 +15,14 @@ import {
   Flex,
   Alert,
   Select,
+  FloatButton,
+  Drawer,
+  Typography,
 } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import Title from "antd/es/typography/Title";
+import { useState } from "react";
 
 export default function DetailMockTestComponent() {
   //   const query = useParams();
@@ -43,7 +47,19 @@ export default function DetailMockTestComponent() {
     handleDelete,
     handleSubmit,
     handleEdit,
+    dataDetailMockTest,
+    handleEditDescription,
+    handleEditTimeLimit,
+    handleSave,
+    isEditingDescription,
+    isEditingTimeLimit,
+    handleCancelDrawer,
+    setIsDrawerVisible,
+    isDrawerVisible,
   } = useDetailMockTestViewModel();
+
+  const detailMockTest = dataDetailMockTest?.data;
+  
 
   const showConfirmDelete = (id: string) => {
     Modal.confirm({
@@ -60,6 +76,7 @@ export default function DetailMockTestComponent() {
     <div style={{ padding: "20px" }}>
       <Flex justify="space-between" style={{ marginBottom: "20px" }}>
         <Title level={4}>Detail Mock Test</Title>
+        <FloatButton onClick={() => setIsDrawerVisible(true)} />
         <Flex justify="space-between" gap={20}>
           <Button type="primary" onClick={() => handleOpenModal()}>
             Tambah Data
@@ -140,6 +157,121 @@ export default function DetailMockTestComponent() {
               </Col>
             ))}
       </Row>
+
+      <Drawer
+        title="Detail Mock Test"
+        placement="right"
+        onClose={() => handleCancelDrawer()}
+        open={isDrawerVisible}
+        width={450} 
+      >
+        <div style={{ padding: "10px 16px" }}>
+          <List
+            bordered
+            dataSource={[
+              {
+                label: "Deskripsi",
+                value:
+                  detailMockTest?.description || "No description available",
+                editable: true,
+                onEdit: handleEditDescription,
+              },
+              {
+                label: "Waktu Pengerjaan",
+                value: detailMockTest?.timeLimit
+                  ? `${detailMockTest.timeLimit} menit`
+                  : "Waktu belum diatur",
+                editable: true,
+                onEdit: handleEditTimeLimit,
+              },
+            ]}
+            renderItem={(item) => (
+              <List.Item
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  background: "#FAFAFA",
+                  marginBottom: "8px",
+                  wordBreak: "break-word", // Mencegah teks panjang meluber
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <Typography.Text strong>{item.label}:</Typography.Text>
+                  <Typography.Text
+                    style={{
+                      display: "block",
+                      whiteSpace: "pre-wrap", // Memastikan deskripsi panjang tidak terpotong
+                      marginTop: 4,
+                    }}
+                  >
+                    {item.value}
+                  </Typography.Text>
+                </div>
+                {item.editable && (
+                  <Button
+                    type="default"
+                    shape="circle"
+                    icon={<EditOutlined />}
+                    onClick={item.onEdit}
+                    style={{ marginLeft: "10px", background: "#F5E3C8" }}
+                  />
+                )}
+              </List.Item>
+            )}
+          />
+
+          <Form
+            form={form}
+            onFinish={handleSave}
+            layout="vertical"
+            style={{
+              marginTop: 20,
+              padding: "16px",
+              background: "#FFF",
+              borderRadius: "8px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            }}
+          >
+            {isEditingDescription && (
+              <Form.Item
+                name="description"
+                label="Deskripsi"
+                rules={[{ required: true, message: "Deskripsi wajib diisi!" }]}
+              >
+                <Input.TextArea rows={4} />
+              </Form.Item>
+            )}
+
+            {isEditingTimeLimit && (
+              <Form.Item
+                name="timeLimit"
+                label="Waktu Pengerjaan (menit)"
+                rules={[
+                  { required: true, message: "Waktu pengerjaan wajib diisi!" },
+                ]}
+              >
+                <Input type="number" placeholder="Masukkan Durasi Pengerjaan" />
+              </Form.Item>
+            )}
+
+            {(isEditingDescription || isEditingTimeLimit) && (
+              <Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  style={{ width: "100%" }}
+                >
+                  Save
+                </Button>
+              </Form.Item>
+            )}
+          </Form>
+        </div>
+      </Drawer>
 
       <Modal
         title="Pilih Siswa"
