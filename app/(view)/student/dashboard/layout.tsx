@@ -21,7 +21,7 @@ import {
   Modal,
 } from "antd";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { useMeetings } from "./home/useMeetingViewModel";
 import { CertificateSvg } from "@/app/components/Icon";
@@ -104,6 +104,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   const { username } = useAuth();
   const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
   const { count_program } = useMeetings();
+  const router = useRouter();
 
   const determineSelectedKeys = (pathname: string): string[] => {
     const exactMatch = Object.entries(menuMap).find(
@@ -149,7 +150,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           key: "profil",
           label: "Profil",
           icon: <UserOutlined />,
-          onClick: () => setIsModalProfileVisible(true),
+          onClick: () => router.push("/student/dashboard/profile"),
         },
         {
           key: "logout",
