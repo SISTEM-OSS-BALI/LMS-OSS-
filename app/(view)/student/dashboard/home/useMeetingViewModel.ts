@@ -55,11 +55,6 @@ export const useMeetings = () => {
     fetcher
   );
 
-  const { data: countPogramData } = useSWR(
-    "/api/student/countProduct",
-    fetcher
-  );
-
   const { data: accessPlacemenetTestData } =
     useSWR<AccessPlacementTestResponse>(
       "/api/student/placementTest/show",
@@ -192,8 +187,6 @@ export const useMeetings = () => {
       };
     }) || [];
 
-  const count_program = countPogramData?.data?.count_program || 0;
-
   return {
     formatDateTimeToUTC,
     isModalVisible,
@@ -201,7 +194,6 @@ export const useMeetings = () => {
     handleEventClick,
     handleModalClose,
     events,
-    count_program,
     mergedData,
     startQuiz,
     mergedDataCourse,

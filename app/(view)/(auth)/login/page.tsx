@@ -11,6 +11,7 @@ import {
   Space,
   Image,
   Flex,
+  Modal,
 } from "antd";
 import {
   UserOutlined,
@@ -27,7 +28,16 @@ import { Footer } from "antd/es/layout/layout";
 export default function Login() {
   const { Content, Header } = Layout;
   const { Title } = Typography;
-  const { login, loading } = useLoginViewModel();
+  const {
+    login,
+    loading,
+    sendNotif,
+    handleOpenModal,
+    handleCloseModal,
+    isModalVisible,
+    form,
+    loadingForgotPassword,
+  } = useLoginViewModel();
 
   const onFinish = (values: any) => {
     login(values);
@@ -135,7 +145,7 @@ export default function Login() {
                     { required: true, message: "Masukkan Password Anda!" },
                   ]}
                 >
-                  <Input
+                  <Input.Password
                     prefix={<LockOutlined />}
                     type="password"
                     placeholder="Password"
@@ -155,7 +165,14 @@ export default function Login() {
                   </Button>
                 </Form.Item>
                 <Row justify="space-between">
-                  <Link href="/forgot-password">Lupa Password?</Link>
+                  <Button
+                    danger
+                    onClick={() => handleOpenModal()}
+                    size="small"
+                    style={{ border: "none" }}
+                  >
+                    Lupa Password?
+                  </Button>
                   <Link href="/register">Belum Punya Akun?</Link>
                 </Row>
               </Form>
@@ -245,6 +262,34 @@ export default function Login() {
           </Col>
         </Row>
       </Footer>
+      <Modal
+        title="Lupa Password?"
+        open={isModalVisible}
+        footer={null}
+        onCancel={handleCloseModal}
+      >
+        <Form layout="vertical" form={form} onFinish={sendNotif}>
+          <Form.Item
+            name="email"
+            rules={[
+              { required: true, message: "Masukkan email Anda!" },
+              { type: "email", message: "Email tidak valid!" },
+            ]}
+          >
+            <Input placeholder="Email" />
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loadingForgotPassword}
+              style={{ width: "100%" }}
+            >
+              Kirim Notifikasi
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </Layout>
   );
 }

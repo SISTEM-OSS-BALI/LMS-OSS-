@@ -109,6 +109,25 @@ model User {
   StudentAnswerMockTest     StudentAnswerMockTest[] @relation("StudentAnswersMockTest")
   TermsAgreement            TermsAgreement?
   ScorePlacementTest        ScorePlacementTest[]
+  PasswordResetToken        PasswordResetToken?
+  PasswordChangeToken       PasswordChangeToken?
+}
+
+model PasswordChangeToken {
+  id         String   @id @default(uuid())
+  user_id    String   @unique
+  token      String   @unique
+  expires_at DateTime
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  user_id    String   @unique
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
 }
 
 model TermsAgreement {
@@ -449,14 +468,14 @@ model MultipleChoicePlacementTest {
 }
 
 model TrueFalseGroupPlacementTest {
-  group_id         String @id @default(uuid())
-  passage         String @db.LongText
+  group_id String @id @default(uuid())
+  passage  String @db.LongText
 
   basePlacementTest   BasePlacementTest @relation(fields: [basePlacementTestId], references: [base_id], onDelete: Cascade)
   basePlacementTestId String
 
-  trueFalseQuestions  TrueFalseQuestion[]
-  studentAnswers      StudentAnswerPlacementTest[] // Pastikan relasi ke StudentAnswerPlacementTest
+  trueFalseQuestions TrueFalseQuestion[]
+  studentAnswers     StudentAnswerPlacementTest[] // Pastikan relasi ke StudentAnswerPlacementTest
 }
 
 model TrueFalseQuestion {
@@ -488,23 +507,23 @@ model StudentAnswerPlacementTest {
   placementTest     PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
   placement_test_id String
 
-  multipleChoice    MultipleChoicePlacementTest? @relation(fields: [mcq_id], references: [mc_id])
-  mcq_id           String?
+  multipleChoice MultipleChoicePlacementTest? @relation(fields: [mcq_id], references: [mc_id])
+  mcq_id         String?
 
-  trueFalseGroup   TrueFalseGroupPlacementTest?  @relation(fields: [group_id], references: [group_id])
-  group_id         String?
+  trueFalseGroup TrueFalseGroupPlacementTest? @relation(fields: [group_id], references: [group_id])
+  group_id       String?
 
-  trueFalseQuestion TrueFalseQuestion?           @relation(fields: [tf_id], references: [tf_id])
+  trueFalseQuestion TrueFalseQuestion? @relation(fields: [tf_id], references: [tf_id])
   tf_id             String?
 
-  writingQuestion  WritingPlacementTest?         @relation(fields: [writing_id], references: [writing_id])
+  writingQuestion  WritingPlacementTest? @relation(fields: [writing_id], references: [writing_id])
   writing_id       String?
-  writing_feedback String?                        @db.LongText
+  writing_feedback String?               @db.LongText
 
-  studentAnswer    String   @db.LongText
-  isCorrect        Boolean?
-  score            Int
-  submittedAt      DateTime @default(now())
+  studentAnswer String   @db.LongText
+  isCorrect     Boolean?
+  score         Int
+  submittedAt   DateTime @default(now())
 
   // Pastikan ada index untuk performa query yang lebih baik
   @@index([student_id, placement_test_id])

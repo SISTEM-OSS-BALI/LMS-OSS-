@@ -11,11 +11,11 @@ export default function AuthWrapper({
   const router = useRouter();
   const pathname = usePathname();
 
-  const authRoutes = ["/", "/register"];
+  const authRoutes = ["/", "/register", "/change-password", "/reset-password"];
   const shouldProtect = !authRoutes.includes(pathname);
 
   useEffect(() => {
-    if (status === "loading") return; // 🔹 Jangan redirect sebelum sesi dimuat
+    if (status === "loading") return;
 
     if (shouldProtect && !session) {
       router.push("/"); // 🔹 Redirect jika user belum login

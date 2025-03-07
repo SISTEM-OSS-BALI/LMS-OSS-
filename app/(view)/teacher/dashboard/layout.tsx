@@ -24,10 +24,10 @@ import {
   theme,
 } from "antd";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
-import { useDashboardViewModel } from "./home/useDashboardViewModel";
 import { useAuth } from "@/app/lib/auth/authServices";
+import { signOut } from "next-auth/react";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -97,10 +97,20 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const pathname = usePathname();
-  const { username } = useAuth();
-  const { count_program } = useDashboardViewModel();
-  const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
+  const { username, imageUrl } = useAuth();
+  const router = useRouter();
 
+  const showConfirmLogout = async () => {
+    Modal.confirm({
+      title: "Logout",
+      content: "Apakah anda yakin ingin logout?",
+      okText: "Logout",
+      okType: "danger",
+      onOk: async () => {
+        await signOut({ callbackUrl: "/" });
+      },
+    });
+  };
   const determineSelectedKeys = (pathname: string): string[] => {
     const exactMatch = Object.entries(menuMap).find(
       ([key]) => key === pathname
@@ -142,14 +152,14 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
           key: "profil",
           label: "Profil",
           icon: <UserOutlined />,
-          onClick: () => setIsModalProfileVisible(true),
+          onClick: () => router.push("/teacher/dashboard/profile"),
         },
         {
           key: "logout",
-          label: "Keluar",
+          label: "Logout",
           icon: <LogoutOutlined />,
           onClick: () => {
-            console.log("logout");
+            showConfirmLogout(); // 🔹 Logout dan redirect ke halaman utama
           },
         },
       ]}
@@ -176,7 +186,7 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
         },
       }}
     >
-      <Layout style={{ minHeight: "100vh" }}>
+      <Layout style={{ height: "100vh" }}>
         <Sider
           collapsible
           collapsed={collapsed}
@@ -264,7 +274,14 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
                       marginRight: 20,
                     }}
                   >
-                    <Avatar icon={<UserOutlined />} style={{}} />
+                    <Avatar
+                      src={imageUrl}
+                      size={45}
+                      style={{
+                        backgroundColor: "#1890ff",
+                        position: "relative",
+                      }}
+                    />
                     <div style={{ color: "black", textAlign: "right" }}>
                       <div>{username}</div>
                       <div style={{ fontSize: "smaller", marginTop: 5 }}>
@@ -307,23 +324,6 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
             LMS OSS ©{new Date().getFullYear()}
           </Footer>
         </Layout>
-        <Modal
-          open={isModalProfileVisible}
-          onCancel={() => setIsModalProfileVisible(false)}
-          title="Profil"
-          footer={null}
-          style={{ top: 20 }}
-          bodyStyle={{ padding: "20px" }}
-        >
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: "16px", fontWeight: "bold" }}>
-              Total Pertemuan
-            </p>
-            <p style={{ fontSize: "24px", color: "#1890ff" }}>
-              {count_program || 0} Pertemuan
-            </p>
-          </div>
-        </Modal>
       </Layout>
     </ConfigProvider>
   );

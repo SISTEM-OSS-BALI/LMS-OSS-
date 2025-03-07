@@ -5,7 +5,7 @@ export const useRandomBgCourse = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedImages = localStorage.getItem("randomBgImages");
+      const savedImages = sessionStorage.getItem("randomBgImages");
 
       if (savedImages) {
         setStoredImages(JSON.parse(savedImages));
@@ -23,7 +23,7 @@ export const useRandomBgCourse = () => {
           return bgCourses[randomIndex];
         });
 
-        localStorage.setItem("randomBgImages", JSON.stringify(randomImages));
+        sessionStorage.setItem("randomBgImages", JSON.stringify(randomImages));
         setStoredImages(randomImages);
       }
     }

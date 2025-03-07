@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { notification } from "antd";
+import { Form, notification } from "antd";
+import { crudService } from "@/app/lib/services/crudServices";
 
 interface LoginPayload {
   email: string;
@@ -10,13 +11,16 @@ interface LoginPayload {
 
 export function useLoginViewModel() {
   const [loading, setLoading] = useState(false);
+  const [loadingForgotPassword, setLoadingForgotPassword] = useState(false);
   const router = useRouter();
+  const [form] = Form.useForm();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const login = async (payload: LoginPayload) => {
     setLoading(true);
     try {
       const response = await signIn("credentials", {
-        redirect: false, 
+        redirect: false,
         email: payload.email,
         password: payload.password,
       });
@@ -25,7 +29,6 @@ export function useLoginViewModel() {
         throw new Error(response?.error || "Login gagal, silakan coba lagi.");
       }
 
-      
       const sessionRes = await fetch("/api/auth/session");
       const session = await sessionRes.json();
 
@@ -56,5 +59,48 @@ export function useLoginViewModel() {
     }
   };
 
-  return { login, loading };
+  const sendNotif = async (values: any) => {
+    setLoadingForgotPassword(true);
+    const payload = {
+      email: values.email,
+    };
+    try {
+      await crudService.post(
+        "/api/student/profile/sendNotifResetPassword",
+        payload
+      );
+      setLoadingForgotPassword(false);
+      handleCloseModal();
+      notification.success({
+        message: "Berhasil",
+        description: "Notifikasi berhasil dikirim cek email anda",
+      });
+    } catch (error) {
+      setLoadingForgotPassword(false);
+      notification.error({
+        message: "Error",
+        description: (error as Error).message || "Terjadi kesalahan",
+      });
+    }
+  };
+
+  const handleOpenModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+  };
+
+  return {
+    login,
+    loading,
+    sendNotif,
+    handleOpenModal,
+    handleCloseModal,
+    isModalVisible,
+    form,
+    loadingForgotPassword,
+  };
 }

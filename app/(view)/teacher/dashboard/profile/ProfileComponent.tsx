@@ -9,6 +9,7 @@ export default function ProfileComponent() {
     handleUpdateAvatar,
     loading,
     handleSendNotif,
+    loadingChangePassword
   } = useProfileViewModel();
 
   return (
@@ -18,6 +19,7 @@ export default function ProfileComponent() {
           data={mergedData}
           isLoading={isLoading}
           loading={loading}
+          loadingChangePassword={loadingChangePassword}
           onUpdate={handleUpdate}
           onUpdateAvatar={handleUpdateAvatar}
           onSendEmail={handleSendNotif}

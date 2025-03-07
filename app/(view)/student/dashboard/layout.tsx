@@ -66,21 +66,21 @@ const items: MenuItem[] = [
     "/student/dashboard/home",
     <PieChartOutlined />
   ),
-  getItem(
-    <Link href={"/student/dashboard/try-out"}>Try Out</Link>,
-    "/student/dashboard/try-out",
-    <CalendarOutlined />
-  ),
+  // getItem(
+  //   <Link href={"/student/dashboard/try-out"}>Try Out</Link>,
+  //   "/student/dashboard/try-out",
+  //   <CalendarOutlined />
+  // ),
   getItem(
     <Link href={"/student/dashboard/meeting"}>Jadwal Pertemuan</Link>,
     "/student/dashboard/meeting",
     <CalendarOutlined />
   ),
-  getItem(
-    <Link href={"/student/dashboard/work-sheet"}>Work Sheet</Link>,
-    "/student/dashboard/work-sheet",
-    <CalendarOutlined />
-  ),
+  // getItem(
+  //   <Link href={"/student/dashboard/work-sheet"}>Work Sheet</Link>,
+  //   "/student/dashboard/work-sheet",
+  //   <CalendarOutlined />
+  // ),
   getItem(
     <Link href="/student/dashboard/course-followed">Modul</Link>,
     "/student/dashboard/course-followed",
@@ -101,10 +101,20 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const pathname = usePathname();
-  const { username } = useAuth();
-  const [isModalProfileVisible, setIsModalProfileVisible] = useState(false);
-  const { count_program } = useMeetings();
+  const { username, imageUrl } = useAuth();
   const router = useRouter();
+
+  const showConfirmLogout = async () => {
+    Modal.confirm({
+      title: "Logout",
+      content: "Apakah anda yakin ingin logout?",
+      okText: "Logout",
+      okType: "danger",
+      onOk: async () => {
+        await signOut({ callbackUrl: "/" });
+      },
+    });
+  };
 
   const determineSelectedKeys = (pathname: string): string[] => {
     const exactMatch = Object.entries(menuMap).find(
@@ -154,10 +164,10 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         },
         {
           key: "logout",
-          label: "Keluar",
+          label: "Logout",
           icon: <LogoutOutlined />,
-          onClick: async () => {
-            await signOut({ callbackUrl: "/" }); // 🔹 Logout dan redirect ke halaman utama
+          onClick: () => {
+            showConfirmLogout(); // 🔹 Logout dan redirect ke halaman utama
           },
         },
       ]}
@@ -186,7 +196,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         },
       }}
     >
-      <Layout style={{ minHeight: "100vh" }}>
+      <Layout style={{ height: "100vh" }}>
         {!isSidebarHidden && (
           <Sider
             collapsible
@@ -281,7 +291,15 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
                         marginRight: 20,
                       }}
                     >
-                      <Avatar icon={<UserOutlined />} style={{}} />
+                      <Avatar
+                        src={imageUrl}
+                        size={45}
+                        icon={!imageUrl && <UserOutlined />}
+                        style={{
+                          backgroundColor: "#1890ff",
+                          position: "relative",
+                        }}
+                      />
                       <div style={{ color: "black", textAlign: "right" }}>
                         <div>{username}</div>
                         <div style={{ fontSize: "smaller", marginTop: 5 }}>
@@ -305,8 +323,6 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
             <div
               style={{
                 padding: 24,
-                // background: colorBgContainer,
-                // borderRadius: borderRadiusLG,
               }}
             >
               {children}
@@ -326,24 +342,6 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
               LMS OSS ©{new Date().getFullYear()}
             </Footer>
           )}
-
-          <Modal
-            open={isModalProfileVisible}
-            onCancel={() => setIsModalProfileVisible(false)}
-            title="Profil"
-            footer={null}
-            style={{ top: 20 }}
-            bodyStyle={{ padding: "20px" }}
-          >
-            <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: "16px", fontWeight: "bold" }}>
-                Total Pertemuan
-              </p>
-              <p style={{ fontSize: "24px", color: "#1890ff" }}>
-                {count_program}
-              </p>
-            </div>
-          </Modal>
         </Layout>
       </Layout>
     </ConfigProvider>

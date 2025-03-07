@@ -79,10 +79,10 @@ export const useMockTestViewModel = () => {
   const [remainingTime, setRemainingTime] = useState<number>(time * 60);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Load jawaban dari localStorage jika ada
+  // ✅ Load jawaban dari sessionStorage jika ada
   const [answersBySection, setAnswersBySection] = useState<
     Record<string, Record<string, string>>
-  >(() => JSON.parse(localStorage.getItem("answersBySection") || "{}"));
+  >(() => JSON.parse(sessionStorage.getItem("answersBySection") || "{}"));
 
   // ✅ Ambil pertanyaan untuk navigasi soal
   const sectionContent: BaseMockTest | null =
@@ -121,7 +121,7 @@ export const useMockTestViewModel = () => {
     };
     setAnswersBySection(updatedAnswers);
     if (typeof window !== "undefined") {
-      localStorage.setItem("answersBySection", JSON.stringify(updatedAnswers));
+      sessionStorage.setItem("answersBySection", JSON.stringify(updatedAnswers));
     }
   };
 
@@ -146,8 +146,8 @@ export const useMockTestViewModel = () => {
       );
       message.success("Seluruh jawaban telah dikirim!");
       if (typeof window !== "undefined") {
-        localStorage.removeItem("answersBySection");
-        localStorage.removeItem("remainingTime");
+        sessionStorage.removeItem("answersBySection");
+        sessionStorage.removeItem("remainingTime");
       }
     } catch (error) {
       message.error("Gagal mengirim jawaban!");
@@ -159,7 +159,7 @@ export const useMockTestViewModel = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedTime = Number(localStorage.getItem("remainingTime"));
+      const savedTime = Number(sessionStorage.getItem("remainingTime"));
       if (!isNaN(savedTime) && savedTime > 0) {
         setRemainingTime(savedTime);
       }
@@ -171,7 +171,7 @@ export const useMockTestViewModel = () => {
     if (remainingTime > 0) {
       const timer = setInterval(() => {
         setRemainingTime((prev) => {
-          localStorage.setItem("remainingTime", String(prev - 1));
+          sessionStorage.setItem("remainingTime", String(prev - 1));
           return prev - 1;
         });
       }, 1000);
@@ -181,9 +181,9 @@ export const useMockTestViewModel = () => {
     }
   }, [remainingTime]);
 
-  // 🔹 Muat kembali waktu yang tersisa dari localStorage saat komponen dimuat ulang
+  // 🔹 Muat kembali waktu yang tersisa dari sessionStorage saat komponen dimuat ulang
   useEffect(() => {
-    const savedTime = Number(localStorage.getItem("remainingTime"));
+    const savedTime = Number(sessionStorage.getItem("remainingTime"));
     if (!isNaN(savedTime) && savedTime > 0) {
       setRemainingTime(savedTime);
     }

@@ -72,7 +72,7 @@ export const usePlacementTestViewModel = () => {
   const [remainingTime, setRemainingTime] = useState(Number(time) * 60 || 0);
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
-  >(() => JSON.parse(localStorage.getItem("answersPlacementTest") || "{}"));
+  >(() => JSON.parse(sessionStorage.getItem("answersPlacementTest") || "{}"));
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
@@ -127,7 +127,7 @@ export const usePlacementTestViewModel = () => {
         [questionId]: answer,
       }));
       if (typeof window !== "undefined") {
-        localStorage.setItem(
+        sessionStorage.setItem(
           "answersPlacementTest",
           JSON.stringify(selectedAnswers)
         );
@@ -138,7 +138,7 @@ export const usePlacementTestViewModel = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedTime = Number(localStorage.getItem("remainingTimePlacement"));
+      const savedTime = Number(sessionStorage.getItem("remainingTimePlacement"));
       if (!isNaN(savedTime) && savedTime > 0) {
         setRemainingTime(savedTime);
       }
@@ -195,8 +195,8 @@ export const usePlacementTestViewModel = () => {
         notification.success({ message: "Berhasil mengirim jawaban" });
         router.push("/student/dashboard/placement-test/result");
         if (typeof window !== "undefined") {
-          localStorage.removeItem("answersPlacementTest");
-          localStorage.removeItem("remainingTimePlacement");
+          sessionStorage.removeItem("answersPlacementTest");
+          sessionStorage.removeItem("remainingTimePlacement");
         }
         setLoading(false);
       } else {

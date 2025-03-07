@@ -18,40 +18,43 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and Password are required");
+          throw new Error("Email dan Password harus diisi");
         }
 
-        // 🔹 Cari user berdasarkan email (gunakan `findFirst` karena `email` bukan Primary Key)
+        // Cari user berdasarkan email
         const user = await prisma.user.findFirst({
           where: { email: credentials.email, is_verified: true },
         });
 
-        if (user && !user.is_verified) {
-          throw new Error("Akun belum aktif, silakan verifikasi email Anda");
+        if (!user || !user.is_verified) {
+          throw new Error("Email belum diverifikasi");
         }
 
         if (
           !user ||
           !(await bcrypt.compare(credentials.password, user.password))
         ) {
-          throw new Error("Invalid email or password");
+          throw new Error("Email atau Password salah");
         }
 
         return {
-          user_id: user.user_id, // Gunakan `user_id` sesuai dengan Prisma
-          name: user.username,
+          user_id: user.user_id,
+          username: user.username,
           email: user.email,
           role: user.role as Role,
           program_id: user.program_id,
-        } as any; // 🔹 Gunakan `as any` untuk mengatasi TypeScript strict mode
+        } as any;
       },
     }),
   ],
+  session: {
+    strategy: "jwt", // Jika masih ingin pakai JWT
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.user_id = user.user_id; // 🔹 Gunakan `user_id`
-        token.name = user.name;
+        token.user_id = user.user_id;
+        token.username = user.username;
         token.email = user.email;
         token.role = user.role;
         token.program_id = user.program_id;
@@ -59,18 +62,29 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      const dbUser = await prisma.user.findUnique({
+        where: { user_id: token.user_id as string },
+        select: { username: true, email: true, role: true, imageUrl: true },
+      });
+
+      // 🔹 Pastikan semua data tetap ada di session
       session.user = {
-        user_id: token.user_id as string, // 🔹 Gunakan `user_id`
-        name: token.name as string,
-        email: token.email as string,
-        role: token.role as string,
+        user_id: token.user_id as string,
+        username: dbUser?.username || (token.username as string), // Jika `dbUser` null, pakai token
+        email: dbUser?.email || token.email || "",
+        role: dbUser?.role || (token.role as string),
         program_id: token.program_id as string | null,
+        imageUrl:
+          dbUser?.imageUrl ||
+          (typeof token.imageUrl === "string" ? token.imageUrl : null) ||
+          null, // Cegah `null` overwrite
       };
+
       return session;
     },
   },
   pages: {
-    signIn: "/login", // Redirect ke halaman login jika belum login
+    signIn: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

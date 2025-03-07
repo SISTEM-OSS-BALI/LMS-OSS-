@@ -3,7 +3,7 @@ import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { Program, User } from "@prisma/client";
 import { notification } from "antd";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 import { useState } from "react";
 import useSWR from "swr";
@@ -33,6 +33,7 @@ export const useProfileViewModel = () => {
   );
 
   const [loading, setLoading] = useState(false);
+  const [loadingChangePassword, setLoadingChangePassword] = useState(false);
 
   // Pastikan mergedData memiliki nilai yang valid
   const mergedData: User & { program?: Program } = {
@@ -96,16 +97,15 @@ export const useProfileViewModel = () => {
 
       if (!response) throw new Error("Gagal mengunggah avatar");
 
-      notification.success({
-        message: "Berhasil",
-        description: "Avatar berhasil diperbarui",
-      });
-
       // 🔹 Perbarui sesi NextAuth TANPA logout
       await update({ imageUrl }); // Auto-refresh session!
 
       mutate(); // Optional: refresh SWR data
       setLoading(false);
+      notification.success({
+        message: "Berhasil",
+        description: "Avatar berhasil diperbarui",
+      });
     } catch (error) {
       setLoading(false);
       notification.error({
@@ -118,21 +118,21 @@ export const useProfileViewModel = () => {
   };
 
   const handleSendNotif = async () => {
-    setLoading(true);
+    setLoadingChangePassword(true);
     try {
       await crudService.post(
         "/api/student/profile/sendNotifChangePassword",
         {}
       );
 
-      setLoading(false);
+      setLoadingChangePassword(false);
 
       notification.success({
         message: "Berhasil",
         description: "Notifikasi berhasil dikirim cek WhatsApp anda",
       });
     } catch (error) {
-      setLoading(false);
+      setLoadingChangePassword(false);
       notification.error({
         message: "Error",
         description: (error as Error).message || "Terjadi kesalahan",
@@ -146,5 +146,6 @@ export const useProfileViewModel = () => {
     handleUpdateAvatar,
     loading,
     handleSendNotif,
+    loadingChangePassword,
   };
 };

@@ -80,13 +80,25 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   const [newRescheduleCount, setNewRescheduleCount] = useState(0);
   const [newTeacherAbsance, setNewTeacherAbsance] = useState(0);
 
+  const showConfirmLogout = async () => {
+    Modal.confirm({
+      title: "Logout",
+      content: "Apakah anda yakin ingin logout?",
+      okText: "Logout",
+      okType: "danger",
+      onOk: async () => {
+        await signOut({ callbackUrl: "/" });
+      },
+    });
+  };
+
   const fetchDataWithLastChecked = useCallback(
     async (
       endpoint: string,
       lastCheckedKey: string,
       setStateCallback: React.Dispatch<React.SetStateAction<number>>
     ) => {
-      const lastChecked = localStorage.getItem(lastCheckedKey) || "";
+      const lastChecked = sessionStorage.getItem(lastCheckedKey) || "";
 
       try {
         const query = lastChecked ? `?lastChecked=${lastChecked}` : "";
@@ -99,13 +111,13 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     []
   );
   const handleRescheduleClick = () => {
-    localStorage.setItem("lastCheckedRescheduleTime", Date.now().toString());
+    sessionStorage.setItem("lastCheckedRescheduleTime", Date.now().toString());
     setNewRescheduleCount(0);
     router.push("/admin/dashboard/student/reschedule");
   };
 
   const handleAbsentClick = () => {
-    localStorage.setItem("lastCheckedTeacherAbsence", Date.now().toString());
+    sessionStorage.setItem("lastCheckedTeacherAbsence", Date.now().toString());
     setNewTeacherAbsance(0);
     router.push("/admin/dashboard/teacher/absent");
   };
@@ -271,17 +283,11 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     <Menu
       items={[
         {
-          key: "profil",
-          label: "Profil",
-          icon: <UserOutlined />,
-          onClick: () => {},
-        },
-        {
           key: "logout",
-          label: "Keluar",
+          label: "Logout",
           icon: <LogoutOutlined />,
-          onClick: async () => {
-            await signOut({ callbackUrl: "/" }); // 🔹 Logout dan redirect ke halaman utama
+          onClick: () => {
+            showConfirmLogout(); // 🔹 Logout dan redirect ke halaman utama
           },
         },
       ]}
@@ -308,7 +314,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         },
       }}
     >
-      <Layout style={{ minHeight: "100vh" }}>
+      <Layout style={{ height: "100vh" }}>
         <Sider
           collapsible
           collapsed={collapsed}

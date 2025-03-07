@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@prisma/client";
+import { Program, User } from "@prisma/client";
 import {
   Card,
   Avatar,
@@ -15,6 +15,9 @@ import {
   Modal,
   Form,
   Input,
+  Upload,
+  message,
+  Image,
 } from "antd";
 import {
   UserOutlined,
@@ -24,12 +27,23 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   EditOutlined,
+  ToTopOutlined,
+  InboxOutlined,
 } from "@ant-design/icons";
+import Dragger from "antd/es/upload/Dragger";
+
+interface UserWithProgram extends User {
+  program?: Program;
+}
 
 interface ProfileComponentProps {
-  data: User | null;
+  data: UserWithProgram | null;
   isLoading: boolean;
-  onUpdate: (updatedData: Partial<User>) => void; // Fungsi untuk mengupdate data user
+  loading: boolean;
+  loadingChangePassword: boolean;
+  onUpdate: (updatedData: Partial<User>) => void;
+  onUpdateAvatar: (imageUrl: string) => void;
+  onSendEmail: () => void;
 }
 
 const { Title, Text } = Typography;
@@ -37,24 +51,78 @@ const { Title, Text } = Typography;
 export const ProfileComponents = ({
   data,
   isLoading,
+  loading,
+  loadingChangePassword,
   onUpdate,
+  onUpdateAvatar,
+  onSendEmail,
 }: ProfileComponentProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [form] = Form.useForm();
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [fileList, setFileList] = useState<any[]>([]);
+
+  const getBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleFileChange = async (info: any) => {
+    if (info.file.status === "done") {
+      const base64 = await getBase64(info.file.originFileObj as File);
+      setImageUrl(base64);
+    }
+    setFileList(info.fileList);
+  };
+
+  const handleBeforeUpload = async (file: any) => {
+    const base64 = await getBase64(file);
+    setImageUrl(base64);
+    return false;
+  };
 
   const handleEdit = () => {
-    form.setFieldsValue(data); // Mengisi form dengan data user saat ini
+    form.setFieldsValue(data);
     setIsModalOpen(true);
   };
 
   const handleUpdate = async () => {
     try {
       const values = await form.validateFields();
-      onUpdate(values); // Kirim data ke parent atau API
+      onUpdate(values);
       setIsModalOpen(false);
     } catch (error) {
       console.error("Update failed:", error);
     }
+  };
+
+  const handleUpload = async () => {
+    if (!fileList.length) {
+      message.error("Pilih gambar terlebih dahulu");
+      return;
+    }
+
+    const file = fileList[0].originFileObj;
+
+    if (!imageUrl) {
+      message.error("Terjadi kesalahan, gambar tidak ditemukan!");
+      return;
+    }
+
+    onUpdateAvatar(imageUrl);
+    setIsAvatarModalOpen(false);
+    setImageUrl(null);
+    setFileList([]);
+  };
+
+  const handleCancelAvatar = () => {
+    setIsAvatarModalOpen(false);
+    setImageUrl(null);
   };
 
   return (
@@ -76,26 +144,58 @@ export const ProfileComponents = ({
       ) : (
         <>
           {/* Tombol Edit */}
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            style={{ position: "absolute", top: 20, right: 20 }}
-            onClick={handleEdit}
+          <div
+            style={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              display: "flex",
+              gap: "10px",
+            }}
           >
-            Edit
-          </Button>
+            <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
+              Edit
+            </Button>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => onSendEmail()}
+              loading={loadingChangePassword}
+            >
+              Ganti Password
+            </Button>
+          </div>
 
-          {/* Avatar & Nama */}
-          <Row align="middle" justify="center" style={{ marginBottom: 20 }}>
+          {/* Avatar & Tombol Edit */}
+          <Row
+            align="middle"
+            justify="center"
+            style={{ marginBottom: 20, position: "relative" }}
+          >
             <Col>
               <Avatar
                 size={100}
                 src={data?.imageUrl || ""}
                 icon={!data?.imageUrl && <UserOutlined />}
-                style={{ backgroundColor: "#1890ff" }}
+                style={{ backgroundColor: "#1890ff", position: "relative" }}
+              />
+              {/* Ikon Edit di Atas Avatar */}
+              <Button
+                shape="circle"
+                icon={<EditOutlined />}
+                size="small"
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: -10,
+                  background: "#fff",
+                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                }}
+                onClick={() => setIsAvatarModalOpen(true)}
               />
             </Col>
           </Row>
+
           <Title level={3} style={{ textAlign: "center", marginBottom: 10 }}>
             {data?.username || "Tidak Diketahui"}
           </Title>
@@ -118,49 +218,47 @@ export const ProfileComponents = ({
             </Descriptions.Item>
             <Descriptions.Item label="Total Pertemuan">
               <CalendarOutlined style={{ marginRight: 8 }} />
-              {data?.count_program || "-"}
+              {data?.count_program || 0}
             </Descriptions.Item>
             <Descriptions.Item label="Wilayah">
               <FlagOutlined style={{ marginRight: 8 }} />
               {data?.region || "-"}
             </Descriptions.Item>
-            <Descriptions.Item label="Peran">
-              <Badge
-                status={data?.role === "STUDENT" ? "processing" : "success"}
-                text={data?.role}
-              />
-            </Descriptions.Item>
-            <Descriptions.Item label="Level">
-              <CalendarOutlined style={{ marginRight: 8 }} />
-              {data?.level || "Belum ditentukan"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Program">
-              <CheckCircleOutlined style={{ marginRight: 8 }} />
-              {data?.program_id || "Tidak ada program"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Status Kursus">
-              {data?.is_completed ? (
-                <Badge status="success" text="Selesai" />
-              ) : (
-                <Badge status="warning" text="Belum Selesai" />
-              )}
-            </Descriptions.Item>
+            {data?.role === "STUDENT" && (
+              <>
+                <Descriptions.Item label="Level">
+                  <ToTopOutlined style={{ marginRight: 8 }} />
+                  {data?.level || "Belum ditentukan"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Program">
+                  <CheckCircleOutlined style={{ marginRight: 8 }} />
+                  {data?.program?.name || "Tidak ada program"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Status Kursus">
+                  {data?.is_completed ? (
+                    <Badge status="success" text="Selesai" />
+                  ) : (
+                    <Badge status="warning" text="Belum Selesai" />
+                  )}
+                </Descriptions.Item>
+              </>
+            )}
             <Descriptions.Item label="Bergabung Sejak">
-              {data?.joined_at ? new Date(data.joined_at).toLocaleDateString("id-ID") : "-"}
+              {data?.joined_at
+                ? new Date(data.joined_at).toLocaleDateString("id-ID")
+                : "-"}
             </Descriptions.Item>
           </Descriptions>
         </>
       )}
 
-      {/* Modal Edit Profil */}
       <Modal
         title="Edit Profil"
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
-        onOk={handleUpdate}
-        okText="Simpan"
+        footer={null}
       >
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" onFinish={handleUpdate}>
           <Form.Item
             name="username"
             label="Nama"
@@ -184,8 +282,68 @@ export const ProfileComponents = ({
           <Form.Item name="no_phone" label="No. Telepon">
             <Input placeholder="No. Telepon" />
           </Form.Item>
-          <Form.Item name="region" label="Wilayah">
-            <Input placeholder="Wilayah" />
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ width: "100%" }}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal Edit Avatar */}
+      <Modal
+        title="Ubah Foto Profil"
+        open={isAvatarModalOpen}
+        onCancel={() => handleCancelAvatar()}
+        footer={null}
+      >
+        <Form form={form} layout="vertical" onFinish={handleUpload}>
+          <Form.Item name="image">
+            <Dragger
+              name="files"
+              listType="picture-card"
+              fileList={fileList}
+              onChange={handleFileChange}
+              beforeUpload={handleBeforeUpload}
+              showUploadList={false}
+              accept="image/png, image/jpeg"
+            >
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt="Image preview"
+                  preview={false}
+                  style={{ width: "100%", height: "auto", maxWidth: "250px" }}
+                />
+              ) : (
+                <div>
+                  <p className="ant-upload-drag-icon">
+                    <InboxOutlined />
+                  </p>
+                  <p className="ant-upload-text">
+                    Klik atau drag file ke area ini untuk upload
+                  </p>
+                  <p className="ant-upload-hint">
+                    Hanya file PNG, JPEG, dan JPG yang diterima.
+                  </p>
+                </div>
+              )}
+            </Dragger>
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ width: "100%" }}
+              loading={loading}
+            >
+              Submit
+            </Button>
           </Form.Item>
         </Form>
       </Modal>
