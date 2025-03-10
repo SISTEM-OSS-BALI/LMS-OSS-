@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Typography,
   Modal,
@@ -12,6 +11,9 @@ import {
   Button,
   Alert,
   Space,
+  Skeleton,
+  Divider,
+  Tag,
 } from "antd";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -19,12 +21,30 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useMeetings } from "./useMeetingViewModel";
 import Link from "next/link";
+import {
+  FileTextOutlined,
+  CheckCircleOutlined,
+  ReadOutlined,
+  ClockCircleOutlined,
+} from "@ant-design/icons";
 import { useAuth } from "@/app/lib/auth/authServices";
+import { useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
 
 export default function HomeStudent() {
   const { username } = useAuth();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const {
     isModalVisible,
@@ -41,13 +61,17 @@ export default function HomeStudent() {
     selectedTest,
     mergedDataMockTest,
     handleModalCloseTest,
+    isLoadingAccess,
+    isLoadingPlacemenet,
+    isLoadingAccessCourse,
+    isLoadingDataTeacher,
+    isLoadingMock,
+    isLoadingCourse,
+    isLoadingAccessMock,
+    isLoadingShowMeetingById,
+    checkMeetingToday,
   } = useMeetings();
 
-  // State untuk modal Placement Test
-
-  // Redirect ke halaman Placement Test
-
-  // Render event di FullCalendar
   const renderEventContent = (eventInfo: any) => {
     const { teacherName, time } = eventInfo.event.extendedProps;
     return (
@@ -77,14 +101,22 @@ export default function HomeStudent() {
   };
 
   return (
-    <div style={{ padding: "24px" }}>
+    <div style={{ padding: isMobile ? "0px" : "24px" }}>
       <Card>
-        <Title level={3}>Selamat Datang, {username || "Student"}!</Title>
-        <p>Jaga Selalu Kerahasian Akun Anda</p>
+        {isLoadingDataTeacher ? (
+          <Skeleton active paragraph={{ rows: 1 }} />
+        ) : (
+          <>
+            <Title level={3}>Selamat Datang, {username || "Student"}!</Title>
+            <Title level={5} style={{ fontWeight: 400, marginTop: "8px" }}>
+              <Tag>{checkMeetingToday()}</Tag>
+            </Title>
+          </>
+        )}
       </Card>
 
-      <Row gutter={20} style={{ marginTop: "20px" }}>
-        <Col md={16}>
+      <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
+        <Col xs={24} md={16}>
           <Card
             title={<Title level={4}>Jadwal Pertemuan</Title>}
             style={{
@@ -92,32 +124,53 @@ export default function HomeStudent() {
               boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
             }}
           >
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              selectable
-              editable
-              showNonCurrentDates={false}
-              locale="id"
-              contentHeight="auto"
-              events={events}
-              eventContent={renderEventContent}
-              eventClick={handleEventClick}
-            />
+            {isLoadingShowMeetingById ? (
+              <Skeleton active paragraph={{ rows: 4 }} />
+            ) : (
+              <FullCalendar
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                initialView={"dayGridMonth"} // Mode mobile jadi timeGridDay
+                selectable
+                editable
+                showNonCurrentDates={false}
+                locale="id"
+                contentHeight="auto"
+                events={events}
+                eventContent={renderEventContent}
+                eventClick={handleEventClick}
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right:
+                    window.innerWidth < 768 ? "" : "dayGridMonth,timeGridWeek",
+                }}
+                dayMaxEventRows={2} // 🔹 Maksimal 2 event per hari di mobile
+                // eventMaxHeightPercentage={80} // 🔹 Hindari event keluar dari cell
+                eventDisplay="block" // 🔹 Paksa event tetap dalam batas cell
+                eventTextColor="white"
+              />
+            )}
           </Card>
         </Col>
 
-        <Col md={8} xs={24}>
+        <Col xs={24} md={8}>
           <Card
             style={{
-              borderRadius: "10px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              borderRadius: "12px",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+              backgroundColor: "#fff",
             }}
-            title={<Title level={4}>Daftar Aktivitas</Title>}
+            title={
+              <Title level={4} style={{ marginBottom: 0, color: "#333" }}>
+                Daftar Aktivitas
+              </Title>
+            }
           >
-            {!!mergedData?.length ||
-            !!mergedDataCourse?.length ||
-            !!mergedDataMockTest?.length ? (
+            {isLoadingCourse || isLoadingAccessCourse || isLoadingMock ? (
+              <Skeleton active paragraph={{ rows: 5 }} />
+            ) : !!mergedData?.length ||
+              !!mergedDataCourse?.length ||
+              !!mergedDataMockTest?.length ? (
               <List
                 dataSource={[
                   ...(mergedData || []),
@@ -129,29 +182,51 @@ export default function HomeStudent() {
                     <Card
                       style={{
                         width: "100%",
-                        borderRadius: "8px",
+                        borderRadius: "10px",
                         backgroundColor: "#FAFAFA",
+                        padding: "16px",
+                        borderLeft: `5px solid ${
+                          item.timeLimit ? "#FA541C" : "#1890FF"
+                        }`,
                       }}
                     >
                       <Title
                         level={5}
                         style={{
                           color: item.timeLimit ? "#FA541C" : "#1890FF",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
                         }}
                       >
+                        {item.timeLimit ? (
+                          <ClockCircleOutlined style={{ fontSize: "18px" }} />
+                        ) : (
+                          <ReadOutlined style={{ fontSize: "18px" }} />
+                        )}
                         {item.timeLimit ? "Ujian" : "Modul"}
                       </Title>
 
-                      {/* Jika Item adalah Mock Test */}
+                      <Divider style={{ margin: "8px 0" }} />
+
+                      <Title level={5} style={{ marginBottom: "8px" }}>
+                        {item.name}
+                      </Title>
+                      <Text style={{ fontSize: "14px", color: "#595959" }}>
+                        {item.description}
+                      </Text>
+
+                      <Divider style={{ margin: "8px 0" }} />
+
                       {item.mock_test_id ? (
                         <>
-                          <Text strong>{item.name}</Text>
-                          <p style={{ margin: "5px 0" }}>
-                            <Text>{item.description}</Text>
-                          </p>
                           {item.is_completed ? (
                             <Space>
-                              <Button type="primary" disabled>
+                              <Button
+                                type="primary"
+                                disabled
+                                icon={<CheckCircleOutlined />}
+                              >
                                 Tes Telah Dilakukan
                               </Button>
                               <Button type="primary">Riwayat</Button>
@@ -159,7 +234,11 @@ export default function HomeStudent() {
                           ) : (
                             <Button
                               type="primary"
-                              style={{ width: "100%" }}
+                              style={{
+                                width: "100%",
+                                fontWeight: "bold",
+                                transition: "0.3s",
+                              }}
                               onClick={() => handleStartTest(item)}
                             >
                               Mulai
@@ -168,14 +247,13 @@ export default function HomeStudent() {
                         </>
                       ) : item.timeLimit ? (
                         <>
-                          {/* Jika Item adalah Placement Test */}
-                          <Text strong>{item.name}</Text>
-                          <p style={{ margin: "5px 0" }}>
-                            <Text>{item.description}</Text>
-                          </p>
                           {item.is_completed ? (
                             <Space>
-                              <Button type="primary" disabled>
+                              <Button
+                                type="primary"
+                                disabled
+                                icon={<CheckCircleOutlined />}
+                              >
                                 Tes Telah Dilakukan
                               </Button>
                               <Button
@@ -188,7 +266,11 @@ export default function HomeStudent() {
                           ) : (
                             <Button
                               type="primary"
-                              style={{ width: "100%" }}
+                              style={{
+                                width: "100%",
+                                fontWeight: "bold",
+                                transition: "0.3s",
+                              }}
                               onClick={() => handleStartTest(item)}
                             >
                               Mulai
@@ -196,28 +278,21 @@ export default function HomeStudent() {
                           )}
                         </>
                       ) : (
-                        <>
-                          {/* Jika Item adalah Course */}
-                          <Space
-                            direction="vertical"
-                            size={15}
-                            style={{ width: "100%" }}
+                        <Space
+                          direction="vertical"
+                          size={15}
+                          style={{ width: "100%" }}
+                        >
+                          <Button
+                            type="primary"
+                            block
+                            icon={<FileTextOutlined />}
+                            href="/student/dashboard/course-followed"
+                            style={{ fontWeight: "bold", transition: "0.3s" }}
                           >
-                            <Text
-                              strong
-                              style={{ fontSize: "16px", marginBottom: "10px" }}
-                            >
-                              {item.name}
-                            </Text>
-                            <Button
-                              type="primary"
-                              block
-                              href="/student/dashboard/course-followed"
-                            >
-                              Lihat Detail
-                            </Button>
-                          </Space>
-                        </>
+                            Lihat Detail
+                          </Button>
+                        </Space>
                       )}
                     </Card>
                   </List.Item>
@@ -227,6 +302,11 @@ export default function HomeStudent() {
               <Alert
                 type="warning"
                 message="Tidak ada aktivitas yang tersedia."
+                style={{
+                  textAlign: "center",
+                  fontSize: "16px",
+                  padding: "12px",
+                }}
               />
             )}
           </Card>
@@ -234,30 +314,60 @@ export default function HomeStudent() {
       </Row>
 
       {/* Modal Deskripsi Placement Test */}
+
       <Modal
-        title="Deskripsi Tes"
+        title={
+          <Title level={3} style={{ marginBottom: 0 }}>
+            Deskripsi Tes
+          </Title>
+        }
         open={isTestModalVisible}
-        onCancel={() => handleModalCloseTest()}
+        onCancel={handleModalCloseTest}
         footer={null}
       >
         {selectedTest ? (
-          <div>
-            <p>
-              <Text strong>Deskripsi:</Text> {selectedTest.description}
-            </p>
-            <p>
-              <Text strong>Durasi:</Text> {selectedTest.timeLimit} menit
-            </p>
+          <div style={{ padding: "16px" }}>
+            {/* 📝 Informasi Tes */}
+            <Title level={4} style={{ color: "#1890FF" }}>
+              {selectedTest.name}
+            </Title>
+
+            <Divider />
+
+            {/* 🔹 Deskripsi */}
+            <Title level={5} style={{ marginBottom: 4 }}>
+              Deskripsi
+            </Title>
+            <Text style={{ fontSize: "16px", color: "#595959" }}>
+              {selectedTest.description}
+            </Text>
+
+            <Divider />
+
+            {/* ⏳ Durasi */}
+            <Title level={5} style={{ marginBottom: 4 }}>
+              Durasi
+            </Title>
+            <Text style={{ fontSize: "16px", color: "#595959" }}>
+              {selectedTest.timeLimit} menit
+            </Text>
+
+            <Divider />
+
+            {/* 🎯 Tombol Mulai Tes */}
             <Button
               type="primary"
+              size="large"
               onClick={startQuiz}
-              style={{ width: "100%" }}
+              style={{ width: "100%", marginTop: "16px", fontWeight: "bold" }}
             >
-              Start
+              Mulai Tes Sekarang
             </Button>
           </div>
         ) : (
-          <Text>Tidak ada informasi tes yang tersedia.</Text>
+          <Title level={5} style={{ textAlign: "center", color: "#FA541C" }}>
+            Tidak ada informasi tes yang tersedia.
+          </Title>
         )}
       </Modal>
 

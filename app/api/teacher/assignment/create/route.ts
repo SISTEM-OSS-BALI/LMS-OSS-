@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable prefer-const */
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { createData } from "@/app/lib/db/createData";
 import { getData } from "@/app/lib/db/getData";

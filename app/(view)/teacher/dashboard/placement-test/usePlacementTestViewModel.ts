@@ -23,6 +23,7 @@ export const usePlacementTestViewModel = () => {
   const [selectedPlacement, setSelectedPlacement] = useState<
     PlacementTest | null | undefined
   >();
+  const [qrModalVisible, setQrModalVisible] = useState(false);
 
   const handleOpenModal = () => {
     setIsModalVisible(true);
@@ -95,6 +96,23 @@ export const usePlacementTestViewModel = () => {
     }
   };
 
+  const handleGenerateQRCode = (placement_test_id: string) => {
+    const selectPlacement = dataPlacementTest?.data.find(
+      (placement) => placement.placement_test_id === placement_test_id
+    );
+    setSelectedPlacement(selectPlacement);
+    setQrModalVisible(true);
+  };
+
+  const handleOpenModalQr = () => {
+    setQrModalVisible(true);
+  };
+
+  const handleCancelOpenModalQr = () => {
+    setQrModalVisible(false);
+    setSelectedPlacement(null);
+  };
+
   return {
     dataPlacementTest,
     isLoadingPlacementTest,
@@ -107,5 +125,9 @@ export const usePlacementTestViewModel = () => {
     handleEdit,
     selectedPlacement,
     handleDelete,
+    handleGenerateQRCode,
+    handleCancelOpenModalQr,
+    qrModalVisible,
+    handleOpenModalQr,
   };
 };

@@ -10,6 +10,7 @@ import {
   AccessMockTest,
   AccessPlacementTest,
   Course,
+  Meeting,
   MockTest,
   PlacementTest,
 } from "@prisma/client";
@@ -46,45 +47,35 @@ interface MockTestResponse {
 
 export const useMeetings = () => {
   const router = useRouter();
-  const { data: showMeetingById } = useSWR(
+  const { data: showMeetingById, isLoading: isLoadingShowMeetingById } = useSWR(
     "/api/student/meeting/showById",
     fetcher
   );
-  const { data: dataTeacher } = useSWR<UserResponse>(
-    "/api/admin/teacher/show",
-    fetcher
-  );
+  const { data: dataTeacher, isLoading: isLoadingDataTeacher } =
+    useSWR<UserResponse>("/api/admin/teacher/show", fetcher);
 
-  const { data: accessPlacemenetTestData } =
+  const { data: accessPlacemenetTestData, isLoading: isLoadingAccess } =
     useSWR<AccessPlacementTestResponse>(
       "/api/student/placementTest/show",
       fetcher
     );
 
-  const { data: accessCourseData } = useSWR<AccessCourseResponse>(
-    "/api/student/accessCourse/show",
-    fetcher
-  );
+  const { data: accessCourseData, isLoading: isLoadingAccessCourse } =
+    useSWR<AccessCourseResponse>("/api/student/accessCourse/show", fetcher);
 
-  const { data: placemenetTestData } = useSWR<PlacementTestResponse>(
-    "/api/teacher/placementTest/show",
-    fetcher
-  );
+  const { data: placemenetTestData, isLoading: isLoadingPlacemenet } =
+    useSWR<PlacementTestResponse>("/api/teacher/placementTest/show", fetcher);
 
-  const { data: courseData } = useSWR<CourseResponse>(
-    "/api/student/course/show",
-    fetcher
-  );
+  const { data: courseData, isLoading: isLoadingCourse } =
+    useSWR<CourseResponse>("/api/student/course/show", fetcher);
 
-  const { data: accessMockTestData } = useSWR<AccessMockTestResponse>(
+  const { data: accessMockTestData, isLoading: isLoadingAccessMock } = useSWR<AccessMockTestResponse>(
     "/api/student/accessMockTest/show",
     fetcher
   );
 
-  const { data: mockTestData } = useSWR<MockTestResponse>(
-    "/api/teacher/mockTest/show",
-    fetcher
-  );
+  const { data: mockTestData, isLoading: isLoadingMock } =
+    useSWR<MockTestResponse>("/api/teacher/mockTest/show", fetcher);
 
   const [isTestModalVisible, setIsTestModalVisible] = useState(false);
   const [selectedTest, setSelectedTest] = useState<any>(null);
@@ -163,6 +154,22 @@ export const useMeetings = () => {
     setSelectedEvent(null);
   };
 
+  const checkMeetingToday = () => {
+    const today = dayjs().format("YYYY-MM-DD");
+
+    const isMeetingToday = showMeetingById?.data.map(
+      (meeting: any) => dayjs(meeting.dateTime).format("YYYY-MM-DD") === today
+    );
+
+    return isMeetingToday;
+  };
+
+  const isMeetingToday = checkMeetingToday();
+  const tagColor = isMeetingToday ? "green" : "yellow";
+  const tagText = isMeetingToday
+    ? "Ada pertemuan hari ini."
+    : "Tidak ada pertemuan hari ini.";
+
   // Format events
   const events =
     showMeetingById?.data?.map((meeting: any) => {
@@ -203,5 +210,14 @@ export const useMeetings = () => {
     selectedTest,
     mergedDataMockTest,
     handleModalCloseTest,
+    isLoadingAccess,
+    isLoadingPlacemenet,
+    isLoadingAccessCourse,
+    isLoadingDataTeacher,
+    isLoadingMock,
+    isLoadingCourse,
+    isLoadingAccessMock,
+    isLoadingShowMeetingById,
+    checkMeetingToday
   };
 };

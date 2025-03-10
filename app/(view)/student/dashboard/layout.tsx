@@ -1,32 +1,35 @@
 "use client";
 
 import React, { useState } from "react";
+import {
+  Avatar,
+  Button,
+  ConfigProvider,
+  Drawer,
+  Dropdown,
+  Flex,
+  GetProps,
+  Image,
+  Layout,
+  Menu,
+  MenuProps,
+  Modal,
+  theme,
+} from "antd";
 import Icon, {
+  MenuOutlined,
   CalendarOutlined,
   DesktopOutlined,
   LogoutOutlined,
   PieChartOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import type { GetProps, MenuProps } from "antd";
-import {
-  Avatar,
-  ConfigProvider,
-  Flex,
-  Image,
-  Layout,
-  Menu,
-  theme,
-  Dropdown,
-  Modal,
-} from "antd";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
-import { useMeetings } from "./home/useMeetingViewModel";
-import { CertificateSvg } from "@/app/components/Icon";
 import { useAuth } from "@/app/lib/auth/authServices";
 import { signOut } from "next-auth/react";
+import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
+import { CertificateSvg } from "@/app/components/Icon";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -97,24 +100,10 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const pathname = usePathname();
   const { username, imageUrl } = useAuth();
   const router = useRouter();
-
-  const showConfirmLogout = async () => {
-    Modal.confirm({
-      title: "Logout",
-      content: "Apakah anda yakin ingin logout?",
-      okText: "Logout",
-      okType: "danger",
-      onOk: async () => {
-        await signOut({ callbackUrl: "/" });
-      },
-    });
-  };
 
   const determineSelectedKeys = (pathname: string): string[] => {
     const exactMatch = Object.entries(menuMap).find(
@@ -153,6 +142,18 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
+  const showConfirmLogout = () => {
+    Modal.confirm({
+      title: "Logout",
+      content: "Apakah anda yakin ingin logout?",
+      okText: "Logout",
+      okType: "danger",
+      onOk: async () => {
+        await signOut({ callbackUrl: "/" });
+      },
+    });
+  };
+
   const menu = (
     <Menu
       items={[
@@ -166,9 +167,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           key: "logout",
           label: "Logout",
           icon: <LogoutOutlined />,
-          onClick: () => {
-            showConfirmLogout(); // 🔹 Logout dan redirect ke halaman utama
-          },
+          onClick: showConfirmLogout,
         },
       ]}
     />
@@ -197,11 +196,14 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
       }}
     >
       <Layout style={{ height: "100vh" }}>
+        {/* Sidebar untuk Desktop */}
         {!isSidebarHidden && (
           <Sider
             collapsible
             collapsed={collapsed}
             onCollapse={(value) => setCollapsed(value)}
+            breakpoint="lg"
+            collapsedWidth="0"
             style={{
               position: "fixed",
               height: "100vh",
@@ -235,24 +237,43 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
             />
           </Sider>
         )}
+
+        {/* Drawer untuk Mobile */}
+        <Drawer
+          placement="left"
+          style={{ backgroundColor: primaryColor }}
+          closable
+          onClose={() => setDrawerVisible(false)}
+          open={drawerVisible}
+        >
+          <Menu
+            mode="inline"
+            defaultSelectedKeys={["/student/dashboard/home"]}
+            selectedKeys={selectedKeys}
+            items={items}
+          />
+        </Drawer>
+
+        {/* Layout Konten */}
         <Layout
           style={
             isSidebarHidden
               ? {}
               : {
-                  marginLeft: collapsed ? 80 : 200,
+                  marginLeft: collapsed ? 0 : 200,
                   marginTop: 50,
                   transition: "margin-left 0.2s",
                 }
           }
         >
+          {/* Header */}
           {!isSidebarHidden && (
             <Flex
               align="center"
               justify="space-between"
               style={{
                 paddingBlock: "1rem",
-                paddingInline: "3rem",
+                paddingInline: "2rem",
                 position: "fixed",
                 top: 0,
                 left: 0,
@@ -262,72 +283,70 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
                 boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             >
-              <Flex
-                style={{
-                  display: "flex",
-                  listStyleType: "none",
-                  padding: 0,
-                  margin: 0,
-                  gap: 20,
-                }}
-                // eslint-disable-next-line react/no-children-prop
-                children={undefined}
-              ></Flex>
-              <Flex justify="center" align="center" gap={20}>
-                <Dropdown overlay={menu}>
-                  <a
-                    onClick={(e) => e.preventDefault()}
+              {/* Tombol Menu untuk Mobile */}
+              <Button
+                type="text"
+                icon={<MenuOutlined />}
+                size="large"
+                onClick={() => setDrawerVisible(true)}
+                style={{ display: "block" }}
+              />
+
+              {/* Profil & Logout */}
+              <Dropdown overlay={menu}>
+                <a
+                  onClick={(e) => e.preventDefault()}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    color: "white",
+                  }}
+                >
+                  <Flex
+                    gap={20}
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      color: "white",
+                      marginRight: 20,
                     }}
                   >
-                    <Flex
-                      gap={20}
+                    <Avatar
+                      src={imageUrl}
+                      size={45}
+                      icon={!imageUrl && <UserOutlined />}
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        marginRight: 20,
+                        backgroundColor: "#1890ff",
+                        position: "relative",
                       }}
-                    >
-                      <Avatar
-                        src={imageUrl}
-                        size={45}
-                        icon={!imageUrl && <UserOutlined />}
-                        style={{
-                          backgroundColor: "#1890ff",
-                          position: "relative",
-                        }}
-                      />
-                      <div style={{ color: "black", textAlign: "right" }}>
-                        <div>{username}</div>
-                        <div style={{ fontSize: "smaller", marginTop: 5 }}>
-                          Student
-                        </div>
+                    />
+                    <div style={{ color: "black", textAlign: "right" }}>
+                      <div>{username}</div>
+                      <div style={{ fontSize: "smaller", marginTop: 5 }}>
+                        Student
                       </div>
-                    </Flex>
-                  </a>
-                </Dropdown>
-              </Flex>
+                    </div>
+                  </Flex>
+                </a>
+              </Dropdown>
             </Flex>
           )}
+
+          {/* Konten Utama */}
           <Content
             style={{
-              margin: "40px 16px",
-              padding: "10px 20px",
+              margin: "20px 12px",
+              padding: window.innerWidth <= 768 ? "20px 10px" : "20px", // Padding lebih kecil di mobile
               height: "auto",
               overflow: "auto",
             }}
           >
             <div
-              style={{
-                padding: 24,
-              }}
             >
               {children}
             </div>
           </Content>
+
+          {/* Footer */}
           {!isSidebarHidden && (
             <Footer
               style={{
