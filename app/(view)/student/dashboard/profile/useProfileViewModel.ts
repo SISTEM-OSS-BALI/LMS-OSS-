@@ -33,6 +33,7 @@ export const useProfileViewModel = () => {
   );
 
   const [loading, setLoading] = useState(false);
+  const [loadingChangePassword, setLoadingChangePassword] = useState(false);
 
   // Pastikan mergedData memiliki nilai yang valid
   const mergedData: User & { program?: Program } = {
@@ -85,7 +86,7 @@ export const useProfileViewModel = () => {
   };
 
   const handleUpdateAvatar = async (imageUrl: string) => {
-    setLoading(true);
+    setLoadingChangePassword(true);
 
     try {
       // Kirim permintaan update avatar ke API
@@ -105,7 +106,7 @@ export const useProfileViewModel = () => {
       await update({ imageUrl }); // Auto-refresh session!
 
       mutate(); // Optional: refresh SWR data
-      setLoading(false);
+      setLoadingChangePassword(false);
     } catch (error) {
       setLoading(false);
       notification.error({
@@ -146,5 +147,6 @@ export const useProfileViewModel = () => {
     handleUpdateAvatar,
     loading,
     handleSendNotif,
+    loadingChangePassword,
   };
 };

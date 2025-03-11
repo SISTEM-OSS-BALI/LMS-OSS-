@@ -45,37 +45,35 @@ export default function Login() {
 
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
+      {/* Header */}
       <Row>
-        <Col span={13}>
-          <Header style={{ backgroundColor: "#fff" }}>
-            <Row align="middle">
-              <Col>
-                <Image
-                  src="/assets/images/logo.jpg"
-                  alt="Logo"
-                  width={45}
-                  preview={false}
-                />
-              </Col>
-              <Col>
-                <Title
-                  level={5}
-                  style={{ marginBottom: 20, marginLeft: 10, marginBlock: 0 }}
-                >
-                  LMS ONE STEP SOLUTION
-                </Title>
-              </Col>
-            </Row>
+        <Col xs={24} md={13}>
+          <Header style={{ backgroundColor: "#fff", padding: "10px 20px" }}>
+            <Flex align="center">
+              <Image
+                src="/assets/images/logo.jpg"
+                alt="Logo"
+                width={45}
+                preview={false}
+              />
+              <Title
+                level={5}
+                style={{ margin: "0 10px", whiteSpace: "nowrap" }}
+              >
+                LMS ONE STEP SOLUTION
+              </Title>
+            </Flex>
           </Header>
         </Col>
 
-        <Col span={11}>
+        <Col xs={24} md={11}>
           <Header
             style={{
               backgroundColor: "#578FCA",
               display: "flex",
               justifyContent: "flex-end",
               alignItems: "center",
+              padding: "10px 20px",
             }}
           >
             <Button type="primary">Try Out Gratis</Button>
@@ -83,16 +81,18 @@ export default function Login() {
         </Col>
       </Row>
 
+      {/* Konten Utama */}
       <Content
         style={{
           display: "flex",
           alignItems: "center",
-          backgroundColor: "#fff",
           justifyContent: "center",
+          backgroundColor: "#fff",
           padding: "2rem",
         }}
       >
         <Row
+          gutter={[16, 16]}
           style={{
             width: "100%",
             maxWidth: "900px",
@@ -100,22 +100,16 @@ export default function Login() {
             borderRadius: "10px",
             overflow: "hidden",
             boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+            padding: "20px",
           }}
         >
-          <Col
-            xs={24}
-            md={14}
-            style={{
-              padding: "2rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Space
-              direction="vertical"
-              size="large"
-              style={{ width: "100%", maxWidth: "400px" }}
+          {/* Form Login */}
+          <Col xs={24} md={14}>
+            <Flex
+              vertical
+              align="center"
+              justify="center"
+              style={{ width: "100%" }}
             >
               <Title level={2} style={{ textAlign: "center" }}>
                 Selamat Datang!
@@ -123,11 +117,13 @@ export default function Login() {
               <Title level={4} style={{ textAlign: "center" }}>
                 Login
               </Title>
+
               <Form
                 name="login_form"
                 initialValues={{ remember: true }}
                 onFinish={onFinish}
-                style={{ width: "100%" }}
+                layout="vertical"
+                style={{ width: "100%", maxWidth: "350px" }}
               >
                 <Form.Item
                   name="email"
@@ -152,6 +148,7 @@ export default function Login() {
                     size="large"
                   />
                 </Form.Item>
+
                 <Form.Item>
                   <Button
                     type="primary"
@@ -164,104 +161,101 @@ export default function Login() {
                     Login
                   </Button>
                 </Form.Item>
+
+                {/* Link Lupa Password & Register */}
                 <Row justify="space-between">
                   <Button
                     danger
-                    onClick={() => handleOpenModal()}
+                    onClick={handleOpenModal}
                     size="small"
-                    style={{ border: "none" }}
+                    type="link"
+                    style={{ padding: 0 }}
                   >
                     Lupa Password?
                   </Button>
                   <Link href="/register">Belum Punya Akun?</Link>
                 </Row>
               </Form>
-            </Space>
+            </Flex>
           </Col>
 
+          {/* Gambar */}
           <Col
             xs={24}
             md={10}
             style={{
-              backgroundColor: "#578FCA",
               display: "flex",
-              alignItems: "center",
               justifyContent: "center",
-              padding: "1rem",
+              alignItems: "center",
             }}
           >
             <Image
               src="/assets/images/logo_login.png"
               alt="Login Image"
-              width={300}
-              height={300}
+              width={250}
+              height={250}
               preview={false}
+              style={{ maxWidth: "100%" }}
             />
           </Col>
         </Row>
       </Content>
 
+      {/* Footer */}
       <Footer
         style={{
           textAlign: "center",
           backgroundColor: "#f0f2f5",
-          padding: "1.5rem 2rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          padding: "1rem",
         }}
       >
         <Row justify="center" gutter={[16, 16]}>
           <Col>
-            <div>
+            <Flex align="center">
               <WhatsAppOutlined style={{ marginRight: "8px" }} />
-              <strong>WhatsApp:</strong>{" "}
               <Link
                 href="https://wa.me/+6287705092020"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                +6287705092020
+                WhatsApp
               </Link>
-            </div>
+            </Flex>
           </Col>
           <Col>
-            <div>
+            <Flex align="center">
               <InstagramOutlined style={{ marginRight: "8px" }} />
-              <strong>Instagram:</strong>{" "}
               <Link
                 href="https://www.instagram.com/oss_bali"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                @oss_bali
+                Instagram
               </Link>
-            </div>
+            </Flex>
           </Col>
           <Col>
-            <div>
+            <Flex align="center">
               <GlobalOutlined style={{ marginRight: "8px" }} />
-              <strong>Website:</strong>{" "}
-              <Link href="https://onestepsolutionbali.com/">
-                onestepsolutionbali.com
-              </Link>
-            </div>
+              <Link href="https://onestepsolutionbali.com/">Website</Link>
+            </Flex>
           </Col>
           <Col>
-            <div>
+            <Flex align="center">
               <LinkedinFilled style={{ marginRight: "8px" }} />
-              <strong>Linkedin:</strong>{" "}
               <Link
                 href="https://www.linkedin.com/company/onestepsolutionbali/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                onestepsolutionbali
+                LinkedIn
               </Link>
-            </div>
+            </Flex>
           </Col>
         </Row>
       </Footer>
+
+      {/* Modal Lupa Password */}
       <Modal
         title="Lupa Password?"
         open={isModalVisible}

@@ -12,6 +12,7 @@ import {
   Image,
   Select,
   DatePicker,
+  Flex,
 } from "antd";
 import {
   UserOutlined,
@@ -55,7 +56,7 @@ export default function Register() {
       alert("Silakan tanda tangani terlebih dahulu!");
       return;
     }
-    handleFinish({ ...values, signature }); 
+    handleFinish({ ...values, signature });
   };
 
   const [formValues, setFormValues] = useState<FormValues>({
@@ -76,34 +77,38 @@ export default function Register() {
 
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
+      {/* Header */}
       <Row>
-        <Col span={13}>
-          <Header style={{ backgroundColor: "#fff" }}>
-            <Row align="middle">
-              <Col>
-                <Image
-                  src="/assets/images/logo.jpg"
-                  alt="Logo"
-                  width={45}
-                  preview={false}
-                />
-              </Col>
-              <Col>
-                <Title
-                  level={5}
-                  style={{ marginBottom: 20, marginLeft: 10, marginBlock: 0 }}
-                >
-                  LMS ONE STEP SOLUTION
-                </Title>
-              </Col>
-            </Row>
+        <Col xs={24} md={13}>
+          <Header style={{ backgroundColor: "#fff", padding: "10px 20px" }}>
+            <Flex align="center">
+              <Image
+                src="/assets/images/logo.jpg"
+                alt="Logo"
+                width={45}
+                preview={false}
+              />
+              <Title
+                level={5}
+                style={{ margin: "0 10px", whiteSpace: "nowrap" }}
+              >
+                LMS ONE STEP SOLUTION
+              </Title>
+            </Flex>
           </Header>
         </Col>
-        <Col span={11}>
-          <Header style={{ backgroundColor: "#578FCA" }} />
+
+        <Col xs={24} md={11}>
+          <Header
+            style={{
+              backgroundColor: "#578FCA",
+              padding: "10px 20px",
+            }}
+          />
         </Col>
       </Row>
 
+      {/* Konten */}
       <Content
         style={{
           display: "flex",
@@ -114,6 +119,7 @@ export default function Register() {
         }}
       >
         <Row
+          gutter={[16, 16]}
           style={{
             width: "100%",
             maxWidth: "900px",
@@ -121,275 +127,257 @@ export default function Register() {
             borderRadius: "10px",
             overflow: "hidden",
             boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+            padding: "20px",
           }}
         >
-          <Col
-            xs={24}
-            md={14}
-            style={{
-              padding: "2rem",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <Title level={2} style={{ textAlign: "center" }}>
-              Selamat Datang!
-            </Title>
-            <Title level={4} style={{ textAlign: "center" }}>
-              Daftar Akun Baru
-            </Title>
-
-            <Form
-              name="register_form"
-              layout="vertical"
-              initialValues={{ remember: true }}
-              onFinish={onFinish}
-              form={form}
-              onValuesChange={handleFormChange}
+          {/* Form Register */}
+          <Col xs={24} md={14}>
+            <Flex
+              vertical
+              align="center"
+              justify="center"
               style={{ width: "100%" }}
             >
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="username"
-                    label="Username"
-                    rules={[{ required: true, message: "Masukkan Username!" }]}
-                  >
-                    <Input
-                      prefix={<IdcardOutlined />}
-                      placeholder="Username"
-                      size="large"
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="email"
-                    label="Email"
-                    rules={[
-                      { required: true, message: "Masukkan Email!" },
-                      { type: "email", message: "Format email tidak valid!" },
-                    ]}
-                  >
-                    <Input
-                      prefix={<UserOutlined />}
-                      placeholder="Email"
-                      size="large"
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
+              <Title level={2} style={{ textAlign: "center" }}>
+                Selamat Datang!
+              </Title>
+              <Title level={4} style={{ textAlign: "center" }}>
+                Daftar Akun Baru
+              </Title>
 
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="password"
-                    label="Password"
-                    rules={[{ required: true, message: "Masukkan Password!" }]}
-                  >
-                    <Input.Password
-                      prefix={<LockOutlined />}
-                      placeholder="Password"
-                      size="large"
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="no_phone"
-                    label="No. Telepon"
-                    rules={[
-                      { required: true, message: "Masukkan No. Telepon!" },
-                      {
-                        pattern: /^[0-9]+$/,
-                        message: "Masukkan hanya angka!",
-                      },
-                    ]}
-                  >
-                    <Input
-                      prefix={<PhoneOutlined />}
-                      placeholder="Nomor Telepon"
-                      size="large"
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
+              <Form
+                name="register_form"
+                layout="vertical"
+                initialValues={{ remember: true }}
+                onFinish={onFinish}
+                form={form}
+                onValuesChange={handleFormChange}
+                style={{ width: "100%" }}
+              >
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="username"
+                      label="Username"
+                      rules={[
+                        { required: true, message: "Masukkan Username!" },
+                      ]}
+                    >
+                      <Input
+                        prefix={<IdcardOutlined />}
+                        placeholder="Username"
+                        size="large"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="email"
+                      label="Email"
+                      rules={[
+                        { required: true, message: "Masukkan Email!" },
+                        { type: "email", message: "Format email tidak valid!" },
+                      ]}
+                    >
+                      <Input prefix={<UserOutlined />} placeholder="Email" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="birth_date"
-                    label="Tanggal Lahir"
-                    rules={[
-                      { required: true, message: "Masukkan Tanggal Lahir!" },
-                    ]}
-                  >
-                    <DatePicker
-                      format="YYYY-MM-DD"
-                      placeholder="Tanggal Lahir"
-                      style={{ width: "100%" }}
-                      size="large"
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="address"
-                    label="Alamat"
-                    rules={[{ required: true, message: "Masukkan Alamat!" }]}
-                  >
-                    <Input placeholder="Alamat" size="large" />
-                  </Form.Item>
-                </Col>
-              </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="password"
+                      label="Password"
+                      rules={[
+                        { required: true, message: "Masukkan Password!" },
+                      ]}
+                    >
+                      <Input.Password
+                        prefix={<LockOutlined />}
+                        placeholder="Password"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="no_phone"
+                      label="No. Telepon"
+                      rules={[
+                        { required: true, message: "Masukkan No. Telepon!" },
+                        {
+                          pattern: /^[0-9]+$/,
+                          message: "Masukkan hanya angka!",
+                        },
+                      ]}
+                    >
+                      <Input
+                        prefix={<PhoneOutlined />}
+                        placeholder="Nomor Telepon"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="program_id"
-                    label="Program"
-                    rules={[{ required: true, message: "Pilih Program!" }]}
-                  >
-                    <Select placeholder="Pilih Program" size="large">
-                      {programData?.data.map((program) => (
-                        <Select.Option
-                          key={program.program_id}
-                          value={program.program_id}
-                        >
-                          {program.name}
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="birth_date"
+                      label="Tanggal Lahir"
+                      rules={[
+                        { required: true, message: "Masukkan Tanggal Lahir!" },
+                      ]}
+                    >
+                      <DatePicker
+                        format="YYYY-MM-DD"
+                        placeholder="Tanggal Lahir"
+                        style={{ width: "100%" }}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="address"
+                      label="Alamat"
+                      rules={[{ required: true, message: "Masukkan Alamat!" }]}
+                    >
+                      <Input placeholder="Alamat" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="program_id"
+                      label="Program"
+                      rules={[{ required: true, message: "Pilih Program!" }]}
+                    >
+                      <Select placeholder="Pilih Program">
+                        {programData?.data.map((program) => (
+                          <Select.Option
+                            key={program.program_id}
+                            value={program.program_id}
+                          >
+                            {program.name}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="region"
+                      label="Region"
+                      rules={[{ required: true, message: "Masukkan Region!" }]}
+                    >
+                      <Select placeholder="Region">
+                        <Select.Option value="Denpasar">Denpasar</Select.Option>
+                        <Select.Option value="Karangasem">
+                          Karangasem
                         </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="region"
-                    label="Region"
-                    rules={[{ required: true, message: "Masukkan Region!" }]}
+                        <Select.Option value="Singaraja">
+                          Singaraja
+                        </Select.Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <TermsCheckbox
+                  formValues={formValues}
+                  setIsAgreed={setIsAgreed}
+                  setSignature={setSignature}
+                />
+
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    block
+                    loading={loading}
+                    disabled={!isAgreed}
+                    style={{
+                      backgroundColor: isAgreed ? "#578FCA" : "#A0AEC0",
+                      color: "white",
+                      cursor: isAgreed ? "pointer" : "not-allowed",
+                      opacity: isAgreed ? 1 : 0.7,
+                    }}
                   >
-                    <Select placeholder="Region" size="large">
-                      <Select.Option value="Denpasar">Denpasar</Select.Option>
-                      <Select.Option value="Karangasem">
-                        Karangasem
-                      </Select.Option>
-                      <Select.Option value="Singaraja">Singaraja</Select.Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <TermsCheckbox
-                formValues={formValues}
-                setIsAgreed={setIsAgreed}
-                setSignature={setSignature}
-              />
-
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  block
-                  size="large"
-                  loading={loading}
-                  disabled={!isAgreed}
-                  style={{
-                    backgroundColor: isAgreed ? "#578FCA" : "#A0AEC0",
-                    color: "white",
-                    cursor: isAgreed ? "pointer" : "not-allowed",
-                    opacity: isAgreed ? 1 : 0.7,
-                  }}
-                >
-                  Register
-                </Button>
-              </Form.Item>
-              <Row justify="end">
-                <Link href="/login">Sudah Punya Akun?</Link>
-              </Row>
-            </Form>
+                    Register
+                  </Button>
+                </Form.Item>
+                <Row justify="end">
+                  <Link href="/login">Sudah Punya Akun?</Link>
+                </Row>
+              </Form>
+            </Flex>
           </Col>
 
-          <Col
-            xs={24}
-            md={10}
-            style={{
-              backgroundColor: "#578FCA",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "1rem",
-            }}
-          >
+          {/* Gambar */}
+          <Col xs={24} md={10} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <Image
               src="/assets/images/logo_login.png"
-              alt="Login Image"
+              alt="Register Image"
               width={300}
               height={300}
               preview={false}
+              style={{ maxWidth: "100%" }}
             />
           </Col>
         </Row>
       </Content>
 
+      {/* Footer */}
       <Footer
         style={{
           textAlign: "center",
           backgroundColor: "#f0f2f5",
-          padding: "1.5rem 2rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          padding: "1rem",
         }}
       >
         <Row justify="center" gutter={[16, 16]}>
           <Col>
-            <div>
+            <Flex align="center">
               <WhatsAppOutlined style={{ marginRight: "8px" }} />
-              <strong>WhatsApp:</strong>{" "}
               <Link
                 href="https://wa.me/+6287705092020"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                +6287705092020
+                WhatsApp
               </Link>
-            </div>
+            </Flex>
           </Col>
           <Col>
-            <div>
+            <Flex align="center">
               <InstagramOutlined style={{ marginRight: "8px" }} />
-              <strong>Instagram:</strong>{" "}
               <Link
                 href="https://www.instagram.com/oss_bali"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                @oss_bali
+                Instagram
               </Link>
-            </div>
+            </Flex>
           </Col>
           <Col>
-            <div>
+            <Flex align="center">
               <GlobalOutlined style={{ marginRight: "8px" }} />
-              <strong>Website:</strong>{" "}
-              <Link href="https://onestepsolutionbali.com/">
-                onestepsolutionbali.com
-              </Link>
-            </div>
+              <Link href="https://onestepsolutionbali.com/">Website</Link>
+            </Flex>
           </Col>
           <Col>
-            <div>
+            <Flex align="center">
               <LinkedinFilled style={{ marginRight: "8px" }} />
-              <strong>Linkedin:</strong>{" "}
               <Link
                 href="https://www.linkedin.com/company/onestepsolutionbali/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                onestepsolutionbali
+                LinkedIn
               </Link>
-            </div>
+            </Flex>
           </Col>
         </Row>
       </Footer>

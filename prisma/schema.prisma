@@ -437,10 +437,79 @@ model PlacementTest {
   description       String @db.LongText
   timeLimit         Int
 
-  basePlacementTests   BasePlacementTest[]
-  accessPlacementTests AccessPlacementTest[]
-  studentAnswers       StudentAnswerPlacementTest[]
-  ScorePlacementTest   ScorePlacementTest[]
+  basePlacementTests             BasePlacementTest[]
+  accessPlacementTests           AccessPlacementTest[]
+  studentAnswers                 StudentAnswerPlacementTest[]
+  ScorePlacementTest             ScorePlacementTest[]
+  PlacementTestSession           PlacementTestSession[]
+  StudentAnswerFreePlacementTest StudentAnswerFreePlacementTest[]
+  ScoreFreePlacementTest         ScoreFreePlacementTest[]
+}
+
+model PlacementTestSession {
+  session_id      String                     @id @default(uuid())
+  placementTestId String                     @map("placement_test_id")
+  placementTest   PlacementTest              @relation(fields: [placementTestId], references: [placement_test_id])
+  sessionDate     DateTime                   @default(now()) // Tanggal sesi placement test
+  participants    PlacementTestParticipant[]
+}
+
+model PlacementTestParticipant {
+  participant_id String               @id @default(uuid())
+  sessionId      String               @map("session_id")
+  session        PlacementTestSession @relation(fields: [sessionId], references: [session_id])
+  name           String
+  email          String               @unique
+  phone          String
+  institution    String
+  grade          String
+  social_media   String
+  createdAt      DateTime             @default(now())
+
+  answers                StudentAnswerFreePlacementTest[]
+  ScoreFreePlacementTest ScoreFreePlacementTest[]
+}
+
+model StudentAnswerFreePlacementTest {
+  answer_id         String        @id @default(uuid())
+  participant_id    String
+  placementTest     PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
+  placement_test_id String
+
+  multipleChoice MultipleChoicePlacementTest? @relation(fields: [mcq_id], references: [mc_id])
+  mcq_id         String?
+
+  trueFalseGroup TrueFalseGroupPlacementTest? @relation(fields: [group_id], references: [group_id])
+  group_id       String?
+
+  trueFalseQuestion TrueFalseQuestion? @relation(fields: [tf_id], references: [tf_id])
+  tf_id             String?
+
+  writingQuestion  WritingPlacementTest? @relation(fields: [writing_id], references: [writing_id])
+  writing_id       String?
+  writing_feedback String?               @db.LongText
+
+  studentAnswer String   @db.LongText
+  isCorrect     Boolean?
+  score         Int
+  submittedAt   DateTime @default(now())
+
+  participant PlacementTestParticipant @relation(fields: [participant_id], references: [participant_id])
+
+  // Pastikan ada index untuk performa query yang lebih baik
+  @@index([participant_id, placement_test_id])
+}
+
+model ScoreFreePlacementTest {
+  score_placement_test_id String        @id @default(uuid())
+  participant_id          String
+  placementTest           PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
+  placement_test_id       String
+  totalScore              Int
+  percentageScore         Float
+  level                   String
+
+  participant PlacementTestParticipant @relation(fields: [participant_id], references: [participant_id])
 }
 
 model BasePlacementTest {
@@ -464,7 +533,8 @@ model MultipleChoicePlacementTest {
   basePlacementTest   BasePlacementTest @relation(fields: [basePlacementTestId], references: [base_id], onDelete: Cascade)
   basePlacementTestId String
 
-  studentAnswers StudentAnswerPlacementTest[]
+  studentAnswers                 StudentAnswerPlacementTest[]
+  StudentAnswerFreePlacementTest StudentAnswerFreePlacementTest[]
 }
 
 model TrueFalseGroupPlacementTest {
@@ -474,8 +544,9 @@ model TrueFalseGroupPlacementTest {
   basePlacementTest   BasePlacementTest @relation(fields: [basePlacementTestId], references: [base_id], onDelete: Cascade)
   basePlacementTestId String
 
-  trueFalseQuestions TrueFalseQuestion[]
-  studentAnswers     StudentAnswerPlacementTest[] // Pastikan relasi ke StudentAnswerPlacementTest
+  trueFalseQuestions             TrueFalseQuestion[]
+  studentAnswers                 StudentAnswerPlacementTest[] // Pastikan relasi ke StudentAnswerPlacementTest
+  StudentAnswerFreePlacementTest StudentAnswerFreePlacementTest[]
 }
 
 model TrueFalseQuestion {
@@ -486,7 +557,8 @@ model TrueFalseQuestion {
   trueFalseGroup TrueFalseGroupPlacementTest @relation(fields: [group_id], references: [group_id], onDelete: Cascade)
   group_id       String
 
-  studentAnswers StudentAnswerPlacementTest[]
+  studentAnswers                 StudentAnswerPlacementTest[]
+  StudentAnswerFreePlacementTest StudentAnswerFreePlacementTest[]
 }
 
 model WritingPlacementTest {
@@ -497,7 +569,8 @@ model WritingPlacementTest {
   basePlacementTest   BasePlacementTest @relation(fields: [basePlacementTestId], references: [base_id], onDelete: Cascade)
   basePlacementTestId String
 
-  studentAnswers StudentAnswerPlacementTest[]
+  studentAnswers                 StudentAnswerPlacementTest[]
+  StudentAnswerFreePlacementTest StudentAnswerFreePlacementTest[]
 }
 
 model StudentAnswerPlacementTest {

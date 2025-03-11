@@ -164,11 +164,6 @@ export const useMeetings = () => {
     return isMeetingToday;
   };
 
-  const isMeetingToday = checkMeetingToday();
-  const tagColor = isMeetingToday ? "green" : "yellow";
-  const tagText = isMeetingToday
-    ? "Ada pertemuan hari ini."
-    : "Tidak ada pertemuan hari ini.";
 
   // Format events
   const events =

@@ -115,9 +115,9 @@ export const ProfileComponents = ({
     }
 
     onUpdateAvatar(imageUrl);
-    setIsAvatarModalOpen(false);
     setImageUrl(null);
     setFileList([]);
+    setIsAvatarModalOpen(false);
   };
 
   const handleCancelAvatar = () => {
@@ -129,7 +129,7 @@ export const ProfileComponents = ({
     <Card
       bordered={false}
       style={{
-        maxWidth: "700px",
+        maxWidth: "800px",
         margin: "0 auto",
         padding: "24px",
         borderRadius: "12px",

@@ -275,7 +275,7 @@ export default function PlacementTestComponent() {
               >
                 {/* QR Code */}
                 <QRCodeCanvas
-                  value={selectedPlacement.name}
+                  value={`${process.env.NEXT_PUBLIC_APP_URL}/free-placement-test/${selectedPlacement.placement_test_id}`}
                   size={200}
                   level="H"
                   includeMargin={true}
