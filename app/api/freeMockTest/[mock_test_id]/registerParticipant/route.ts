@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
+import prisma from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,

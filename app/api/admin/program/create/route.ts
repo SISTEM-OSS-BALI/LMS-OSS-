@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import prisma from "@/lib/prisma";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { createData } from "@/app/lib/db/createData";
 

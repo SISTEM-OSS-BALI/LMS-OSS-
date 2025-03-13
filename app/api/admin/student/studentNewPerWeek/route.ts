@@ -1,7 +1,6 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import isoWeek from "dayjs/plugin/isoWeek"; // Agar minggu dimulai dari Senin

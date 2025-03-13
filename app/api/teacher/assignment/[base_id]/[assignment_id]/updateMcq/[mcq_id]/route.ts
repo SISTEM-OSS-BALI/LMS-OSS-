@@ -1,6 +1,6 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { NextRequest, NextResponse } from "next/server";
-
+import prisma from "@/lib/prisma";
 export async function PUT(
   request: NextRequest,
   { params }: { params: { assignment_id: string; mcq_id: string } }

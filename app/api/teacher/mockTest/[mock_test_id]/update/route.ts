@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { createData } from "@/app/lib/db/createData";
 import { updateData } from "@/app/lib/db/updateData";
-
+import prisma from "@/lib/prisma";
 export async function PUT(
   request: NextRequest,
   params: { params: { mock_test_id: string } }

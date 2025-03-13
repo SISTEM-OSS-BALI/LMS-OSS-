@@ -1,6 +1,6 @@
 import { deleteData } from "@/app/lib/db/deleteData";
 import { NextRequest, NextResponse } from "next/server";
-
+import prisma from "@/lib/prisma";
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { teacher_id: string } }

@@ -1,7 +1,7 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { updateData } from "@/app/lib/db/updateData";
 import { NextRequest, NextResponse } from "next/server";
-
+import prisma from "@/lib/prisma";
 export async function PUT(
   request: NextRequest,
   { params }: { params: { course_id: string } }

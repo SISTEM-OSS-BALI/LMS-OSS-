@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-
+import prisma from "@/lib/prisma";
 dayjs.extend(utc);
 
 export async function GET(

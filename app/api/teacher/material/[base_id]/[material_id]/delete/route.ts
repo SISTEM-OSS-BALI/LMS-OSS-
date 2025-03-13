@@ -1,8 +1,8 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
+// const prisma = new PrismaClient();
 
 // Helper function to retrieve the correct Prisma model
 function getPrismaModel(type: "image" | "url" | "text") {

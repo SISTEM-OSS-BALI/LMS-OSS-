@@ -3,7 +3,7 @@ import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { getData } from "@/app/lib/db/getData";
 import { createData } from "@/app/lib/db/createData";
 import { formatPhoneNumber } from "@/app/lib/utils/notificationHelper";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import dayjs from "dayjs";
 
 async function sendWhatsAppMessage(

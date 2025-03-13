@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/app/lib/prisma"; // Pastikan Prisma client diimport
+import prisma from "@/lib/prisma"; // Pastikan Prisma client diimport
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { answers, testId, audio, speaking_id, email } = body;
- 
+
     if (!testId || !answers) {
       return NextResponse.json(
         { status: 400, error: true, message: "Data tidak lengkap." },

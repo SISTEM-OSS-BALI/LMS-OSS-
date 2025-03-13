@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import prisma from "@/app/lib/prisma"; // Pastikan prisma di-import
+import prisma from "@/lib/prisma"; // Pastikan prisma di-import
 
 export async function DELETE(
   request: NextRequest,

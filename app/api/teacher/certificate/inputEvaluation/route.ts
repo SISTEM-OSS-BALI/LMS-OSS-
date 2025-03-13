@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-
+import prisma from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
 
@@ -64,8 +64,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 🔹 4️⃣ Fungsi untuk membuat nomor sertifikat unik (bisa disesuaikan)
-import prisma from "@/app/lib/prisma";
 
 async function generateCertificateNumber() {
   const currentYear = new Date().getFullYear(); // Tahun saat ini (2024, 2025, dll.)

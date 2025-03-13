@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { getData } from "@/app/lib/db/getData";
-
+import prisma from "@/lib/prisma";
 // Definisi tipe data
 interface StudentAnswer {
   answer_id: string;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
-
+import prisma from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { selectedData, placement_test_id, email } = body;

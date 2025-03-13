@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
+import prisma from "@/lib/prisma";
 
 export async function PATCH(request: NextRequest) {
   const user = await authenticateRequest(request);

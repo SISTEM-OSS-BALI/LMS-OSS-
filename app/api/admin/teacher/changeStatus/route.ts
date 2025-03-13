@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import { deleteData } from "@/app/lib/db/deleteData";
 import { getData } from "@/app/lib/db/getData";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { formatPhoneNumber, sendWhatsAppMessage } from "@/app/lib/utils/notificationHelper";
+import {
+  formatPhoneNumber,
+  sendWhatsAppMessage,
+} from "@/app/lib/utils/notificationHelper";
 dayjs.extend(utc);
 
 export async function POST(request: NextRequest) {
@@ -47,24 +50,44 @@ export async function POST(request: NextRequest) {
     const formattedTeacherPhone = formatPhoneNumber(getTeacher.no_phone);
 
     // Pesan untuk Siswa 📩
-    const studentMessage = `🚨 *Pemberitahuan Pembatalan Meeting* 🚨\n\n` +
+    const studentMessage =
+      `🚨 *Pemberitahuan Pembatalan Meeting* 🚨\n\n` +
       `Halo, *${getStudent.username}*! 👋\n\n` +
       `Kami ingin menginformasikan bahwa meeting Anda dengan *${getTeacher.username}* telah *dibatalkan* 🚫.\n\n` +
-      `📅 *Jadwal*: ${dayjs.utc(getMeeting.startTime).format("dddd, DD MMMM YYYY HH:mm")} - ${dayjs.utc(getMeeting.endTime).format("HH:mm")}\n` +
+      `📅 *Jadwal*: ${dayjs
+        .utc(getMeeting.startTime)
+        .format("dddd, DD MMMM YYYY HH:mm")} - ${dayjs
+        .utc(getMeeting.endTime)
+        .format("HH:mm")}\n` +
       `❌ *Alasan*: Guru berhalangan hadir.\n\n` +
       `Kami mohon maaf atas ketidaknyamanannya 🙏. Silakan hubungi admin untuk menjadwalkan ulang. 📞✨`;
 
-    await sendWhatsAppMessage(apiKey, numberKey, formattedStudentPhone, studentMessage);
+    await sendWhatsAppMessage(
+      apiKey,
+      numberKey,
+      formattedStudentPhone,
+      studentMessage
+    );
 
     // Pesan untuk Guru 📩
-    const teacherMessage = `✅ *Pengajuan Absen Berhasil* ✅\n\n` +
+    const teacherMessage =
+      `✅ *Pengajuan Absen Berhasil* ✅\n\n` +
       `Halo, *${getTeacher.username}*! 👋\n\n` +
       `Pengajuan ketidakhadiran Anda pada meeting berikut telah dikonfirmasi:\n\n` +
-      `📅 *Jadwal*: ${dayjs.utc(getMeeting.startTime).format("dddd, DD MMMM YYYY HH:mm")} - ${dayjs.utc(getMeeting.endTime).format("HH:mm")}\n` +
+      `📅 *Jadwal*: ${dayjs
+        .utc(getMeeting.startTime)
+        .format("dddd, DD MMMM YYYY HH:mm")} - ${dayjs
+        .utc(getMeeting.endTime)
+        .format("HH:mm")}\n` +
       `📢 *Status*: Disetujui.\n\n` +
       `Terima kasih telah memberi tahu kami sebelumnya! 🚀✨`;
 
-    await sendWhatsAppMessage(apiKey, numberKey, formattedTeacherPhone, teacherMessage);
+    await sendWhatsAppMessage(
+      apiKey,
+      numberKey,
+      formattedTeacherPhone,
+      teacherMessage
+    );
 
     await prisma.teacherAbsence.update({
       where: { teacher_absence_id },
@@ -76,7 +99,6 @@ export async function POST(request: NextRequest) {
       error: false,
       data: updateAbsent,
     });
-
   } catch (error) {
     console.error("Error updating absent status:", error);
     return new NextResponse(
@@ -86,8 +108,5 @@ export async function POST(request: NextRequest) {
         headers: { "Content-Type": "application/json" },
       }
     );
- 
   }
 }
-
-

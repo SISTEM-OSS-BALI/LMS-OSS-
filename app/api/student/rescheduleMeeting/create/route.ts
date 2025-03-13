@@ -6,8 +6,7 @@ import {
   formatPhoneNumber,
   sendWhatsAppMessage,
 } from "@/app/lib/utils/notificationHelper";
-import { admin } from "googleapis/build/src/apis/admin";
-
+import prisma from "@/lib/prisma";
 dayjs.extend(utc);
 
 export async function POST(request: NextRequest) {

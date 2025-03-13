@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import dayjs from "dayjs";
 
 export async function GET(request: NextRequest) {
@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
         role: "STUDENT",
         start_date: {
           not: null,
-          gte: new Date(`${year}-01-01T00:00:00Z`), 
-          lt: new Date(`${year + 1}-01-01T00:00:00Z`), 
+          gte: new Date(`${year}-01-01T00:00:00Z`),
+          lt: new Date(`${year + 1}-01-01T00:00:00Z`),
         },
       },
       select: {

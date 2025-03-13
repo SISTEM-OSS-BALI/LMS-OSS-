@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { deleteData } from "@/app/lib/db/deleteData";
-
+import prisma from "@/lib/prisma";
 export async function DELETE(
   request: NextRequest,
   params: { params: { base_mock_test_id: string } }

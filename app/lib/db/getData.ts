@@ -1,4 +1,4 @@
-import prisma from "../prisma";
+import prisma from "../../../lib/prisma";
 import { PrismaClient } from "@prisma/client";
 
 type ModelName = keyof PrismaClient;

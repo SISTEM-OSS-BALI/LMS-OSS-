@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import { randomBytes } from "crypto";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";

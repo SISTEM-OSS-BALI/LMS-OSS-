@@ -2,7 +2,7 @@ import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { getData } from "@/app/lib/db/getData";
 import { updateData } from "@/app/lib/db/updateData";
 import { NextRequest, NextResponse } from "next/server";
-
+import prisma from "@/lib/prisma";
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { assignment_id: string } }

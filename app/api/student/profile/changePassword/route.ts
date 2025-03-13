@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -29,12 +29,12 @@ export async function PUT(request: NextRequest) {
       const tokenExpirationTime = dayjs.utc(resetRecord?.expires_at);
       const currentTimeUTC = dayjs.utc();
 
-       if (currentTimeUTC.isAfter(tokenExpirationTime)) {
-         return NextResponse.json(
-           { message: "Token telah kedaluwarsa" },
-           { status: 400 }
-         );
-       }
+      if (currentTimeUTC.isAfter(tokenExpirationTime)) {
+        return NextResponse.json(
+          { message: "Token telah kedaluwarsa" },
+          { status: 400 }
+        );
+      }
 
       // 🔹 Hash password baru
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);

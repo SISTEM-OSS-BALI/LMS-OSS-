@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import prisma from "@/lib/prisma";
 import { getData } from "@/app/lib/db/getData";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import dayjs from "dayjs";

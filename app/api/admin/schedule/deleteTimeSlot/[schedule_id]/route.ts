@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
-
 enum DayOfWeek {
   MONDAY = "MONDAY",
   TUESDAY = "TUESDAY",

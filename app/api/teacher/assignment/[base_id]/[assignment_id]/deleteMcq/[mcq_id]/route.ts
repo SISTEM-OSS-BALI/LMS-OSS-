@@ -1,7 +1,7 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { deleteData } from "@/app/lib/db/deleteData";
 import { NextRequest, NextResponse } from "next/server";
-
+import prisma from "@/lib/prisma";
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { assignment_id: string; mcq_id: string } }

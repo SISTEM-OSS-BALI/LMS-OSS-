@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { getData } from "@/app/lib/db/getData";
-
+import prisma from "@/lib/prisma";
 // Interface untuk response API
 interface StudentAnswerMockTest {
   answer_id: string;

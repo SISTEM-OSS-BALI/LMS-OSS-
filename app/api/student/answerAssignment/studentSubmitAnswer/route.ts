@@ -1,7 +1,7 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { getData } from "@/app/lib/db/getData";
 import { NextRequest, NextResponse } from "next/server";
-
+import prisma from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
   const body = await request.json();

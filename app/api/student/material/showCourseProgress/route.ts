@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 
 export async function GET(request: NextRequest) {
@@ -13,10 +13,14 @@ export async function GET(request: NextRequest) {
     const getCourseProgress = await prisma.courseProgress.findMany({
       where: {
         user_id: user.user_id,
-      }
+      },
     });
 
-    return NextResponse.json({ status: 200, error: false, data: getCourseProgress });
+    return NextResponse.json({
+      status: 200,
+      error: false,
+      data: getCourseProgress,
+    });
   } catch (error) {
     console.error("Error accessing database:", error);
     return new NextResponse(

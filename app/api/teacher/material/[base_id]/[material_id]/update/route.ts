@@ -2,6 +2,7 @@ import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { createData } from "@/app/lib/db/createData";
 import { getData } from "@/app/lib/db/getData";
 import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 // Function to shift indices up starting from a given index
 async function shiftIndices(material_id: any, type: string, fromIndex: any) {

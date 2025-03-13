@@ -2,7 +2,7 @@ import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI, Part, Content } from "@google/generative-ai";
 import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
-
+import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
