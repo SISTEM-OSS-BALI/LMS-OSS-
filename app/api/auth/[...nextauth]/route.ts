@@ -77,7 +77,7 @@ export const authOptions: NextAuthOptions = {
         imageUrl:
           dbUser?.imageUrl ||
           (typeof token.imageUrl === "string" ? token.imageUrl : null) ||
-          null, // Cegah `null` overwrite
+          null,
       };
 
       return session;
@@ -91,3 +91,4 @@ export const authOptions: NextAuthOptions = {
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
+export default handler;
