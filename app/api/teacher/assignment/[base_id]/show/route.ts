@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { getData } from "@/app/lib/db/getData";
 import { NextRequest, NextResponse } from "next/server";
-
 
 export async function GET(
   request: NextRequest,
@@ -17,18 +15,22 @@ export async function GET(
 
   try {
     // Query untuk mendapatkan semua assignment dengan base_id
-    const assignments = await getData("assignment", {
-      where: {
-        base_id: base_id,
+    const assignments = await getData(
+      "assignment",
+      {
+        where: {
+          base_id: base_id,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+        include: {
+          multipleChoices: true,
+          essay: true,
+        },
       },
-      orderBy: {
-        createdAt: "asc",
-      },
-      include: {
-        multipleChoices: true, 
-        essay: true, 
-      },
-    }, "findMany");
+      "findMany"
+    );
 
     // Transform data dinamis sesuai dengan tipe
     const formattedAssignments = assignments.map((assignment: any) => {
@@ -52,7 +54,7 @@ export async function GET(
         timeLimit: assignment.timeLimit,
         createdAt: assignment.createdAt,
         base_id: assignment.base_id,
-        typeData, 
+        typeData,
       };
     });
 

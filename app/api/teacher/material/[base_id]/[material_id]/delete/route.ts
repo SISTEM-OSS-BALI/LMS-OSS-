@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
@@ -93,7 +92,7 @@ export async function DELETE(
     const model = getPrismaModel(type);
 
     // Use the correct deleteMany method
-    const deleteResult = await(model as any).deleteMany({
+    const deleteResult = await (model as any).deleteMany({
       where: { material_id, index },
     });
 

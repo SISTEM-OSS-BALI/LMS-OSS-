@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Alert, Flex } from "antd";
 
 export default function CustomAlert({ type, message }: any) {
