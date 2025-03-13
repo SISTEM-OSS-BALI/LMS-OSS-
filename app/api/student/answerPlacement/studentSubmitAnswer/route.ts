@@ -1,14 +1,8 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { NextRequest, NextResponse } from "next/server";
-import axios from "axios";
 import { GoogleGenerativeAI, Part, Content } from "@google/generative-ai";
+import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
 
-const geminiApiKey = process.env.GEMINI_API_KEY;
-if (!geminiApiKey) {
-  throw new Error("GEMINI_API_KEY is not defined");
-}
-
-export const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
@@ -120,7 +114,7 @@ export async function POST(request: NextRequest) {
           });
         } else if (writingQuestion) {
           const writingQuestionText = writingQuestion.question;
-          const { aiScore, aiFeedback } = await evaluateWritingWithGemini(
+          const { aiScore, aiFeedback } = await evaluateWritingAnswer(
             writingQuestionText,
             selectedAnswer
           );
@@ -216,34 +210,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function evaluateWritingWithGemini(question: string, answer: string) {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
-    const prompt = `
-    Anda adalah penguji bahasa Inggris. Berikan penilaian dari 0-10 berdasarkan tata bahasa, struktur, dan relevansi jawaban.
-    Berikan nilai dalam format berikut: 
-    - Score: (nilai antara 0 hingga 10)
-    - Feedback: (5 kalimat feedback)
-    
-    Soal: ${question}
-    Jawaban: ${answer}
-    `;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const textResponse = response.text();
-
-    // Parsing skor dan feedback
-    const scoreMatch = textResponse.match(/\b\d+\b/);
-    const aiScore = scoreMatch ? parseInt(scoreMatch[0], 10) : 0;
-    const aiFeedback = textResponse.replace(/\b\d+\b/, "").trim();
-
-    return {
-      aiScore: Math.min(Math.max(aiScore, 0), 10),
-      aiFeedback,
-    };
-  } catch (error) {
-    console.error("Error evaluating writing:", error);
-    return { aiScore: 0, aiFeedback: "Terjadi kesalahan dalam penilaian." };
-  }
-}

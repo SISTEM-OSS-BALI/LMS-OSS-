@@ -74,7 +74,7 @@ export async function POST(
     const adminMessage =
       `🚨 *Pengajuan Absen Guru* 🚨\n\n` +
       `Halo, *${getAdmin.username}*! 👋\n\n` +
-      `Guru *${user.name}* telah mengajukan ketidakhadiran pada jadwal berikut:\n\n` +
+      `Guru *${user.username}* telah mengajukan ketidakhadiran pada jadwal berikut:\n\n` +
       `📅 *Jadwal*: ${dayjs().format("dddd, DD MMMM YYYY HH:mm")}\n` +
       `📢 *Alasan*: ${reason}\n\n` +
       `Mohon segera ditindaklanjuti. Terima kasih! 🙏✨`;
