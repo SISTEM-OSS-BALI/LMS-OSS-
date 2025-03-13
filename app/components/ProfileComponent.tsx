@@ -18,6 +18,8 @@ import {
   Upload,
   message,
   Image,
+  Grid,
+  Drawer,
 } from "antd";
 import {
   UserOutlined,
@@ -31,6 +33,9 @@ import {
   InboxOutlined,
 } from "@ant-design/icons";
 import Dragger from "antd/es/upload/Dragger";
+
+const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 interface UserWithProgram extends User {
   program?: Program;
@@ -46,8 +51,6 @@ interface ProfileComponentProps {
   onSendEmail: () => void;
 }
 
-const { Title, Text } = Typography;
-
 export const ProfileComponents = ({
   data,
   isLoading,
@@ -57,6 +60,7 @@ export const ProfileComponents = ({
   onUpdateAvatar,
   onSendEmail,
 }: ProfileComponentProps) => {
+  const screens = useBreakpoint();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [form] = Form.useForm();
@@ -108,7 +112,6 @@ export const ProfileComponents = ({
     }
 
     const file = fileList[0].originFileObj;
-
     if (!imageUrl) {
       message.error("Terjadi kesalahan, gambar tidak ditemukan!");
       return;
@@ -120,17 +123,12 @@ export const ProfileComponents = ({
     setIsAvatarModalOpen(false);
   };
 
-  const handleCancelAvatar = () => {
-    setIsAvatarModalOpen(false);
-    setImageUrl(null);
-  };
-
   return (
     <Card
       bordered={false}
       style={{
-        maxWidth: "800px",
-        margin: "0 auto",
+        maxWidth: screens.xs ? "100%" : "800px",
+        margin: screens.xs ? "0 auto" : "20px auto",
         padding: "24px",
         borderRadius: "12px",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
@@ -138,48 +136,45 @@ export const ProfileComponents = ({
         position: "relative",
       }}
     >
-      {/* Skeleton Loading */}
       {isLoading ? (
         <Skeleton active avatar paragraph={{ rows: 4 }} />
       ) : (
         <>
-          {/* Tombol Edit */}
-          <div
-            style={{
-              position: "absolute",
-              top: 20,
-              right: 20,
-              display: "flex",
-              gap: "10px",
-            }}
-          >
-            <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
-              Edit
-            </Button>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => onSendEmail()}
-              loading={loadingChangePassword}
-            >
-              Ganti Password
-            </Button>
-          </div>
-
-          {/* Avatar & Tombol Edit */}
           <Row
-            align="middle"
-            justify="center"
-            style={{ marginBottom: 20, position: "relative" }}
+            justify={screens.xs ? "center" : "end"}
+            gutter={[16, 16]}
+            style={{ marginBottom: 20 }}
           >
             <Col>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={handleEdit}
+              >
+                Edit Profil
+              </Button>
+            </Col>
+            <Col>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={onSendEmail}
+                loading={loadingChangePassword}
+              >
+                Ganti Password
+              </Button>
+            </Col>
+          </Row>
+
+          {/* Avatar Section */}
+          <Row justify="center" style={{ marginBottom: 20 }}>
+            <Col>
               <Avatar
-                size={100}
+                size={screens.xs ? 80 : 100}
                 src={data?.imageUrl || ""}
                 icon={!data?.imageUrl && <UserOutlined />}
                 style={{ backgroundColor: "#1890ff", position: "relative" }}
               />
-              {/* Ikon Edit di Atas Avatar */}
               <Button
                 shape="circle"
                 icon={<EditOutlined />}
@@ -196,17 +191,10 @@ export const ProfileComponents = ({
             </Col>
           </Row>
 
-          <Title level={3} style={{ textAlign: "center", marginBottom: 10 }}>
+          <Title level={screens.xs ? 4 : 3} style={{ textAlign: "center" }}>
             {data?.username || "Tidak Diketahui"}
           </Title>
-          <Text
-            type="secondary"
-            style={{ display: "block", textAlign: "center", marginBottom: 16 }}
-          >
-            {data?.role === "STUDENT" ? "Student" : "Teacher"}
-          </Text>
 
-          {/* Informasi User */}
           <Descriptions bordered column={1} size="middle">
             <Descriptions.Item label="Email">
               <MailOutlined style={{ marginRight: 8 }} />
@@ -252,6 +240,7 @@ export const ProfileComponents = ({
         </>
       )}
 
+      {/* Modal Edit Profil */}
       <Modal
         title="Edit Profil"
         open={isModalOpen}
@@ -279,28 +268,20 @@ export const ProfileComponents = ({
           >
             <Input placeholder="Email" />
           </Form.Item>
-          <Form.Item name="no_phone" label="No. Telepon">
-            <Input placeholder="No. Telepon" />
-          </Form.Item>
           <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              style={{ width: "100%" }}
-              loading={loading}
-            >
-              Submit
+            <Button type="primary" htmlType="submit" loading={loading} block>
+              Simpan
             </Button>
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Modal Edit Avatar */}
-      <Modal
+      {/* Modal Ubah Avatar */}
+      <Drawer
         title="Ubah Foto Profil"
+        placement="bottom"
         open={isAvatarModalOpen}
-        onCancel={() => handleCancelAvatar()}
-        footer={null}
+        onClose={() => setIsAvatarModalOpen(false)}
       >
         <Form form={form} layout="vertical" onFinish={handleUpload}>
           <Form.Item name="image">
@@ -346,7 +327,7 @@ export const ProfileComponents = ({
             </Button>
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
     </Card>
   );
 };

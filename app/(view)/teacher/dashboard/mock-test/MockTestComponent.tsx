@@ -10,14 +10,18 @@ import {
   Form,
   Input,
   Alert,
+  Image,
 } from "antd";
 import { useMockTestViewModel } from "./useMockTestViewModel";
 import {
   EditOutlined,
   DeleteOutlined,
   PlusCircleFilled,
+  QrcodeOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
+import { QRCodeCanvas } from "qrcode.react";
+import { useRef } from "react";
 
 export default function MockTestComponent() {
   const {
@@ -32,7 +36,63 @@ export default function MockTestComponent() {
     selectedMockTest,
     loading,
     handleDelete,
+    handleGenerateQRCode,
+    handleCancelOpenModalQr,
+    qrModalVisible,
+    handleOpenModalQr,
   } = useMockTestViewModel();
+
+  const qrRef = useRef<HTMLDivElement | null>(null);
+
+  const handleDownloadQRCode = () => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    if (context && qrRef.current) {
+      const qrElement = qrRef.current.querySelector("canvas"); // Ambil elemen QR Code (canvas)
+
+      if (qrElement) {
+        const qrSize = 800; // Ukuran besar untuk resolusi tinggi
+        canvas.width = qrSize;
+        canvas.height = qrSize;
+
+        // **Gambar QR Code ke Canvas dalam resolusi tinggi**
+        context.drawImage(qrElement, 0, 0, qrSize, qrSize);
+
+        // **Tambahkan logo di tengah QR Code**
+        const logo: HTMLImageElement = document.createElement("img");
+        logo.src = "/assets/images/logo.jpg"; // Path logo
+        logo.onload = () => {
+          const logoSize = qrSize * 0.2; // Ukuran logo 20% dari QR Code
+          const x = (qrSize - logoSize) / 2;
+          const y = (qrSize - logoSize) / 2;
+
+          // **Buat logo berbentuk bulat**
+          context.save();
+          context.beginPath();
+          context.arc(
+            x + logoSize / 2,
+            y + logoSize / 2,
+            logoSize / 2,
+            0,
+            Math.PI * 2
+          );
+          context.closePath();
+          context.clip();
+
+          // Gambar logo
+          context.drawImage(logo, x, y, logoSize, logoSize);
+          context.restore();
+
+          // **Simpan QR Code sebagai gambar PNG**
+          const link = document.createElement("a");
+          link.href = canvas.toDataURL("image/png", 1.0); // 1.0 = kualitas tertinggi
+          link.download = "qrcode.png";
+          link.click();
+        };
+      }
+    }
+  };
 
   const showConfirmDelete = (mock_test_id: string) => {
     Modal.confirm({
@@ -121,17 +181,27 @@ export default function MockTestComponent() {
                       danger
                       onClick={() => showConfirmDelete(item.mock_test_id)}
                     />
+                    <Button
+                      key={`qr-${item.mock_test_id}`}
+                      type="default"
+                      shape="circle"
+                      icon={<QrcodeOutlined />}
+                      onClick={() => handleGenerateQRCode(item.mock_test_id)}
+                    />
                   </Space>
 
                   {/* Isi Card */}
-                  <h3 style={{ marginBottom: "20px" }}>{item.name}</h3>
+                  <h3 style={{ marginBottom: "20px", marginTop: "20px" }}>{item.name}</h3>
 
                   {/* Tombol Detail di Bawah */}
+
                   <Link
                     href={`/teacher/dashboard/mock-test/${item.mock_test_id}`}
                     passHref
                   >
-                    Detail
+                    <Button type="link" style={{ padding: 0 }}>
+                      Detail
+                    </Button>
                   </Link>
                 </Card>
               </Col>
@@ -189,6 +259,88 @@ export default function MockTestComponent() {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+      <Modal
+        open={qrModalVisible}
+        onCancel={() => handleCancelOpenModalQr()}
+        footer={null}
+        title="QR Code Mock Test"
+      >
+        <div
+          ref={qrRef}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            gap: "20px",
+          }}
+        >
+          {selectedMockTest && (
+            <>
+              <div
+                style={{
+                  position: "relative",
+                  padding: 15,
+                  backgroundColor: "#fff",
+                  borderRadius: 10,
+                  boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
+                  display: "inline-block",
+                }}
+              >
+                {/* QR Code */}
+                <QRCodeCanvas
+                  value={`${process.env.NEXT_PUBLIC_APP_URL}/free-mock-test/${selectedMockTest.mock_test_id}`}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                />
+                {/* Logo di atas QR Code */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: 50, // Sesuaikan ukuran logo
+                    height: 50,
+                    borderRadius: "50%", // Opsional untuk membuat logo bulat
+                    backgroundColor: "white", // Latar belakang untuk kontras
+                    padding: 5, // Padding agar logo tidak menyatu dengan QR Code
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Image
+                    src="/assets/images/logo.jpg" // Ganti dengan path logo Anda
+                    alt="Logo"
+                    preview={false}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      borderRadius: "50%",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Tombol Download */}
+              <Button
+                key="download"
+                type="primary"
+                style={{ width: "100%", marginTop: "15px" }}
+                onClick={handleDownloadQRCode}
+              >
+                Download QR Code
+              </Button>
+            </>
+          )}
+        </div>
       </Modal>
     </div>
   );

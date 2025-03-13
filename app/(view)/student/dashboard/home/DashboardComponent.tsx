@@ -14,6 +14,7 @@ import {
   Skeleton,
   Divider,
   Tag,
+  Descriptions,
 } from "antd";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -108,8 +109,12 @@ export default function HomeStudent() {
         ) : (
           <>
             <Title level={3}>Selamat Datang, {username || "Student"}!</Title>
-            <Title level={5} style={{ fontWeight: 400, marginTop: "8px" }}>
-              <Tag>{checkMeetingToday()}</Tag>
+            <Title level={5}>
+              <Tag color={checkMeetingToday() ? "green" : "red"}>
+                {checkMeetingToday()
+                  ? "Ada Meeting Hari Ini"
+                  : "Tidak Ada Meeting Hari Ini"}
+              </Tag>
             </Title>
           </>
         )}
@@ -141,8 +146,7 @@ export default function HomeStudent() {
                 headerToolbar={{
                   left: "prev,next today",
                   center: "title",
-                  right:
-                    window.innerWidth < 768 ? "" : "dayGridMonth,timeGridWeek",
+                  right: window.innerWidth < 768 ? "" : "dayGridMonth",
                 }}
                 dayMaxEventRows={2} // 🔹 Maksimal 2 event per hari di mobile
                 // eventMaxHeightPercentage={80} // 🔹 Hindari event keluar dari cell
@@ -229,7 +233,12 @@ export default function HomeStudent() {
                               >
                                 Tes Telah Dilakukan
                               </Button>
-                              <Button type="primary">Riwayat</Button>
+                              <Button
+                                type="primary"
+                                href={`/student/dashboard/mock-test/history/${item.mock_test_id}`}
+                              >
+                                Riwayat
+                              </Button>
                             </Space>
                           ) : (
                             <Button
@@ -379,34 +388,34 @@ export default function HomeStudent() {
         footer={null}
       >
         {selectedEvent && (
-          <div style={{ padding: "16px" }}>
-            <p>
-              <Text strong>Nama Guru:</Text> {selectedEvent.teacherName}
-            </p>
-            <p>
-              <Text strong>Waktu:</Text> {selectedEvent.time}
-            </p>
-            <p>
-              <Text strong>Metode:</Text> {selectedEvent.method}
-            </p>
-            <p>
+          <Descriptions
+            bordered
+            column={1}
+            size="middle"
+            style={{ padding: "16px" }}
+          >
+            <Descriptions.Item label="Nama Guru">
+              <Text strong>{selectedEvent.teacherName}</Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="Waktu">
+              <Text>{selectedEvent.time}</Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="Metode">
+              <Text>{selectedEvent.method}</Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="Link">
               {selectedEvent.meetLink ? (
-                <p>
-                  <Text strong>Link:</Text>{" "}
-                  <Link
-                    href={selectedEvent.meetLink}
-                    style={{ color: "#1890FF" }}
-                  >
-                    {selectedEvent.meetLink}
-                  </Link>
-                </p>
+                <Link
+                  href={selectedEvent.meetLink}
+                  style={{ color: "#1890FF" }}
+                >
+                  {selectedEvent.meetLink}
+                </Link>
               ) : (
-                <p>
-                  <Text strong>Link:</Text> <span>Tidak ada link</span>
-                </p>
+                <Text type="secondary">Tidak ada link</Text>
               )}
-            </p>
-          </div>
+            </Descriptions.Item>
+          </Descriptions>
         )}
       </Modal>
     </div>

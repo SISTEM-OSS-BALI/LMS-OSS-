@@ -133,12 +133,16 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
     const regex3 = /^\/student\/dashboard\/placement-test\/result$/;
     const regex4 = /^\/student\/dashboard\/mock-test$/;
     const regex5 = /^\/student\/dashboard\/placement-test\/history\/[^/]+$/;
+    const regex6 = /^\/student\/dashboard\/mock-test\/result$/;
+    const regex7 = /^\/student\/dashboard\/mock-test\/history\/[^/]+$/;
     return (
       regex.test(pathname) ||
       regex2.test(pathname) ||
       regex3.test(pathname) ||
       regex4.test(pathname) ||
-      regex5.test(pathname)
+      regex5.test(pathname) ||
+      regex6.test(pathname) ||
+      regex7.test(pathname)
     );
   };
 
@@ -340,10 +344,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
               overflow: "auto",
             }}
           >
-            <div
-            >
-              {children}
-            </div>
+            <div>{children}</div>
           </Content>
 
           {/* Footer */}

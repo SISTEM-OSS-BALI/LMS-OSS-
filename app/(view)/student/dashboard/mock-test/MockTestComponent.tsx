@@ -8,8 +8,10 @@ import {
   Row,
   Col,
   Progress,
-  message,
   Modal,
+  Drawer,
+  Grid,
+  Space,
 } from "antd";
 import { useMockTestViewModel } from "./useMockTestViewModel";
 import ListeningMockTestStudent from "@/app/components/ListeningMockTestStudent";
@@ -17,12 +19,13 @@ import SpeakingMockTestStudent from "@/app/components/SpeakingMockTestStudent";
 import WritingMockTestStudent from "@/app/components/WritingMockTestStudent";
 import ReadingMockTestStudent from "@/app/components/ReadingMockTestStudent";
 import Loading from "@/app/components/Loading";
+import { MenuOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
-
-// ✅ Interface untuk Data Soal
+const { useBreakpoint } = Grid;
 
 export default function MockTestComponent() {
+  const screens = useBreakpoint();
   const {
     sectionData,
     selectedSectionIndex,
@@ -43,7 +46,7 @@ export default function MockTestComponent() {
     loading,
   } = useMockTestViewModel();
 
-  // 🔹 State untuk navigasi section & soal
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   const showConfirmSubmit = () => {
     Modal.confirm({
@@ -57,198 +60,186 @@ export default function MockTestComponent() {
   };
 
   return (
-    <div style={{ display: "flex", gap: "24px", padding: "24px" }}>
-      {/* 🔹 Kolom Kiri (Timer & Soal) */}
-      <div
-        style={{
-          flex: 2,
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-        }}
-      >
-        {/* 🔹 Timer */}
-        <Card
-          bordered={false}
-          style={{
-            textAlign: "center",
-            backgroundColor: "#fff7e6",
-            borderRadius: "12px",
-            padding: "10px",
-            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <Text strong style={{ fontSize: "16px" }}>
-            Waktu Tersisa:
-          </Text>
-          <br />
-          <Text type="danger" style={{ fontSize: "18px", fontWeight: "bold" }}>
-            {formatTime(remainingTime)}
-          </Text>
-          <Progress
-            percent={(remainingTime / (10 * 60)) * 100}
-            showInfo={false}
-            strokeColor="#fa541c"
-            style={{ marginTop: "10px" }}
-          />
-        </Card>
-
-        {/* 🔹 Soal */}
-        <div>
-          {baseMockTestDataLoading ? (
-            <Loading />
-          ) : sectionContent ? (
-            <div>
-              {sectionContent.type === "READING" && sectionContent.reading && (
-                <ReadingMockTestStudent
-                  data={sectionContent.reading}
-                  selectedQuestion={selectedQuestion}
-                  onSelectQuestion={setSelectedQuestion}
-                  onAnswerChange={handleAnswerChange}
-                  selectedAnswers={selectedAnswers}
-                />
-              )}
-
-              {sectionContent.type === "LISTENING" &&
-                sectionContent.listening && (
-                  <ListeningMockTestStudent
-                    data={sectionContent.listening}
-                    selectedQuestion={selectedQuestion}
-                    onSelectQuestion={setSelectedQuestion}
-                    onAnswerChange={handleAnswerChange}
-                    selectedAnswers={selectedAnswers}
-                  />
-                )}
-
-              {sectionContent.type === "SPEAKING" &&
-                sectionContent.speaking && (
-                  <SpeakingMockTestStudent
-                    data={sectionContent.speaking}
-                    onSubmitAudio={handleSubmitAudio}
-                  />
-                )}
-
-              {sectionContent.type === "WRITING" && sectionContent.writing && (
-                <WritingMockTestStudent
-                  data={sectionContent.writing}
-                  selectedQuestion={selectedQuestion}
-                  onSelectQuestion={setSelectedQuestion}
-                  onAnswerChange={handleAnswerChange}
-                  selectedAnswers={selectedAnswers}
-                />
-              )}
-            </div>
-          ) : (
-            <p>Tidak ada data</p>
-          )}
-        </div>
-      </div>
-
-      {/* 🔹 Kolom Kanan (Navigasi Section & Navigasi Soal) */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-        }}
-      >
-        {/* 🔹 Navigasi Section */}
-        <Card
-          bordered={false}
-          style={{
-            width: "100%",
-            borderRadius: "12px",
-            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <Title level={4} style={{ textAlign: "center" }}>
-            Navigasi Section
-          </Title>
-          <Row gutter={[10, 10]}>
-            {sectionData.map((section, index) => {
-              const sectionQuestions = [
-                ...(section.reading?.questions ?? []),
-                ...(section.listening?.questions ?? []),
-                ...(section.writing?.questions ?? []),
-              ];
-
-              const isSectionCompleted = sectionQuestions.every((q) =>
-                selectedAnswers[q.question_id] ? true : false
-              );
-
-              return (
-                <Col key={index} span={12} style={{ textAlign: "center" }}>
-                  <Button
-                    type={
-                      selectedSectionIndex === index ? "primary" : "default"
-                    }
-                    onClick={() => {
-                      setSelectedSectionIndex(index);
-                      setSelectedQuestion(0);
-                    }}
-                    style={{
-                      width: "100%",
-                      fontWeight: "bold",
-                      borderRadius: "8px",
-                      backgroundColor: isSectionCompleted
-                        ? "#52c41a"
-                        : undefined,
-                      color: isSectionCompleted ? "white" : undefined,
-                    }}
-                  >
-                    {section.type}
-                  </Button>
-                </Col>
-              );
-            })}
-          </Row>
-        </Card>
-
-        {/* 🔹 Navigasi Soal */}
-        {questions.length > 0 && (
+    <div style={{ padding: screens.xs ? "10px" : "24px" }}>
+      <Row gutter={[16, 16]}>
+        {/* Timer dan Soal */}
+        <Col span={screens.xs ? 24 : 16}>
+          {/* Timer */}
           <Card
-            title="Navigasi Soal"
             bordered={false}
-            style={{ width: "100%", borderRadius: "12px" }}
+            style={{
+              textAlign: "center",
+              backgroundColor: "#fff7e6",
+              borderRadius: "12px",
+              padding: "10px",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
           >
-            <Row gutter={[5, 5]} justify="start">
-              {questions.map((q, index) => (
-                <Col key={index} span={4} style={{ textAlign: "center" }}>
-                  <Button
-                    type={selectedQuestion === index ? "primary" : "default"}
-                    onClick={() => setSelectedQuestion(index)}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      fontWeight: "bold",
-                      borderRadius: "8px",
-                      backgroundColor: selectedAnswers[q.question_id]
-                        ? "#52c41a"
-                        : undefined, // ✅ Warna hijau jika sudah dijawab
-                      color: selectedAnswers[q.question_id]
-                        ? "white"
-                        : undefined,
-                    }}
-                  >
-                    {index + 1}
-                  </Button>
-                </Col>
-              ))}
-            </Row>
+            <Text strong style={{ fontSize: "16px" }}>
+              Waktu Tersisa:
+            </Text>
+            <br />
+            <Text
+              type="danger"
+              style={{ fontSize: "18px", fontWeight: "bold" }}
+            >
+              {formatTime(remainingTime)}
+            </Text>
+            <Progress
+              percent={(remainingTime / (10 * 60)) * 100}
+              showInfo={false}
+              strokeColor="#fa541c"
+              style={{ marginTop: "10px" }}
+            />
           </Card>
-        )}
-        {isAllSectionsCompleted && (
+
+          {/* Soal */}
+          <div>
+            {baseMockTestDataLoading ? (
+              <Loading />
+            ) : sectionContent ? (
+              <div>
+                {sectionContent.type === "READING" &&
+                  sectionContent.reading && (
+                    <ReadingMockTestStudent
+                      data={sectionContent.reading}
+                      selectedQuestion={selectedQuestion}
+                      onSelectQuestion={setSelectedQuestion}
+                      onAnswerChange={handleAnswerChange}
+                      selectedAnswers={selectedAnswers}
+                    />
+                  )}
+
+                {sectionContent.type === "LISTENING" &&
+                  sectionContent.listening && (
+                    <ListeningMockTestStudent
+                      data={sectionContent.listening}
+                      selectedQuestion={selectedQuestion}
+                      onSelectQuestion={setSelectedQuestion}
+                      onAnswerChange={handleAnswerChange}
+                      selectedAnswers={selectedAnswers}
+                    />
+                  )}
+
+                {sectionContent.type === "SPEAKING" &&
+                  sectionContent.speaking && (
+                    <SpeakingMockTestStudent
+                      data={sectionContent.speaking}
+                      onSubmitAudio={handleSubmitAudio}
+                    />
+                  )}
+
+                {sectionContent.type === "WRITING" &&
+                  sectionContent.writing && (
+                    <WritingMockTestStudent
+                      data={sectionContent.writing}
+                      selectedQuestion={selectedQuestion}
+                      onSelectQuestion={setSelectedQuestion}
+                      onAnswerChange={handleAnswerChange}
+                      selectedAnswers={selectedAnswers}
+                    />
+                  )}
+              </div>
+            ) : (
+              <p>Tidak ada data</p>
+            )}
+          </div>
+        </Col>
+
+        {/* Navigasi Section & Soal */}
+        {!screens.xs ? (
+          <Col span={8}>
+            <Card
+              bordered={false}
+              style={{
+                borderRadius: "12px",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <Title level={4} style={{ textAlign: "center" }}>
+                Navigasi Section
+              </Title>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {sectionData.map((section, index) => {
+                  return (
+                    <Button
+                      key={index}
+                      type={
+                        selectedSectionIndex === index ? "primary" : "default"
+                      }
+                      onClick={() => {
+                        setSelectedSectionIndex(index);
+                        setSelectedQuestion(0);
+                      }}
+                      block
+                    >
+                      {section.type}
+                    </Button>
+                  );
+                })}
+              </Space>
+            </Card>
+          </Col>
+        ) : (
           <Button
             type="primary"
-            onClick={showConfirmSubmit}
-            style={{ marginTop: "20px", width: "100%" }}
-            loading={loading}
-          >
-            Kirim Jawaban
-          </Button>
+            shape="circle"
+            icon={<MenuOutlined />}
+            style={{
+              position: "fixed",
+              bottom: "20px",
+              right: "20px",
+              zIndex: 1000,
+            }}
+            onClick={() => setDrawerVisible(true)}
+          />
         )}
-      </div>
+      </Row>
+
+
+      {/* Drawer Navigasi Section untuk Mobile */}
+      <Drawer
+        title="Navigasi Section"
+        placement="bottom"
+        closable
+        onClose={() => setDrawerVisible(false)}
+        open={drawerVisible}
+      >
+        <Space direction="vertical" style={{ width: "100%" }}>
+          {sectionData.map((section, index) => (
+            <Button
+              key={index}
+              type={selectedSectionIndex === index ? "primary" : "default"}
+              onClick={() => {
+                setSelectedSectionIndex(index);
+                setSelectedQuestion(0);
+                setDrawerVisible(false);
+              }}
+              block
+            >
+              {section.type}
+            </Button>
+          ))}
+        </Space>
+      </Drawer>
+
+      {/* Tombol Kirim Jawaban */}
+      {isAllSectionsCompleted && (
+        <Button
+          type="primary"
+          onClick={showConfirmSubmit}
+          style={{
+            marginTop: "20px",
+            width: screens.xs ? "100%" : "auto",
+            display: "block",
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+          loading={loading}
+        >
+          Kirim Jawaban
+        </Button>
+      )}
     </div>
   );
 }

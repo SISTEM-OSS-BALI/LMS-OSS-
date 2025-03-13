@@ -51,6 +51,7 @@ export default function HistoryTestComponent() {
           test
             ? [
                 <Link
+                  key={test.placement_test_id}
                   href={`/teacher/dashboard/history-test/${student_id}/${test.placement_test_id}`}
                 >
                   Selengkapnya

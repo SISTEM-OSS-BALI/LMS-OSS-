@@ -21,6 +21,7 @@ export const useMockTestViewModel = () => {
   const [selectedMockTest, setSelectedMockTest] = useState<
     MockTest | null | undefined
   >();
+  const [qrModalVisible, setQrModalVisible] = useState(false);
 
   const handleOpenModal = () => {
     setIsModalVisible(true);
@@ -92,6 +93,23 @@ export const useMockTestViewModel = () => {
     }
   };
 
+  const handleGenerateQRCode = (mock_test_id: string) => {
+    const selectMockTest = mockTestData?.data.find(
+      (mock) => mock.mock_test_id === mock_test_id
+    );
+    setSelectedMockTest(selectMockTest);
+    setQrModalVisible(true);
+  };
+
+  const handleOpenModalQr = () => {
+    setQrModalVisible(true);
+  };
+
+  const handleCancelOpenModalQr = () => {
+    setQrModalVisible(false);
+    setSelectedMockTest(null);
+  };
+
   return {
     mockTestData,
     mockTestDataLoading,
@@ -103,6 +121,10 @@ export const useMockTestViewModel = () => {
     handleEdit,
     selectedMockTest,
     loading,
-    handleDelete
+    handleDelete,
+    handleGenerateQRCode,
+    handleCancelOpenModalQr,
+    qrModalVisible,
+    handleOpenModalQr,
   };
 };

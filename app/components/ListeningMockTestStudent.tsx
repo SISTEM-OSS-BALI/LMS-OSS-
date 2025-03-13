@@ -75,12 +75,12 @@ export default function ListeningMockTestStudent({
       >
         <iframe
           src={directAudioUrl}
-          width="450"
-          height="60"
           style={{
             border: "none",
             borderRadius: "8px",
             backgroundColor: "#fff",
+            maxWidth: "300px",
+            maxHeight: "60px",
           }}
           allow="autoplay"
           sandbox="allow-scripts allow-same-origin"

@@ -103,7 +103,6 @@ export const useMeetings = () => {
 
   const handleStartTest = (test: any) => {
     setSelectedTest(test);
-    console.log(selectedTest);
     setIsTestModalVisible(true);
   };
 
@@ -157,13 +156,10 @@ export const useMeetings = () => {
   const checkMeetingToday = () => {
     const today = dayjs().format("YYYY-MM-DD");
 
-    const isMeetingToday = showMeetingById?.data.map(
+    return showMeetingById?.data.some(
       (meeting: any) => dayjs(meeting.dateTime).format("YYYY-MM-DD") === today
     );
-
-    return isMeetingToday;
   };
-
 
   // Format events
   const events =

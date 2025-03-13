@@ -16,10 +16,13 @@ import {
   Form,
   Rate,
   Input,
+  Grid,
 } from "antd";
 const { Text } = Typography;
 import generateCertificate from "@/app/lib/utils/generateCertificate";
 import Link from "next/link";
+
+const { useBreakpoint } = Grid;
 
 const { Title } = Typography;
 
@@ -46,6 +49,8 @@ export default function CertificateComponent() {
     }
   }, [certificate, evaluationData]);
 
+  const screens = useBreakpoint();
+
   return (
     <div style={{ padding: "24px", textAlign: "center" }}>
       <Title level={3} style={{ marginBottom: "20px", color: "#1890ff" }}>
@@ -62,13 +67,13 @@ export default function CertificateComponent() {
         <Row gutter={[24, 24]} justify="center">
           <Col xs={24} md={8}>
             <Card
-              title="Status Sertifikat"
+              title={<Text strong>Status Sertifikat</Text>}
               style={{
                 borderRadius: "10px",
                 textAlign: "left",
-                height: "100%",
-                padding: "16px",
+                padding: screens.xs ? "12px" : "16px",
                 boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                width: "100%",
               }}
             >
               <Space
@@ -76,44 +81,66 @@ export default function CertificateComponent() {
                 size="middle"
                 style={{ width: "100%" }}
               >
+                {/* Status Meeting */}
                 <Tag
                   color={certificate.is_complated_meeting ? "green" : "red"}
                   style={{
                     fontSize: "16px",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    textAlign: "center",
                     width: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: screens.xs ? "wrap" : "nowrap",
                   }}
                 >
-                  <Text strong>Melakukan Jadwal Pertemuan: </Text>
+                  <Text strong>Melakukan Jadwal Pertemuan:</Text>
                   {certificate.is_complated_meeting ? (
-                    "Selesai"
+                    <Text strong style={{ color: "green" }}>
+                      Selesai
+                    </Text>
                   ) : (
-                    <Link
-                      href="/student/dashboard/meeting"
-                      style={{ color: "#1890ff" }}
-                    >
-                      Selesaikan
+                    <Link href="/student/dashboard/meeting">
+                      <Button
+                        type="link"
+                        style={{ padding: 0, color: "#1890ff" }}
+                      >
+                        Selesaikan
+                      </Button>
                     </Link>
                   )}
                 </Tag>
 
+                {/* Status Testimoni */}
                 <Tag
                   color={certificate.is_complated_testimoni ? "green" : "red"}
                   style={{
                     fontSize: "16px",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    textAlign: "center",
                     width: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: screens.xs ? "wrap" : "nowrap",
                   }}
                 >
-                  <Text strong>Melakukan Testimoni: </Text>
+                  <Text strong>Melakukan Testimoni:</Text>
                   {certificate.is_complated_testimoni ? (
-                    "Selesai"
+                    <Text strong style={{ color: "green" }}>
+                      Selesai
+                    </Text>
                   ) : (
-                    <Button danger onClick={() => handleOpenModalTestimoni()}>
+                    <Button
+                      danger
+                      onClick={handleOpenModalTestimoni}
+                      size={screens.xs ? "small" : "middle"}
+                      style={{
+                        minWidth: screens.xs ? "100px" : "120px",
+                        fontSize: screens.xs ? "14px" : "16px",
+                      }}
+                    >
                       Selesaikan
                     </Button>
                   )}

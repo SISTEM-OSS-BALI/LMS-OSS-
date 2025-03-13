@@ -18,6 +18,8 @@ export default function AuthWrapper({
     "/reset-password",
     "/free-placement-test",
     "/free-placement-test/result",
+    "free-mock-test",
+    "free-mock-test/result",
   ];
   const shouldProtect = !authRoutes.some((route) => {
     const regex = new RegExp(`^${route}(/.*)?$`);

@@ -12,7 +12,11 @@ import {
 } from "antd";
 import { usePlacementTestViewModel } from "./usePlacementTestViewModel";
 import { useRandomBgCourse } from "@/app/lib/utils/useRandomBgCourse";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  QrcodeOutlined,
+} from "@ant-design/icons";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import { useRef } from "react";
@@ -91,7 +95,6 @@ export default function PlacementTestComponent() {
     }
   };
 
-
   const confirmDelete = (placement_id: string) => {
     Modal.confirm({
       title: "Yakin menghapus data ini?",
@@ -142,20 +145,6 @@ export default function PlacementTestComponent() {
                 >
                   Detail
                 </Link>,
-                <Button
-                  key={`qr-${test.placement_test_id}`}
-                  type="primary"
-                  style={{
-                    width: "90%",
-                    margin: "0 auto",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  onClick={() => handleGenerateQRCode(test.placement_test_id)}
-                >
-                  Generate QR Code
-                </Button>,
               ]}
               style={{ width: 300, position: "relative" }}
             >
@@ -181,6 +170,13 @@ export default function PlacementTestComponent() {
                   shape="circle"
                   icon={<DeleteOutlined />}
                   onClick={() => confirmDelete(test.placement_test_id)}
+                />
+                <Button
+                  key={`qr-${test.placement_test_id}`}
+                  type="default"
+                  shape="circle"
+                  icon={<QrcodeOutlined />}
+                  onClick={() => handleGenerateQRCode(test.placement_test_id)}
                 />
               </div>
 

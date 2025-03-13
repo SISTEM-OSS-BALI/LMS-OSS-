@@ -40,6 +40,8 @@ import CustomerServiceChat from "@/app/components/CustomerService";
 
 const { useBreakpoint } = Grid;
 
+const { Text } = Typography;
+
 export default function MeetingComponent() {
   const {
     handleDateClick,
@@ -151,7 +153,7 @@ export default function MeetingComponent() {
   };
 
   return (
-    <div style={{ padding: "24px" }}>
+    <div style={{ padding: screens.xs ? "0px" : "24px" }}>
       <Card
         style={{
           marginBottom: "20px",
@@ -170,14 +172,26 @@ export default function MeetingComponent() {
             { title: "Berhasil" },
           ]}
         />
-        <Title level={screens.xs ? 4 : 3}>Pilih Guru</Title>
+        <Title
+          level={screens.xs ? 4 : 3}
+          style={{ textAlign: screens.xs ? "center" : "left" }}
+        >
+          Pilih Guru
+        </Title>
         <CustomerServiceChat />
         <Divider />
 
         {isLoadingMeeting ? (
           <Skeleton active paragraph={{ rows: 4 }} />
         ) : (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "16px",
+              justifyContent: screens.xs ? "center" : "flex-start",
+            }}
+          >
             {dataTeacher?.data.map((teacher) => (
               <Card
                 key={teacher.user_id}
@@ -229,9 +243,14 @@ export default function MeetingComponent() {
       </Card>
 
       <div style={{ marginTop: "50px" }}>
-        <Row gutter={30}>
+        <Row gutter={[30, 30]}>
           <Col md={16}>
-            <Title level={3}>Pilih Tanggal</Title>
+            <Title
+              level={3}
+              style={{ textAlign: screens.xs ? "center" : "left" }}
+            >
+              Pilih Tanggal
+            </Title>
             <Card
               style={{
                 marginTop: "20px",
@@ -244,7 +263,7 @@ export default function MeetingComponent() {
               ) : (
                 <FullCalendar
                   plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                  initialView={screens.xs ? "timeGridDay" : "dayGridMonth"}
+                  initialView={screens.xs ? "" : "dayGridMonth"}
                   selectable={true}
                   editable={true}
                   dateClick={handleDateClick}
@@ -257,22 +276,15 @@ export default function MeetingComponent() {
               )}
             </Card>
           </Col>
-          <Col md={8}>
-            <Flex justify={"space-between"}>
-              <Title level={3}>Reschedule Jadwal</Title>
-              <Tooltip title="Tutorial">
-                <Button
-                  type="primary"
-                  shape="round"
-                  onClick={() => handleOpenModalInfo()}
-                >
-                  <Icon component={InfoIcon} />
-                </Button>
-              </Tooltip>
-            </Flex>
+          <Col xs={24} md={8}>
+            <Title
+              level={screens.xs ? 4 : 3}
+              style={{ textAlign: screens.xs ? "center" : "left" }}
+            >
+              Reschedule Jadwal
+            </Title>
             <Card
               style={{
-                marginTop: "20px",
                 borderRadius: "8px",
                 overflow: "hidden",
                 boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
@@ -281,16 +293,16 @@ export default function MeetingComponent() {
               <DatePicker
                 placeholder="Pilih Tanggal"
                 onChange={handleChangeDate}
-                style={{ width: "100%", margin: "20px 0" }}
+                style={{ width: "100%", marginBottom: "16px" }}
               />
               {isLoadingMeetingByDate ? (
-                <Skeleton active paragraph={{ rows: 4 }} />
+                <Skeleton active paragraph={{ rows: 3 }} />
               ) : showMeetingByDate && showMeetingByDate.data.length > 0 ? (
                 showMeetingByDate.data.map((meeting) => (
                   <Card
                     key={meeting.meeting_id}
                     style={{
-                      marginBottom: "20px",
+                      marginBottom: "16px",
                       borderRadius: "8px",
                       overflow: "hidden",
                     }}
@@ -302,9 +314,9 @@ export default function MeetingComponent() {
                       color="blue"
                     >
                       <div style={{ padding: "16px" }}>
-                        <Typography.Text strong style={{ fontSize: "16px" }}>
+                        <Text strong style={{ fontSize: "16px" }}>
                           {dayjs.utc(meeting.dateTime).format("DD MMMM YYYY")}
-                        </Typography.Text>
+                        </Text>
                         <div style={{ marginTop: "10px" }}>
                           <Button
                             type="primary"

@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
     const getCourses = await getData(
       "course",
       {
-        where: {
-          teacher_id: user_id,
-        },
+        // where: {
+        //   teacher_id: user_id,
+        // },
         include: {
           students: true,
         },

@@ -1,7 +1,8 @@
 import React from "react";
-import { Button, Card, Divider, Radio, Typography } from "antd";
+import { Button, Card, Divider, Radio, Typography, Grid } from "antd";
 
 const { Title } = Typography;
+const { useBreakpoint } = Grid;
 
 interface MultipleChoiceProps {
   data: {
@@ -26,12 +27,13 @@ const MultipleChoiceReview: React.FC<MultipleChoiceProps> = ({
   studentAnswers,
   onBackToDescription,
 }) => {
-  if (!data || data.length === 0) {
-    return <div>Loading...</div>;
-  }
+  const screens = useBreakpoint();
+  // if (!data || data.length === 0) {
+  //   return <div>Loading...</div>;
+  // }
 
   return (
-    <div>
+    <div style={{ padding: screens.xs ? "20px" : "0px" }}>
       <Title level={3}>Review Assigment</Title>
       <Button type="primary" onClick={onBackToDescription}>
         Kembali

@@ -14,8 +14,6 @@ export async function GET(
     return user;
   }
 
-  console.log("Fetching Base Mock Test for Mock Test ID:", params.mock_test_id);
-
   try {
     // ✅ Ambil semua data baseMockTest berdasarkan mock_test_id
     const baseMockTests = await prisma.baseMockTest.findMany({

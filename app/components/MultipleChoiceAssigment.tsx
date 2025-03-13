@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Card,
@@ -13,6 +12,9 @@ import {
   Table,
   Popconfirm,
   Flex,
+  Grid,
+  Divider,
+  Space,
 } from "antd";
 import { RadioChangeEvent } from "antd";
 import { crudService } from "../lib/services/crudServices";
@@ -22,11 +24,12 @@ import MultipleChoiceReview from "./MultipleChoiceReview";
 import Loading from "./Loading";
 import { MultipleChoice } from "../model/assigment";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 interface MultipleChoiceAssignmentProps {
   description: string;
-  data : MultipleChoice[];
+  data: MultipleChoice[];
   timeLimit: number;
   assignment_id: string;
   base_id: string;
@@ -47,6 +50,7 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
   mutate,
   onComplete,
 }) => {
+  const screens = useBreakpoint();
   const [selectedOptions, setSelectedOptions] = useState<{
     [key: string]: string;
   }>({});
@@ -72,6 +76,17 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
     if (showReview) setIsTimeRunning(false);
   }, [showReview]);
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isTimeRunning && timeRemaining > 0) {
+      timer = setTimeout(() => setTimeRemaining((prev) => prev - 1), 1000);
+    } else if (timeRemaining === 0) {
+      message.warning("Waktu habis, jawaban disubmit otomatis.");
+      handleSubmit();
+    }
+    return () => clearTimeout(timer);
+  }, [isTimeRunning, timeRemaining]);
+
   const handleOptionChange = (mcq_id: string, event: RadioChangeEvent) => {
     setSelectedOptions((prev) => ({
       ...prev,
@@ -91,7 +106,7 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
         payload
       );
       mutate();
-      notification.success({ message: "Jawaban Berhasil Di Submit" });
+      notification.success({ message: "Jawaban Berhasil Disubmit" });
       setShowQuestions(false);
       setShowReview(false);
       if (onComplete) onComplete();
@@ -100,37 +115,18 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
     }
   };
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isTimeRunning && timeRemaining > 0) {
-      timer = setTimeout(() => setTimeRemaining((prev) => prev - 1), 1000);
-    } else if (timeRemaining === 0) {
-      message.warning("Waktu habis, jawaban disubmit otomatis.");
-      handleSubmit();
-    }
-    return () => clearTimeout(timer);
-  }, [isTimeRunning, timeRemaining]);
-
   const handleStart = () => {
     setSelectedOptions({});
     setCurrentQuestionIndex(0);
-    setTimeRemaining(timeLimit * 60); 
+    setTimeRemaining(timeLimit * 60);
     setShowQuestions(true);
     setIsTimeRunning(true);
   };
 
-
   const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
+    const minutes = Math.floor(seconds / 60);
     const secondsRemaining = seconds % 60;
-    return `${hours > 0 ? `${hours}:` : ""}${
-      minutes < 10 ? "0" : ""
-    }${minutes}:${secondsRemaining < 10 ? "0" : ""}${secondsRemaining}`;
-  };
-
-  const handleNavigationClick = (index: number) => {
-    setCurrentQuestionIndex(index);
+    return `${minutes}:${secondsRemaining < 10 ? "0" : ""}${secondsRemaining}`;
   };
 
   const handleReview = async () => {
@@ -171,39 +167,33 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
   };
 
   return (
-    <div
-      style={{
-        paddingLeft: "100px",
-        paddingRight: "100px",
-        paddingTop: "20px",
-      }}
-    >
+    <div style={{ padding: screens.xs ? "0px" : "50px" }}>
       {!showQuestions && !showReview ? (
-        <div>
-          <div
-            dangerouslySetInnerHTML={{ __html: description }}
-            style={{
-              padding: "10px",
-              background: "#fff",
-            }}
-          />
-          <Title level={5} style={{ marginBottom: "10px" }}>
-            Waktu pengerjaan: {timeLimit} menit
+        <div style={{ padding: screens.xs ? "20px" : "0px" }}>
+          <Text style={{ fontSize: "16px", color: "#595959" }}>
+            {/* Gunakan dangerouslySetInnerHTML hanya jika ada HTML di dalam description */}
+            <span dangerouslySetInnerHTML={{ __html: description }} />
+          </Text>
+          <Divider />
+          <Title level={5}>
+            Waktu pengerjaan:{" "}
+            <span style={{ color: "#1890ff" }}>{timeLimit} menit</span>
           </Title>
-
-          {pointStudent?.completed === false && (
-            <Title level={5}>Nilai Kamu Kurang</Title>
-          )}
 
           {(pointStudent?.completed === false || !pointStudent) && (
             <Flex justify="end">
-              <Button type="primary" onClick={handleStart}>
+              <Button
+                type="primary"
+                size="large"
+                onClick={handleStart}
+                style={{ backgroundColor: "#1890ff", borderRadius: "6px" }}
+              >
                 Mulai
               </Button>
             </Flex>
           )}
-
-          {pointStudent?.completed === true && (
+          
+          {pointStudent?.completed && (
             <Table
               columns={columns}
               dataSource={[
@@ -214,108 +204,143 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
                 },
               ]}
               pagination={false}
-              style={{ marginBottom: "20px" }}
+              style={{ marginTop: "20px" }}
             />
           )}
         </div>
       ) : showReview && studentAnswer ? (
-        studentAnswer ? (
-          <MultipleChoiceReview
-            data={shuffledData}
-            studentAnswers={
-              Array.isArray(studentAnswer)
-                ? studentAnswer.reduce((acc: any, answer: any) => {
-                    acc[answer.mcq_id] = answer.studentAnswer;
-                    return acc;
-                  }, {} as { [key: string]: string })
-                : studentAnswer
-            }
-            onBackToDescription={handleBackToDescription}
-          />
-        ) : (
-          <Loading />
-        )
+        <MultipleChoiceReview
+          data={shuffledData}
+          studentAnswers={studentAnswer}
+          onBackToDescription={handleBackToDescription}
+        />
       ) : (
-        <div>
-          <div
+        <div style={{ padding: screens.xs ? "20px" : "0px" }}>
+          {/* Timer dengan desain lebih menarik */}
+          <Title level={4} style={{ textAlign: "center", fontWeight: "bold" }}>
+            Sisa Waktu:{" "}
+            <span style={{ color: "#d48806" }}>
+              {formatTime(timeRemaining)}
+            </span>
+          </Title>
+
+          {/* Navigasi soal */}
+          <Flex justify="center" gap={8} style={{ marginBottom: "16px" }}>
+            {shuffledData.map((_, index) => (
+              <Button
+                key={index}
+                shape="round"
+                size="large"
+                style={{
+                  backgroundColor: selectedOptions[shuffledData[index].mcq_id]
+                    ? "#d48806"
+                    : "#f5f5f5",
+                  color: selectedOptions[shuffledData[index].mcq_id]
+                    ? "#fff"
+                    : "#333",
+                  border: "1px solid #d9d9d9",
+                  fontWeight: "bold",
+                }}
+                onClick={() => setCurrentQuestionIndex(index)}
+              >
+                {index + 1}
+              </Button>
+            ))}
+          </Flex>
+
+          {/* Soal & opsi jawaban */}
+          <Card
             style={{
-              marginBottom: "20px",
-              border: `2px solid ${
-                timeRemaining > timeLimit * 30 ? "green" : "red"
-              }`,
-              padding: "10px",
-              borderRadius: "8px",
+              marginTop: "16px",
+              borderRadius: "12px",
+              padding: "20px",
+              boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
             }}
           >
-            <p style={{ fontWeight: "bold" }}>
-              Sisa Waktu: {formatTime(timeRemaining)}
-            </p>
-          </div>
-          <Row gutter={[16, 16]} style={{ marginBottom: "20px" }}>
-            {shuffledData.map((_, index) => (
-              <Col key={index}>
-                <Button
-                  type={
-                    selectedOptions[shuffledData[index].mcq_id]
-                      ? "primary"
-                      : "default"
-                  }
-                  onClick={() => handleNavigationClick(index)}
-                >
-                  {index + 1}
-                </Button>
-              </Col>
-            ))}
-          </Row>
-          {shuffledData.length > 0 && (
-            <Card style={{ marginBottom: "20px" }}>
-              <Title level={4}>
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: shuffledData[currentQuestionIndex].question,
-                  }}
-                />
-              </Title>
-              <Radio.Group
-                onChange={(event) =>
-                  handleOptionChange(
-                    shuffledData[currentQuestionIndex].mcq_id,
-                    event
-                  )
-                }
-                value={
-                  selectedOptions[shuffledData[currentQuestionIndex].mcq_id]
-                }
+            <Title
+              level={5}
+              style={{ marginBottom: "10px", fontWeight: "bold" }}
+            >
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: shuffledData[currentQuestionIndex]?.question,
+                }}
+              />
+            </Title>
+
+            <Radio.Group
+              onChange={(e) =>
+                handleOptionChange(shuffledData[currentQuestionIndex].mcq_id, e)
+              }
+              style={{ width: "100%" }}
+            >
+              <Space
+                direction="vertical"
+                size="large"
+                style={{ width: "100%" }}
               >
-                {shuffledData[currentQuestionIndex].options.map(
-                  (option: any, index: any) => (
-                    <Radio
+                {shuffledData[currentQuestionIndex]?.options.map(
+                  (option, index) => (
+                    <Radio.Button
                       key={index}
                       value={option}
-                      style={{ display: "block" }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        fontSize: "16px",
+                        border: "1px solid #d9d9d9",
+                        background:
+                          selectedOptions[
+                            shuffledData[currentQuestionIndex].mcq_id
+                          ] === option
+                            ? "#d48806"
+                            : "#fff",
+                        color:
+                          selectedOptions[
+                            shuffledData[currentQuestionIndex].mcq_id
+                          ] === option
+                            ? "#fff"
+                            : "#333",
+                      }}
                     >
                       {option}
-                    </Radio>
+                    </Radio.Button>
                   )
                 )}
-              </Radio.Group>
-            </Card>
-          )}
-          <Popconfirm
-            title="Apakah Anda yakin ingin submit jawaban Anda?"
-            onConfirm={handleSubmit}
-            okText="Ya"
-            cancelText="Tidak"
-          >
-            <Button
-              type="primary"
-              disabled={
-                Object.keys(selectedOptions).length !== shuffledData.length
-              }
+              </Space>
+            </Radio.Group>
+          </Card>
+
+          {/* Tombol Submit */}
+          <Flex justify="center" style={{ marginTop: "20px" }}>
+            <Popconfirm
+              title="Apakah Anda yakin ingin submit jawaban Anda?"
+              onConfirm={handleSubmit}
+              okText="Ya"
+              cancelText="Tidak"
             >
-              Submit
-            </Button>
-          </Popconfirm>
+              <Button
+                type="primary"
+                size="large"
+                shape="round"
+                disabled={
+                  Object.keys(selectedOptions).length !== shuffledData.length
+                }
+                style={{
+                  backgroundColor: "#d48806",
+                  borderColor: "#d48806",
+                  color: "#fff",
+                  fontWeight: "bold",
+                  padding: "10px 20px",
+                }}
+              >
+                Submit Jawaban
+              </Button>
+            </Popconfirm>
+          </Flex>
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@
 import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { message } from "antd";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 
@@ -63,7 +63,9 @@ export const useMockTestViewModel = () => {
   const selectedMockId = searchParams.get("testId") || "";
   const time = Number(searchParams.get("t")) || 0;
   const access_id = searchParams.get("accessId") || "";
-
+  const router = useRouter();
+  const [audioBlob, setAudioBlob] = useState<string | undefined>(undefined);
+  const [speakingId, setSpeakingId] = useState<string | undefined>(undefined);
   const { data: baseMockTestData, isLoading: baseMockTestDataLoading } =
     useSWR<BaseMockTestResponse>(
       selectedMockId
@@ -121,14 +123,25 @@ export const useMockTestViewModel = () => {
     };
     setAnswersBySection(updatedAnswers);
     if (typeof window !== "undefined") {
-      sessionStorage.setItem("answersBySection", JSON.stringify(updatedAnswers));
+      sessionStorage.setItem(
+        "answersBySection",
+        JSON.stringify(updatedAnswers)
+      );
     }
   };
 
   // 🔹 Fungsi untuk submit audio
-  const handleSubmitAudio = (audioBlob: Blob) => {
-    console.log("Audio yang dikirimkan:", audioBlob);
-    message.success("Audio berhasil dikirim!");
+  const handleSubmitAudio = (blob: Blob, speaking_id: string) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+
+    reader.onloadend = () => {
+      const base64Audio = reader.result as string; // Simpan hasil konversi
+      setAudioBlob(base64Audio);
+      setSpeakingId(speaking_id);
+      console.log(speakingId);
+      message.success("Audio berhasil dikonversi dan disimpan!");
+    };
   };
 
   // 🔹 Fungsi Kirim Semua Jawaban ke Backend
@@ -138,12 +151,19 @@ export const useMockTestViewModel = () => {
       answers: answersBySection,
       testId: selectedMockId,
       accessId: access_id,
+      audio: audioBlob,
+      speaking_id: speakingId,
     };
+    console.log(payload);
     try {
-      await crudService.post(
+      const response = await crudService.post(
         "/api/student/answerMockTest/studentSubmitAnswer",
         payload
       );
+      if (response.status === 200 && !response.error) {
+        sessionStorage.setItem("mockTestResult", JSON.stringify(response.data));
+        router.push("/student/dashboard/mock-test/result");
+      }
       message.success("Seluruh jawaban telah dikirim!");
       if (typeof window !== "undefined") {
         sessionStorage.removeItem("answersBySection");
@@ -177,7 +197,7 @@ export const useMockTestViewModel = () => {
       }, 1000);
       return () => clearInterval(timer);
     } else if (remainingTime === 0) {
-      handleFinalSubmit(); 
+      handleFinalSubmit();
     }
   }, [remainingTime]);
 

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Layout,
@@ -7,11 +10,14 @@ import {
   Button,
   ConfigProvider,
   Image,
+  Grid,
+  Drawer,
+  Typography,
 } from "antd";
 import Loading from "@/app/components/Loading";
 import CustomAlert from "@/app/components/CustomAlert";
 import MultipleChoiceAssignment from "@/app/components/MultipleChoiceAssigment";
-import Icon, { CheckCircleTwoTone } from "@ant-design/icons";
+import Icon, { CheckCircleTwoTone, MenuOutlined } from "@ant-design/icons";
 import { useMaterialViewModel } from "./useMaterialViewModel";
 import { Header } from "antd/es/layout/layout";
 import { BackIcon, NextIcon } from "@/app/components/Icon";
@@ -19,12 +25,16 @@ import { primaryColor } from "@/app/lib/utils/colors";
 import ReactPlayer from "react-player";
 
 const { Content, Sider, Footer } = Layout;
+const { useBreakpoint } = Grid;
+const { Title } = Typography;
 
 export default function ShowMaterialComponent() {
+  const screens = useBreakpoint();
   const query = useParams();
   const router = useRouter();
   const base_id = query.base_id as string;
   const course_id = query.course_id as string;
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   const {
     materialError,
@@ -94,7 +104,25 @@ export default function ShowMaterialComponent() {
       }}
     >
       <Layout style={{ minHeight: "100vh", background: "#fff" }}>
-        <Header style={{ background: "#fff", padding: "0 20px" }}>
+        {/* HEADER */}
+        <Header
+          style={{
+            background: "#fff",
+            padding: screens.xs ? "10px 16px" : "0 20px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {/* Tombol menu untuk mobile */}
+          {screens.xs && (
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={() => setDrawerVisible(true)}
+            />
+          )}
+
           <Button
             type="primary"
             size="large"
@@ -104,8 +132,15 @@ export default function ShowMaterialComponent() {
             Halaman Utama
           </Button>
         </Header>
+
         <Layout>
-          <Content style={{ margin: "20px", background: "#fff" }}>
+          {/* MAIN CONTENT */}
+          <Content
+            style={{
+              margin: screens.xs ? "0px" : "20px",
+              background: "#fff",
+            }}
+          >
             {!material && !assignment && <Loading />}
             {material && (
               <div style={{ marginBottom: "20px" }}>
@@ -132,9 +167,8 @@ export default function ShowMaterialComponent() {
                       key={idx}
                       style={{
                         marginBottom: "20px",
-                        marginTop: "20px",
-                        paddingLeft: 200,
-                        paddingRight: 200,
+                        paddingLeft: screens.xs ? "10px" : "200px",
+                        paddingRight: screens.xs ? "10px" : "200px",
                       }}
                     >
                       {item.type === "text" && (
@@ -148,43 +182,27 @@ export default function ShowMaterialComponent() {
                         />
                       )}
                       {item.type === "url" && (
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
+                        <div style={{ textAlign: "center" }}>
                           {ReactPlayer.canPlay(item.value!) ? (
                             <ReactPlayer
                               url={item.value}
                               controls
-                              width={700}
-                              height={500}
+                              width={screens.xs ? "100%" : 700}
+                              height={screens.xs ? 200 : 500}
                             />
                           ) : (
-                            <a
-                              href={item.value}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
+                            <a href={item.value} target="_blank">
                               {item.value}
                             </a>
                           )}
                         </div>
                       )}
                       {item.type === "image" && (
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
+                        <div style={{ textAlign: "center" }}>
                           <Image
                             src={item.value}
                             alt="Image"
-                            height={500}
+                            height={screens.xs ? 200 : 500}
                             style={{ maxWidth: "100%" }}
                           />
                         </div>
@@ -197,67 +215,89 @@ export default function ShowMaterialComponent() {
             <div>{renderAssignment()}</div>
           </Content>
 
-          <Sider
-            width={350}
-            style={{
-              background: "#fff",
-              paddingRight: "30px",
-              paddingLeft: "30px",
-              position: "sticky",
-              top: 0,
-              height: "100vh",
-              overflow: "auto",
-            }}
-          >
-            <div
+          {/* SIDEBAR MENU */}
+          {!screens.xs ? (
+            <Sider
+              width={300}
               style={{
-                marginBottom: "20px",
-                padding: "10px",
-                background: "#ffff",
-                borderRadius: "5px",
+                background: "#fff",
+                padding: "30px",
+                minHeight: "100vh",
+                overflow: "auto",
               }}
             >
-              <h1>Progress</h1>
-              <Progress
-                percent={progressCourse?.progress ?? 0}
-                status="active"
-                showInfo={true}
-                strokeColor="#4CAF50"
-              />
-            </div>
-            <Divider />
-            <h2>Daftar Materi</h2>
-            <Menu
-              mode="inline"
-              selectedKeys={[base_id]}
-              onClick={({ key }) =>
-                router.push(
-                  `/student/dashboard/courses/${course_id}/materials/${key}`
-                )
-              }
+              <Title level={4}>Daftar Materi</Title>
+              <Menu
+                mode="inline"
+                selectedKeys={[base_id]}
+                onClick={({ key }) =>
+                  router.push(
+                    `/student/dashboard/courses/${course_id}/materials/${key}`
+                  )
+                }
+              >
+                {materialBases!.map((base) => {
+                  const isCompleted = progressMaterialData?.data.some(
+                    (progress: any) =>
+                      progress.base_id === base.base_id && progress.completed
+                  );
+                  return (
+                    <Menu.Item
+                      key={base.base_id}
+                      icon={
+                        isCompleted ? (
+                          <CheckCircleTwoTone
+                            style={{ color: "green", marginRight: 10 }}
+                          />
+                        ) : null
+                      }
+                    >
+                      {base.title}
+                    </Menu.Item>
+                  );
+                })}
+              </Menu>
+            </Sider>
+          ) : (
+            <Drawer
+              title="Daftar Materi"
+              placement="left"
+              closable
+              onClose={() => setDrawerVisible(false)}
+              open={drawerVisible}
             >
-              {materialBases!.map((base) => {
-                const isCompleted = progressMaterialData?.data.some(
-                  (progress: any) =>
-                    progress.base_id === base.base_id && progress.completed
-                );
-                return (
-                  <Menu.Item
-                    key={base.base_id}
-                    icon={
-                      isCompleted ? (
-                        <CheckCircleTwoTone
-                          style={{ color: "green", marginRight: 10 }}
-                        />
-                      ) : null
-                    }
-                  >
-                    {base.title}
-                  </Menu.Item>
-                );
-              })}
-            </Menu>
-          </Sider>
+              <Menu
+                mode="inline"
+                selectedKeys={[base_id]}
+                onClick={({ key }) =>
+                  router.push(
+                    `/student/dashboard/courses/${course_id}/materials/${key}`
+                  )
+                }
+              >
+                {materialBases!.map((base) => {
+                  const isCompleted = progressMaterialData?.data.some(
+                    (progress: any) =>
+                      progress.base_id === base.base_id && progress.completed
+                  );
+                  return (
+                    <Menu.Item
+                      key={base.base_id}
+                      icon={
+                        isCompleted ? (
+                          <CheckCircleTwoTone
+                            style={{ color: "green", marginRight: 10 }}
+                          />
+                        ) : null
+                      }
+                    >
+                      {base.title}
+                    </Menu.Item>
+                  );
+                })}
+              </Menu>
+            </Drawer>
+          )}
         </Layout>
         <Footer
           style={{

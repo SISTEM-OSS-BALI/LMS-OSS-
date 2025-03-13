@@ -5,6 +5,8 @@ import {
   BookOutlined,
   CalendarFilled,
   CheckCircleFilled,
+  FileOutlined,
+  FileTextOutlined,
   LogoutOutlined,
   PieChartOutlined,
   ScheduleFilled,
@@ -65,6 +67,9 @@ const menuMap: { [key: string]: string } = {
     "/admin/dashboard/student/data-student",
   "/admin/dashboard/student/calendar/confirm-account":
     "/admin/dashboard/student/calendar/confirm-account",
+  "/admin/dashboard/report/placement-test":
+    "/admin/dashboard/report/placement-test",
+  "/admin/dashboard/report/mock-test": "/admin/dashboard/report/mock-test",
 };
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
@@ -247,6 +252,20 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
       "/admin/dashboard/queue",
       <TableOutlined />
     ),
+    getItem(<span>Laporan</span>, "/admin/dashboard/report", <FileOutlined />, [
+      getItem(
+        <Link href="/admin/dashboard/report/placement-test">
+          Placement Test
+        </Link>,
+        "/admin/dashboard/report/placement-test",
+        <FileTextOutlined />
+      ),
+      getItem(
+        <Link href="/admin/dashboard/report/mock-test">Mock Test</Link>,
+        "/admin/dashboard/report/mock-test",
+        <FileTextOutlined />
+      ),
+    ]),
   ];
 
   const determineSelectedKeys = (pathname: string): string[] => {

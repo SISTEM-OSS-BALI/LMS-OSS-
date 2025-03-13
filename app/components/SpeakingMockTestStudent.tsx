@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Card, Button, Space, Typography } from "antd";
+import { Card, Button, Space, Typography, message } from "antd";
 import {
   AudioOutlined,
   StopOutlined,
@@ -19,7 +19,7 @@ interface SpeakingMockTest {
 
 interface SpeakingMockTestProps {
   data: SpeakingMockTest;
-  onSubmitAudio: (audioBlob: Blob) => void;
+  onSubmitAudio: (audioBlob: Blob, speaking_id: string) => void;
 }
 
 export default function SpeakingMockTestStudent({
@@ -170,7 +170,13 @@ export default function SpeakingMockTestStudent({
             <Button
               type="primary"
               icon={<UploadOutlined />}
-              onClick={() => onSubmitAudio(audioBlob!)}
+              onClick={() => {
+                if (audioBlob) {
+                  onSubmitAudio(audioBlob, data.speaking_id);
+                } else {
+                  message.error("Audio belum direkam.");
+                }
+              }}
             >
               Submit Recording
             </Button>

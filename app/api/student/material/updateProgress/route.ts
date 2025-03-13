@@ -123,12 +123,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (courseProgress.completed === true) {
-      await prisma.courseEnrollment.update({
+      await prisma.courseEnrollment.updateMany({
         where: {
-          user_id_course_id: {
-            user_id: user.user_id,
-            course_id: course_id,
-          },
+          user_id: user.user_id,
+          course_id: course_id,
         },
         data: {
           completed: true,
