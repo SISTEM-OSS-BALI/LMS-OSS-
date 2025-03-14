@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
 import prisma from "@/lib/prisma";
+import {
+  formatPhoneNumber,
+  sendWhatsAppMessage,
+} from "@/app/lib/utils/notificationHelper";
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { selectedData, placement_test_id, email } = body;
 
-  try {
-    // 🔹 Ambil jumlah total soal dalam placement test
+  const apiKey = process.env.API_KEY_WATZAP!;
+  const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
+  try {
     const user = await prisma.placementTestParticipant.findFirst({
       where: {
         email: email,
@@ -171,6 +177,40 @@ export async function POST(request: NextRequest) {
         level: newLevel,
       },
     });
+
+    const no_tlp = formatPhoneNumber(user?.phone ?? "");
+
+    // 🔹 Kirim notifikasi
+    const message = `
+🌟 *Halo, ${user?.name}!*
+
+Terima kasih telah mengikuti *Mock Test* bersama *One Step Solution (OSS)*. Berikut adalah hasil tes Anda:
+
+📊 *Skor Total:* ${totalScore}  
+📈 *Persentase Skor:* ${percentageScore.toFixed(2)}%  
+🎯 *Level:* ${newLevel}  
+
+🗣 *Feedback Speaking:*  
+${writingFeedback
+  .map((feedback) => `- ${feedback.feedback} (⭐ Skor: ${feedback.score})`)
+  .join("\n")}
+
+📢 *Tingkatkan Kemampuan Bahasa Inggris Anda!*
+Hasil tes menunjukkan bahwa masih ada ruang untuk perbaikan dalam kemampuan bahasa Inggris Anda. Kami sangat menyarankan Anda untuk bergabung dengan *Program Sahabat OSS English Course*! 🚀✨  
+
+✅ *Keuntungan Bergabung:*  
+🌏 Peluang *Kerja di Luar Negeri* dengan gaji dalam *Dollar 💵*  
+🎓 Bisa *Kuliah sambil Berkarier* di luar negeri 🏫✈️  
+
+🔥 Jangan lewatkan kesempatan ini untuk masa depan yang lebih cerah!  
+
+📞 Hubungi kami untuk informasi lebih lanjut. Kami siap membantu Anda! 😊  
+
+Terima kasih,  
+*One Step Solution (OSS)* 🌍✨
+`;
+
+    await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
 
     return NextResponse.json({
       status: 200,

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { createData } from "@/app/lib/db/createData";
-import bcrypt from "bcrypt";
 
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);

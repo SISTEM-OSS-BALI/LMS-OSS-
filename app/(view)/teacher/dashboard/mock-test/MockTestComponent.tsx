@@ -67,22 +67,8 @@ export default function MockTestComponent() {
           const x = (qrSize - logoSize) / 2;
           const y = (qrSize - logoSize) / 2;
 
-          // **Buat logo berbentuk bulat**
-          context.save();
-          context.beginPath();
-          context.arc(
-            x + logoSize / 2,
-            y + logoSize / 2,
-            logoSize / 2,
-            0,
-            Math.PI * 2
-          );
-          context.closePath();
-          context.clip();
-
-          // Gambar logo
+          // Gambar logo tanpa clipping bulat
           context.drawImage(logo, x, y, logoSize, logoSize);
-          context.restore();
 
           // **Simpan QR Code sebagai gambar PNG**
           const link = document.createElement("a");
@@ -191,7 +177,9 @@ export default function MockTestComponent() {
                   </Space>
 
                   {/* Isi Card */}
-                  <h3 style={{ marginBottom: "20px", marginTop: "20px" }}>{item.name}</h3>
+                  <h3 style={{ marginBottom: "20px", marginTop: "20px" }}>
+                    {item.name}
+                  </h3>
 
                   {/* Tombol Detail di Bawah */}
 
