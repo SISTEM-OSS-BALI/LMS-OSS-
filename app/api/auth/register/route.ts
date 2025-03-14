@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
       signature,
     } = body;
 
-    if (!username || !email || !password || !signature) {
+    if (!username || !email || !password) {
       return NextResponse.json(
-        { error: "Username, email, password, and signature are required" },
+        { error: "Username, email, password is required" },
         { status: 400 }
       );
     }
