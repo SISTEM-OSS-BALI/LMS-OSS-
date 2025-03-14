@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
-    return user; // Jika pengguna tidak terautentikasi
+    return user;
   }
 
   const body = await request.json();
