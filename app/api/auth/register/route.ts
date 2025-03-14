@@ -50,22 +50,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const program = await prisma.program.findUnique({
-      where: { program_id },
-    });
+    if (program_id) {
+      const program = await prisma.program.findUnique({
+        where: { program_id },
+      });
+      await prisma.termsAgreement.create({
+        data: {
+          user_id: user.user_id,
+          is_agreed: true,
+          email: user.email,
+          username: user.username,
+          program_name: program?.name ?? "",
+          agreed_at: new Date(),
+          signature_url: signature,
+        },
+      });
+    }
 
     // Simpan persetujuan Terms & Conditions di dalam transaksi
-    await prisma.termsAgreement.create({
-      data: {
-        user_id: user.user_id,
-        is_agreed: true,
-        email: user.email,
-        username: user.username,
-        program_name: program?.name ?? "",
-        agreed_at: new Date(),
-        signature_url: signature,
-      },
-    });
 
     return NextResponse.json({
       status: 200,
