@@ -345,7 +345,7 @@ export default function Register() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                WhatsApp
+                Call Center
               </Link>
             </Flex>
           </Col>

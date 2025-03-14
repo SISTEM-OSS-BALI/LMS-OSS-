@@ -218,7 +218,7 @@ export default function Login() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                WhatsApp
+                Call Center
               </Link>
             </Flex>
           </Col>
