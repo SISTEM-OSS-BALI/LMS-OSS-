@@ -1,6 +1,8 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma"; // Pastikan Prisma client diimport
+import { transcribeAudioFromBase64 } from "@/app/lib/utils/speechToTextHelper";
+import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
 
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
@@ -39,11 +41,27 @@ export async function POST(request: NextRequest) {
 
     let totalQuestionsCount = 0;
 
+    const speakingFeedback: {
+      speaking_id: string;
+      score: number;
+      feedback: string;
+    }[] = [];
+
     // ✅ **Simpan jawaban SPEAKING jika ada**
     if (speaking_id && audio) {
       const speakingTest = baseMockTests.find(
         (section) => section.speaking?.speaking_id === speaking_id
       );
+
+      const transcriptionText = await transcribeAudioFromBase64(audio);
+
+      const evaluationResult = speakingTest?.speaking?.prompt
+        ? await evaluateWritingAnswer(
+            speakingTest.speaking.prompt,
+            transcriptionText
+          )
+        : null;
+      const { aiScore, aiFeedback } = evaluationResult || {};
 
       if (speakingTest) {
         await prisma.studentAnswerMockTest.create({
@@ -52,12 +70,18 @@ export async function POST(request: NextRequest) {
             mock_test_id: testId,
             base_mock_test_id: speakingTest.base_mock_test_id,
             speaking_test_id: speaking_id,
-            studentAnswer: null, // Tidak ada jawaban teks untuk speaking
-            recording_url: audio, // Simpan audio di sini
+            studentAnswer: null,
+            recording_url: audio,
+            feedback: aiFeedback,
             isCorrect: null,
-            score: null,
+            score: aiScore,
             submittedAt: new Date(),
           },
+        });
+        speakingFeedback.push({
+          speaking_id: speaking_id,
+          score: aiScore ?? 0,
+          feedback: aiFeedback ?? "",
         });
       }
     }
@@ -174,12 +198,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       status: 200,
       error: false,
-      data: { totalScore, percentageScore, level: newLevel },
+      data: { totalScore, percentageScore, level: newLevel, speakingFeedback },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
+    console.error("Error accessing database:", error);
+    return new NextResponse(
+      JSON.stringify({ error: "Internal Server Error" }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
   } finally {
     await prisma.$disconnect();

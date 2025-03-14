@@ -95,79 +95,6 @@ export const usePlacementTestViewModel = () => {
     return [];
   }, [currentSection]);
 
-  // Timer countdown
-  useEffect(() => {
-    if (remainingTime > 0) {
-      const timer = setInterval(() => {
-        setRemainingTime((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    } else if (remainingTime === 0) {
-      handleSubmit();
-    }
-  }, [remainingTime]);
-
-  // Format waktu MM:SS
-  const formatTime = useCallback((seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
-  }, []);
-
-  // Navigasi antar soal
-  const handleQuestionClick = useCallback((index: number) => {
-    setCurrentQuestionIndex(index);
-  }, []);
-
-  // Simpan jawaban
-  const handleAnswerChange = useCallback(
-    (questionId: string, answer: string) => {
-      setSelectedAnswers((prev) => ({
-        ...prev,
-        [questionId]: answer,
-      }));
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(
-          "answersPlacementTest",
-          JSON.stringify(selectedAnswers)
-        );
-      }
-    },
-    [selectedAnswers]
-  );
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedTime = Number(sessionStorage.getItem("remainingTimePlacement"));
-      if (!isNaN(savedTime) && savedTime > 0) {
-        setRemainingTime(savedTime);
-      }
-    }
-  }, []);
-
-  // Konfirmasi sebelum mengirim
-  const showConfirmSubmit = () => {
-    const allAnswered = currentQuestions.every(
-      (q: any) => selectedAnswers[q.mc_id || q.writing_id || q.tf_id]
-    );
-
-    if (!allAnswered) {
-      message.warning("Pastikan semua soal telah dijawab!");
-      return;
-    }
-
-    confirm({
-      title: "Konfirmasi Pengiriman",
-      content: "Apakah Anda yakin ingin mengirim jawaban?",
-      okText: "Kirim",
-      cancelText: "Batal",
-      onOk: () => {
-        handleSubmit();
-      },
-    });
-  };
-
-  // Kirim jawaban ke backend
   const handleSubmit = async () => {
     const selectedData = Object.keys(selectedAnswers).map((id) => ({
       id,
@@ -208,6 +135,82 @@ export const usePlacementTestViewModel = () => {
       message.error("Gagal menghubungi server. Coba lagi.");
     }
   };
+
+  // Timer countdown
+  useEffect(() => {
+    if (remainingTime > 0) {
+      const timer = setInterval(() => {
+        setRemainingTime((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    } else if (remainingTime === 0) {
+      handleSubmit();
+    }
+  }, [remainingTime, handleSubmit]);
+
+  // Format waktu MM:SS
+  const formatTime = useCallback((seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+  }, []);
+
+  // Navigasi antar soal
+  const handleQuestionClick = useCallback((index: number) => {
+    setCurrentQuestionIndex(index);
+  }, []);
+
+  // Simpan jawaban
+  const handleAnswerChange = useCallback(
+    (questionId: string, answer: string) => {
+      setSelectedAnswers((prev) => ({
+        ...prev,
+        [questionId]: answer,
+      }));
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          "answersPlacementTest",
+          JSON.stringify(selectedAnswers)
+        );
+      }
+    },
+    [selectedAnswers]
+  );
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTime = Number(
+        sessionStorage.getItem("remainingTimePlacement")
+      );
+      if (!isNaN(savedTime) && savedTime > 0) {
+        setRemainingTime(savedTime);
+      }
+    }
+  }, []);
+
+  // Konfirmasi sebelum mengirim
+  const showConfirmSubmit = () => {
+    const allAnswered = currentQuestions.every(
+      (q: any) => selectedAnswers[q.mc_id || q.writing_id || q.tf_id]
+    );
+
+    if (!allAnswered) {
+      message.warning("Pastikan semua soal telah dijawab!");
+      return;
+    }
+
+    confirm({
+      title: "Konfirmasi Pengiriman",
+      content: "Apakah Anda yakin ingin mengirim jawaban?",
+      okText: "Kirim",
+      cancelText: "Batal",
+      onOk: () => {
+        handleSubmit();
+      },
+    });
+  };
+
+  // Kirim jawaban ke backend
 
   return {
     basePlacementTestData,

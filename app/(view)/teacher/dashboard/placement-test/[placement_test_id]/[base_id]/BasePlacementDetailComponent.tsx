@@ -126,6 +126,7 @@ export default function BasePlacementDetailComponent() {
     form,
     setPassage,
     setQuestions,
+    setQuestionCount,
   ]);
 
   const handleNameChange = (name: string) => {

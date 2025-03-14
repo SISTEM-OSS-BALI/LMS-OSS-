@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma"; // Pastikan Prisma client diimport
+import { transcribeAudioFromBase64 } from "@/app/lib/utils/speechToTextHelper";
+import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,12 +39,27 @@ export async function POST(request: NextRequest) {
     }
 
     let totalQuestionsCount = 0;
+    const speakingFeedback: {
+      speaking_id: string;
+      score: number;
+      feedback: string;
+    }[] = [];
 
     // ✅ **Simpan jawaban SPEAKING jika ada**
     if (speaking_id && audio) {
       const speakingTest = baseMockTests.find(
         (section) => section.speaking?.speaking_id === speaking_id
       );
+
+      const transcriptionText = await transcribeAudioFromBase64(audio);
+
+      const evaluationResult = speakingTest?.speaking?.prompt
+        ? await evaluateWritingAnswer(
+            speakingTest.speaking.prompt,
+            transcriptionText
+          )
+        : null;
+      const { aiScore, aiFeedback } = evaluationResult || {};
 
       if (speakingTest) {
         await prisma.studentAnswerFreeMockTest.create({
@@ -54,9 +71,15 @@ export async function POST(request: NextRequest) {
             studentAnswer: null, // Tidak ada jawaban teks untuk speaking
             recording_url: audio, // Simpan audio di sini
             isCorrect: null,
-            score: null,
+            feedback: aiFeedback,
+            score: aiScore,
             submittedAt: new Date(),
           },
+        });
+        speakingFeedback.push({
+          speaking_id: speaking_id,
+          score: aiScore ?? 0,
+          feedback: aiFeedback ?? "",
         });
       }
     }
@@ -162,7 +185,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       status: 200,
       error: false,
-      data: { totalScore, percentageScore, level: newLevel },
+      data: { totalScore, percentageScore, level: newLevel, speakingFeedback },
     });
   } catch (error) {
     console.error("Error accessing database:", error);

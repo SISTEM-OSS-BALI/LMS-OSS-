@@ -316,11 +316,51 @@ export const HistoryMockTestComponent: React.FC<HistoryMockTestProps> = ({
 
                 {entry.speakingTest && (
                   <>
-                    <Title level={4}>{entry.speakingTest.prompt}</Title>
-                    <audio controls>
+                    <Title
+                      level={4}
+                      style={{ color: "#1890ff", marginBottom: "10px" }}
+                    >
+                      {entry.speakingTest.prompt}
+                    </Title>
+
+                    {/* 🔹 Audio Player */}
+                    <audio
+                      controls
+                      style={{ width: "100%", marginBottom: "15px" }}
+                    >
                       <source src={entry.recording_url} type="audio/mp3" />
                       Your browser does not support the audio element.
                     </audio>
+
+                    {/* 🔹 Feedback Section */}
+                    <div
+                      style={{
+                        background: "#f0f2f5",
+                        padding: "15px",
+                        borderRadius: "8px",
+                        marginTop: "10px",
+                      }}
+                    >
+                      <Title
+                        level={4}
+                        style={{ marginBottom: "10px", color: "#595959" }}
+                      >
+                        Feedback
+                      </Title>
+                      <Text style={{ fontSize: "16px", color: "#595959" }}>
+                        {entry.feedback}
+                      </Text>
+                    </div>
+
+                    {/* 🔹 Score Section */}
+                    <div style={{ marginTop: "15px" }}>
+                      <Text
+                        strong
+                        style={{ fontSize: "18px", color: "#1890ff" }}
+                      >
+                        Skor: {entry.score}
+                      </Text>
+                    </div>
                   </>
                 )}
               </Card>

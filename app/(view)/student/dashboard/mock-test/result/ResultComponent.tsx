@@ -12,7 +12,7 @@ export default function ResultComponent() {
     totalScore: number;
     percentageScore: number;
     level: string;
-    writingFeedback?: { writing_id: string; score: number; feedback: string }[];
+    speakingFeedback?: { speaking_id: string; score: number; feedback: string }[];
   } | null>(null);
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function ResultComponent() {
           </Card>
 
           {/* 🔹 Writing Feedback */}
-          {/* {result.writingFeedback && result.writingFeedback.length > 0 && (
+          {result.speakingFeedback && result.speakingFeedback.length > 0 && (
             <Card
               style={{
                 marginTop: "20px",
@@ -112,15 +112,15 @@ export default function ResultComponent() {
               }}
             >
               <Title level={4} style={{ color: "#fa8c16" }}>
-                Writing Feedback
+                Speaking Feedback
               </Title>
               <List
                 itemLayout="vertical"
-                dataSource={result.writingFeedback}
+                dataSource={result.speakingFeedback}
                 renderItem={(item, index) => (
-                  <List.Item key={item.writing_id}>
+                  <List.Item key={item.speaking_id}>
                     <Text strong style={{ fontSize: "16px", color: "#722ed1" }}>
-                      ✏️ Writing {index + 1} - Score: {item.score}/10
+                      ✏️ Speaking {index + 1} - Score: {item.score}/10
                     </Text>
                     <br />
                     <Text style={{ fontSize: "14px", color: "#333" }}>
@@ -130,7 +130,7 @@ export default function ResultComponent() {
                 )}
               />
             </Card>
-          )} */}
+          )}
 
           {/* 🔹 Tombol Kembali */}
           <Button

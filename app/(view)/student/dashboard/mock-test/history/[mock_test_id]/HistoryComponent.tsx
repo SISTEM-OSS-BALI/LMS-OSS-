@@ -11,10 +11,6 @@ export default function HistoryComponent() {
     showScoreData,
   } = useHistoryViewModel();
 
-  useEffect(() => {
-    console.log(studentAnswerData);
-  }, [studentAnswerData]);
-
   const { level = "", score = 0, percentage = 0 } = showScoreData?.data || {};
 
   if (showScoreDataLoading || studentAnswerLoading) {

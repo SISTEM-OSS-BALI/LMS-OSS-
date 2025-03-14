@@ -510,7 +510,7 @@ model ScoreFreePlacementTest {
   percentageScore         Float
   level                   String
 
-  participant                       PlacementTestParticipant @relation(fields: [participant_id], references: [participant_id])
+  participant PlacementTestParticipant @relation(fields: [participant_id], references: [participant_id])
 }
 
 model BasePlacementTest {
@@ -615,7 +615,7 @@ model ScorePlacementTest {
 }
 
 model ScoreMockTest {
-  score_placement_test_id String   @id @default(uuid())
+  score_mock_test_id      String        @id @default(uuid())
   user                    User     @relation(fields: [student_id], references: [user_id])
   student_id              String
   mockTest                MockTest @relation(fields: [mock_test_id], references: [mock_test_id])
@@ -756,8 +756,8 @@ model MockTestParticipant {
   social_media   String
   createdAt      DateTime        @default(now())
 
-  answers                StudentAnswerFreeMockTest[]
-  ScoreFreeMockTest      ScoreFreeMockTest[]
+  answers           StudentAnswerFreeMockTest[]
+  ScoreFreeMockTest ScoreFreeMockTest[]
 }
 
 model StudentAnswerFreeMockTest {
@@ -786,6 +786,7 @@ model StudentAnswerFreeMockTest {
   studentAnswer String?  @db.LongText
   recording_url String?  @db.LongText
   isCorrect     Boolean?
+  feedback      String?  @db.LongText
   score         Int?
   submittedAt   DateTime @default(now())
 }
@@ -912,6 +913,7 @@ model StudentAnswerMockTest {
   // Penyimpanan jawaban
   studentAnswer String?  @db.LongText // Jawaban teks untuk reading, writing
   recording_url String?  @db.LongText
+  feedback      String?  @db.LongText
   isCorrect     Boolean?
   score         Int?
   submittedAt   DateTime @default(now())

@@ -47,7 +47,7 @@ export default function CertificateComponent() {
     if (certificate && evaluationData) {
       generateCertificatePreview();
     }
-  }, [certificate, evaluationData]);
+  }, [certificate, evaluationData, generateCertificatePreview]);
 
   const screens = useBreakpoint();
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Typography, Row, Col } from "antd";
+import { Card, Typography, Row, Col, List } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -12,7 +12,11 @@ export default function ResultComponent() {
     totalScore: number;
     percentageScore: number;
     level: string;
-    writingFeedback?: { writing_id: string; score: number; feedback: string }[];
+    speakingFeedback?: {
+      speaking_id: string;
+      score: number;
+      feedback: string;
+    }[];
   } | null>(null);
 
   useEffect(() => {
@@ -100,7 +104,37 @@ export default function ResultComponent() {
           </Card>
 
           {/* 🔹 Writing Feedback */}
-
+          {result.speakingFeedback && result.speakingFeedback.length > 0 && (
+            <Card
+              style={{
+                marginTop: "20px",
+                padding: "15px",
+                backgroundColor: "#fffbe6",
+                borderRadius: "8px",
+                border: "1px solid #faad14",
+                textAlign: "left",
+              }}
+            >
+              <Title level={4} style={{ color: "#fa8c16" }}>
+                Speaking Feedback
+              </Title>
+              <List
+                itemLayout="vertical"
+                dataSource={result.speakingFeedback}
+                renderItem={(item, index) => (
+                  <List.Item key={item.speaking_id}>
+                    <Text strong style={{ fontSize: "16px", color: "#722ed1" }}>
+                      ✏️ Speaking {index + 1} - Score: {item.score}/10
+                    </Text>
+                    <br />
+                    <Text style={{ fontSize: "14px", color: "#333" }}>
+                      {item.feedback}
+                    </Text>
+                  </List.Item>
+                )}
+              />
+            </Card>
+          )}
           {/* 🔹 Tombol Kembali */}
         </Card>
       </Col>

@@ -101,6 +101,54 @@ export const useQuestionViewModel = () => {
     return [];
   }, [currentSection]);
 
+  const handleSubmit = async () => {
+    const selectedData = Object.keys(selectedAnswers).map((id) => ({
+      id,
+      selectedAnswer: selectedAnswers[id],
+    }));
+
+    const payload = {
+      selectedData,
+      placement_test_id,
+      email,
+    };
+
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/freePlacementTest/studentSubmitAnswer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await res.json();
+
+      if (res.status === 200 && !response.error) {
+        sessionStorage.setItem(
+          "freePlacementTestResult",
+          JSON.stringify(response.data)
+        );
+        notification.success({ message: "Berhasil mengirim jawaban" });
+        router.push("/free-placement-test/result");
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("answersFreePlacementTest");
+          sessionStorage.removeItem("remainingTimeFreePlacement");
+        }
+        setLoading(false);
+      } else {
+        setLoading(false);
+        message.error(
+          response.message || "Terjadi kesalahan saat mengirim jawaban."
+        );
+      }
+    } catch (error) {
+      setLoading(false);
+      message.error("Gagal menghubungi server. Coba lagi.");
+    }
+  };
+
   // Timer countdown
   useEffect(() => {
     if (remainingTime > 0) {
@@ -111,7 +159,7 @@ export const useQuestionViewModel = () => {
     } else if (remainingTime === 0) {
       handleSubmit();
     }
-  }, [remainingTime]);
+  }, [remainingTime, handleSubmit]);
 
   // Format waktu MM:SS
   const formatTime = useCallback((seconds: number) => {
@@ -176,53 +224,6 @@ export const useQuestionViewModel = () => {
   };
 
   // Kirim jawaban ke backend
-  const handleSubmit = async () => {
-    const selectedData = Object.keys(selectedAnswers).map((id) => ({
-      id,
-      selectedAnswer: selectedAnswers[id],
-    }));
-
-    const payload = {
-      selectedData,
-      placement_test_id,
-      email,
-    };
-
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/freePlacementTest/studentSubmitAnswer`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const response = await res.json();
-
-      if (res.status === 200 && !response.error) {
-        sessionStorage.setItem(
-          "freePlacementTestResult",
-          JSON.stringify(response.data)
-        );
-        notification.success({ message: "Berhasil mengirim jawaban" });
-        router.push("/free-placement-test/result");
-        if (typeof window !== "undefined") {
-          sessionStorage.removeItem("answersFreePlacementTest");
-          sessionStorage.removeItem("remainingTimeFreePlacement");
-        }
-        setLoading(false);
-      } else {
-        setLoading(false);
-        message.error(
-          response.message || "Terjadi kesalahan saat mengirim jawaban."
-        );
-      }
-    } catch (error) {
-      setLoading(false);
-      message.error("Gagal menghubungi server. Coba lagi.");
-    }
-  };
 
   return {
     basePlacementTestData,

@@ -9,6 +9,7 @@ import {
   Dropdown,
   Flex,
   GetProps,
+  Grid,
   Image,
   Layout,
   Menu,
@@ -32,6 +33,7 @@ import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
 import { CertificateSvg } from "@/app/components/Icon";
 
 const { Content, Footer, Sider } = Layout;
+const { useBreakpoint } = Grid;
 
 type MenuItem = Required<MenuProps>["items"][number];
 type CustomIconComponentProps = GetProps<typeof Icon>;
@@ -104,6 +106,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   const pathname = usePathname();
   const { username, imageUrl } = useAuth();
   const router = useRouter();
+  const screens = useBreakpoint();
 
   const determineSelectedKeys = (pathname: string): string[] => {
     const exactMatch = Object.entries(menuMap).find(
@@ -339,7 +342,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
           <Content
             style={{
               margin: "20px 12px",
-              padding: window.innerWidth <= 768 ? "20px 10px" : "20px", // Padding lebih kecil di mobile
+              padding: screens.xs ? "20px 10px" : "20px", // Padding lebih kecil di mobile
               height: "auto",
               overflow: "auto",
             }}

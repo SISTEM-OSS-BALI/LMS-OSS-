@@ -176,7 +176,7 @@ export const useQuestionViewModel = () => {
           "freeMockTestResult",
           JSON.stringify(response.data)
         );
-       router.push("/free-mock-test/result");
+        router.push("/free-mock-test/result");
       }
       message.success("Seluruh jawaban telah dikirim!");
       if (typeof window !== "undefined") {
@@ -213,7 +213,7 @@ export const useQuestionViewModel = () => {
     } else if (remainingTime === 0) {
       handleFinalSubmit();
     }
-  }, [remainingTime]);
+  }, [remainingTime, handleFinalSubmit]);
 
   // 🔹 Muat kembali waktu yang tersisa dari sessionStorage saat komponen dimuat ulang
   useEffect(() => {

@@ -76,24 +76,6 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
     if (showReview) setIsTimeRunning(false);
   }, [showReview]);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isTimeRunning && timeRemaining > 0) {
-      timer = setTimeout(() => setTimeRemaining((prev) => prev - 1), 1000);
-    } else if (timeRemaining === 0) {
-      message.warning("Waktu habis, jawaban disubmit otomatis.");
-      handleSubmit();
-    }
-    return () => clearTimeout(timer);
-  }, [isTimeRunning, timeRemaining]);
-
-  const handleOptionChange = (mcq_id: string, event: RadioChangeEvent) => {
-    setSelectedOptions((prev) => ({
-      ...prev,
-      [mcq_id]: event.target.value,
-    }));
-  };
-
   const handleSubmit = async () => {
     try {
       const selectedData = Object.keys(selectedOptions).map((mcq_id) => ({
@@ -113,6 +95,24 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
     } catch (error) {
       message.error(`Gagal mengirim jawaban: ${error}`);
     }
+  };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isTimeRunning && timeRemaining > 0) {
+      timer = setTimeout(() => setTimeRemaining((prev) => prev - 1), 1000);
+    } else if (timeRemaining === 0) {
+      message.warning("Waktu habis, jawaban disubmit otomatis.");
+      handleSubmit();
+    }
+    return () => clearTimeout(timer);
+  }, [isTimeRunning, timeRemaining, handleSubmit]);
+
+  const handleOptionChange = (mcq_id: string, event: RadioChangeEvent) => {
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [mcq_id]: event.target.value,
+    }));
   };
 
   const handleStart = () => {
@@ -192,7 +192,7 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
               </Button>
             </Flex>
           )}
-          
+
           {pointStudent?.completed && (
             <Table
               columns={columns}

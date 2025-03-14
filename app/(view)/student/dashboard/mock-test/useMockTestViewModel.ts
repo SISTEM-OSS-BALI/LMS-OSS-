@@ -154,7 +154,6 @@ export const useMockTestViewModel = () => {
       audio: audioBlob,
       speaking_id: speakingId,
     };
-    console.log(payload);
     try {
       const response = await crudService.post(
         "/api/student/answerMockTest/studentSubmitAnswer",
@@ -199,7 +198,7 @@ export const useMockTestViewModel = () => {
     } else if (remainingTime === 0) {
       handleFinalSubmit();
     }
-  }, [remainingTime]);
+  }, [remainingTime, handleFinalSubmit]);
 
   // 🔹 Muat kembali waktu yang tersisa dari sessionStorage saat komponen dimuat ulang
   useEffect(() => {
