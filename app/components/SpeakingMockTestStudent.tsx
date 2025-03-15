@@ -33,33 +33,44 @@ export default function SpeakingMockTestStudent({
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // 🔹 Meminta izin mikrofon sebelum mulai rekaman
+  // 🔹 Periksa ulang izin mikrofon sebelum mulai rekaman
+  const checkMicrophonePermission = async (): Promise<boolean> => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop()); // Tutup stream setelah tes izin
+      return true;
+    } catch (error) {
+      console.error("Gagal mengakses mikrofon:", error);
+      alert(
+        "Pastikan izin mikrofon telah diberikan di pengaturan browser atau sistem."
+      );
+      return false;
+    }
+  };
+
+  // 🔹 Memastikan mikrofon bisa digunakan saat komponen dimuat
   useEffect(() => {
-    const requestPermission = async () => {
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (error) {
-        console.error("Izin mikrofon ditolak:", error);
-        alert("Anda perlu memberikan izin mikrofon untuk merekam audio.");
-      }
-    };
-    requestPermission();
+    checkMicrophonePermission();
   }, []);
 
   // 🔹 Mulai Rekaman
   const startRecording = async () => {
+    const permissionGranted = await checkMicrophonePermission();
+    if (!permissionGranted) return;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // Inisialisasi AudioContext untuk Safari & browser lain
+      // 🔹 Pastikan AudioContext berjalan di Safari & browser lainnya
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext ||
           (window as any).webkitAudioContext)();
       }
       await audioContextRef.current.resume();
 
+      // 🔹 Gunakan `audio/mp4` untuk kompatibilitas lebih luas
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
+        mimeType: "audio/mp4",
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -68,26 +79,29 @@ export default function SpeakingMockTestStudent({
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
+        // Tunggu beberapa saat untuk memastikan rekaman diproses dengan baik di Safari
         setTimeout(() => {
           const audioBlob = new Blob(audioChunksRef.current, {
-            type: "audio/webm",
+            type: "audio/mp4",
           });
           const audioURL = URL.createObjectURL(audioBlob);
           setAudioBlob(audioBlob);
           setAudioURL(audioURL);
-        }, 200); // Delay agar Safari tidak error
+        }, 200);
       };
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       mediaRecorder.start();
       setIsRecording(true);
-      setAudioBlob(null); // Reset rekaman sebelumnya
+      setAudioBlob(null);
       setAudioURL(null);
     } catch (error) {
       console.error("Gagal mengakses mikrofon:", error);
-      alert("Gagal mengakses mikrofon. Pastikan izin telah diberikan.");
+      alert(
+        "Gagal mengakses mikrofon. Pastikan izin telah diberikan di browser dan sistem Anda."
+      );
     }
   };
 
@@ -116,12 +130,10 @@ export default function SpeakingMockTestStudent({
         backgroundColor: "#fff",
       }}
     >
-      {/* Header */}
       <Title level={4} style={{ marginBottom: "12px" }}>
         Speaking Test
       </Title>
 
-      {/* Prompt */}
       <Text strong>Question:</Text>
       <Card
         style={{
@@ -137,7 +149,6 @@ export default function SpeakingMockTestStudent({
         </Text>
       </Card>
 
-      {/* Tombol Rekaman */}
       <div style={{ textAlign: "center", marginTop: "20px" }}>
         {!isRecording ? (
           <Button
@@ -159,18 +170,6 @@ export default function SpeakingMockTestStudent({
         )}
       </div>
 
-      {/* Tampilkan Audio Saat Merekam */}
-      {isRecording && (
-        <div style={{ marginTop: "20px", textAlign: "center" }}>
-          <Text strong style={{ color: "#ff4d4f" }}>
-            Recording...
-          </Text>
-          <br />
-          <audio controls autoPlay />
-        </div>
-      )}
-
-      {/* Tampilkan Audio Setelah Rekaman Selesai */}
       {audioURL && (
         <div style={{ marginTop: "20px", textAlign: "center" }}>
           <audio controls src={audioURL} autoPlay={false} />
