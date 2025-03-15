@@ -1,6 +1,6 @@
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma"; // Pastikan Prisma client diimport
+import prisma from "@/lib/prisma"; 
 import { transcribeAudioFromBase64 } from "@/app/lib/utils/speechToTextHelper";
 import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
 

@@ -190,7 +190,7 @@ Terima kasih telah mengikuti *Placement Test* bersama *One Step Solution (OSS)*.
 📈 *Persentase Skor:* ${percentageScore.toFixed(2)}%  
 🎯 *Level:* ${newLevel}  
 
-🗣 *Feedback Speaking:*  
+🗣 *Writing Feedback:*  
 ${writingFeedback
   .map((feedback) => `- ${feedback.feedback} (⭐ Skor: ${feedback.score})`)
   .join("\n")}
