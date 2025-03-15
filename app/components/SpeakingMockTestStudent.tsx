@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { Card, Button, Space, Typography, message } from "antd";
+import React, { useState, useRef, useEffect } from "react";
+import { Card, Button, Typography, message } from "antd";
 import {
   AudioOutlined,
   StopOutlined,
@@ -31,23 +31,36 @@ export default function SpeakingMockTestStudent({
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
-  // 🔹 Meminta izin microphone sebelum mulai rekaman
-  const requestPermission = async () => {
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (error) {
-      console.error("Izin mikrofon ditolak:", error);
-      alert("Anda perlu memberikan izin mikrofon untuk merekam audio.");
-    }
-  };
+  // 🔹 Meminta izin mikrofon sebelum mulai rekaman
+  useEffect(() => {
+    const requestPermission = async () => {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (error) {
+        console.error("Izin mikrofon ditolak:", error);
+        alert("Anda perlu memberikan izin mikrofon untuk merekam audio.");
+      }
+    };
+    requestPermission();
+  }, []);
 
   // 🔹 Mulai Rekaman
   const startRecording = async () => {
     try {
-      // Pastikan user telah memberikan izin
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+
+      // Inisialisasi AudioContext untuk Safari & browser lain
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+      }
+      await audioContextRef.current.resume();
+
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm",
+      });
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -56,12 +69,14 @@ export default function SpeakingMockTestStudent({
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/wav",
-        });
-        const audioURL = URL.createObjectURL(audioBlob);
-        setAudioBlob(audioBlob);
-        setAudioURL(audioURL);
+        setTimeout(() => {
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: "audio/webm",
+          });
+          const audioURL = URL.createObjectURL(audioBlob);
+          setAudioBlob(audioBlob);
+          setAudioURL(audioURL);
+        }, 200); // Delay agar Safari tidak error
       };
 
       mediaRecorderRef.current = mediaRecorder;
@@ -158,7 +173,7 @@ export default function SpeakingMockTestStudent({
       {/* Tampilkan Audio Setelah Rekaman Selesai */}
       {audioURL && (
         <div style={{ marginTop: "20px", textAlign: "center" }}>
-          <audio controls src={audioURL} />
+          <audio controls src={audioURL} autoPlay={false} />
           <div
             style={{
               marginTop: "10px",
