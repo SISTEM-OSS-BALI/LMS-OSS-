@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
       const message = `
 🌟 *Halo, ${user?.name}!*
 
-Terima kasih telah mengikuti *Placement Test* bersama *One Step Solution (OSS)*. Berikut adalah hasil tes Anda:
+Terima kasih telah mengikuti *Mock Test* bersama *One Step Solution (OSS)*. Berikut adalah hasil tes Anda:
 
 📊 *Skor Total:* ${totalScore}  
 📈 *Persentase Skor:* ${percentageScore.toFixed(2)}%  
