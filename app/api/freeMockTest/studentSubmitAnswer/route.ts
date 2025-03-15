@@ -22,21 +22,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await prisma.mockTestParticipant.findFirst({
-      where: {
-        email: email,
-      },
-    });
-
-    const baseMockTests = await prisma.baseMockTest.findMany({
-      where: { mock_test_id: testId },
-      include: {
-        reading: { include: { questions: true } },
-        listening: { include: { questions: true } },
-        speaking: true,
-        writing: { include: { questions: true } },
-      },
-    });
+    const [user, baseMockTests] = await prisma.$transaction([
+      prisma.mockTestParticipant.findFirst({
+        where: {
+          email: email,
+        },
+      }),
+      prisma.baseMockTest.findMany({
+        where: { mock_test_id: testId },
+        include: {
+          reading: { include: { questions: true } },
+          listening: { include: { questions: true } },
+          speaking: true,
+          writing: { include: { questions: true } },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      }),
+    ]);
 
     if (baseMockTests.length === 0) {
       return NextResponse.json(
@@ -192,36 +196,38 @@ export async function POST(request: NextRequest) {
     const no_tlp = formatPhoneNumber(user?.phone ?? "");
 
     // 🔹 Kirim notifikasi
-    const message = `
-🌟 *Halo, ${user?.name}!*
 
-Terima kasih telah mengikuti *Mock Test* bersama *One Step Solution (OSS)*. Berikut adalah hasil tes Anda:
-
-📊 *Skor Total:* ${totalScore}  
-📈 *Persentase Skor:* ${percentageScore.toFixed(2)}%  
-🎯 *Level:* ${newLevel}  
-
-🗣 *Feedback Speaking:*  
-${speakingFeedback
-  .map((feedback) => `- ${feedback.feedback} (⭐ Skor: ${feedback.score})`)
-  .join("\n")}
-
-📢 *Tingkatkan Kemampuan Bahasa Inggris Anda!*
-Hasil tes menunjukkan bahwa masih ada ruang untuk perbaikan dalam kemampuan bahasa Inggris Anda. Kami sangat menyarankan Anda untuk bergabung dengan *Program Sahabat OSS English Course*! 🚀✨  
-
-✅ *Keuntungan Bergabung:*  
-🌏 Peluang *Kerja di Luar Negeri* dengan gaji dalam *Dollar 💵*  
-🎓 Bisa *Kuliah sambil Berkarier* di luar negeri 🏫✈️  
-
-🔥 Jangan lewatkan kesempatan ini untuk masa depan yang lebih cerah!  
-
-📞 Hubungi kami untuk informasi lebih lanjut. Kami siap membantu Anda! 😊  
-
-Terima kasih,  
-*One Step Solution (OSS)* 🌍✨
-`;
-
-    await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
+    async () => {
+      const message = `
+  🌟 *Halo, ${user?.name}!*
+  
+  Terima kasih telah mengikuti *Mock Test* bersama *One Step Solution (OSS)*. Berikut adalah hasil tes Anda:
+  
+  📊 *Skor Total:* ${totalScore}  
+  📈 *Persentase Skor:* ${percentageScore.toFixed(2)}%  
+  🎯 *Level:* ${newLevel}  
+  
+  🗣 *Feedback Speaking:*  
+  ${speakingFeedback
+    .map((feedback) => `- ${feedback.feedback} (⭐ Skor: ${feedback.score})`)
+    .join("\n")}
+  
+  📢 *Tingkatkan Kemampuan Bahasa Inggris Anda!*
+  Hasil tes menunjukkan bahwa masih ada ruang untuk perbaikan dalam kemampuan bahasa Inggris Anda. Kami sangat menyarankan Anda untuk bergabung dengan *Program Sahabat OSS English Course*! 🚀✨  
+  
+  ✅ *Keuntungan Bergabung:*  
+  🌏 Peluang *Kerja di Luar Negeri* dengan gaji dalam *Dollar 💵*  
+  🎓 Bisa *Kuliah sambil Berkarier* di luar negeri 🏫✈️  
+  
+  🔥 Jangan lewatkan kesempatan ini untuk masa depan yang lebih cerah!  
+  
+  📞 Hubungi kami untuk informasi lebih lanjut. Kami siap membantu Anda! 😊  
+  
+  Terima kasih,  
+  *One Step Solution (OSS)* 🌍✨
+  `;
+      await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
+    };
 
     return NextResponse.json({
       status: 200,
@@ -239,7 +245,5 @@ Terima kasih,
         },
       }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
