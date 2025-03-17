@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { DesktopOutlined, ExceptionOutlined, FileOutlined, LogoutOutlined, PieChartOutlined, TableOutlined, UsergroupAddOutlined, UserOutlined } from '@ant-design/icons';
+import { DesktopOutlined, ExceptionOutlined, FileOutlined, LogoutOutlined, PieChartOutlined, TableOutlined, UsergroupAddOutlined, UserOutlined, MenuOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Avatar, ConfigProvider, Dropdown, Flex, Image, Layout, Menu, Modal, theme } from 'antd';
+import { Avatar, ConfigProvider, Dropdown, Flex, Image, Layout, Menu, Modal, Button, Grid } from 'antd';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { primaryColor, secondaryColor } from '@/app/lib/utils/colors';
@@ -11,6 +11,7 @@ import { useAuth } from '@/app/lib/auth/authServices';
 import { signOut } from 'next-auth/react';
 
 const { Content, Footer, Sider } = Layout;
+const { useBreakpoint } = Grid;
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -35,17 +36,16 @@ const items: MenuItem[] = [
 const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const {
-    token: { colorBgContainer },
-  } = theme.useToken();
   const pathname = usePathname();
   const { username, imageUrl } = useAuth();
   const router = useRouter();
+  const screens = useBreakpoint();
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      setCollapsed(window.innerWidth < 768); // Auto collapse jika layar kecil
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setCollapsed(mobile); // Sidebar otomatis collapse di mobile
     };
 
     handleResize(); // Panggil saat pertama kali dimuat
@@ -70,6 +70,7 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({ children })
       content: 'Apakah anda yakin ingin logout?',
       okText: 'Logout',
       okType: 'danger',
+      centered: true, // Modal lebih rapi di mobile
       onOk: async () => {
         await signOut({ callbackUrl: '/' });
       },
@@ -87,6 +88,7 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({ children })
       }}
     >
       <Layout style={{ height: '100vh' }}>
+        {/* Sidebar */}
         <Sider
           collapsible
           collapsed={collapsed}
@@ -97,7 +99,8 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({ children })
             overflowY: 'auto',
             left: 0,
             zIndex: 1000,
-            boxShadow: '8px 0 10px -5px rgba(0, 0, 0, 0.2)',
+            boxShadow: isMobile ? 'none' : '8px 0 10px -5px rgba(0, 0, 0, 0.2)',
+            display: isMobile && collapsed ? 'none' : 'block', // Sembunyikan sidebar jika di mobile dan collapsed
           }}
         >
           <div
@@ -129,12 +132,13 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({ children })
             transition: 'margin-left 0.2s',
           }}
         >
+          {/* Header */}
           <Flex
             align='center'
-            justify='end'
+            justify='space-between'
             style={{
               paddingBlock: '1rem',
-              paddingInline: isMobile ? '1rem' : '3rem',
+              paddingInline: '3rem',
               position: 'fixed',
               top: 0,
               left: 0,
@@ -144,19 +148,26 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({ children })
               boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
             }}
           >
+            {isMobile && (
+              <Button
+                type='text'
+                icon={<MenuOutlined />}
+                onClick={() => setCollapsed(!collapsed)} // Klik hamburger untuk buka/tutup sidebar
+              />
+            )}
+
+            {/* Avatar dan Username di sebelah kanan */}
             <Flex
-              justify='center'
+              style={{ marginLeft: 'auto' }} // ✅ Mendorong Avatar ke kanan
               align='center'
               gap={20}
             >
               <Dropdown overlay={menu}>
-                <a
-                  onClick={(e) => e.preventDefault()}
-                  style={{ display: 'flex', alignItems: 'center' }}
-                >
+                <a onClick={(e) => e.preventDefault()}>
                   <Flex
+                    align='center'
                     gap={20}
-                    style={{ alignItems: 'center' }}
+                    style={{ cursor: 'pointer' }}
                   >
                     <Avatar
                       src={imageUrl}
@@ -177,27 +188,16 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({ children })
 
           <Content
             style={{
-              margin: '40px 16px',
-              padding: '10px 20px',
+              margin: '20px 12px',
+              padding: screens.xs ? '20px 10px' : '20px', // Padding lebih kecil di mobile
               height: 'auto',
               overflow: 'auto',
             }}
           >
-            <div style={{ padding: 24 }}>{children}</div>
+            <div style={{ marginTop: 100 }}>{children}</div>
           </Content>
 
-          <Footer
-            style={{
-              height: '50px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              textAlign: 'center',
-              boxShadow: '0px -5px 10px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            LMS OSS ©{new Date().getFullYear()}
-          </Footer>
+          <Footer style={{ textAlign: 'center' }}>LMS OSS ©{new Date().getFullYear()}</Footer>
         </Layout>
       </Layout>
     </ConfigProvider>
