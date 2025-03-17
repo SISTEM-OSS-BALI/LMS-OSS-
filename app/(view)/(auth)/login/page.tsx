@@ -76,7 +76,6 @@ export default function Login() {
               padding: "10px 20px",
             }}
           >
-            <Button type="primary">Try Out Gratis</Button>
           </Header>
         </Col>
       </Row>

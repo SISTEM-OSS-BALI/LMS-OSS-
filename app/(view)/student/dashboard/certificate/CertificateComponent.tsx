@@ -52,7 +52,7 @@ export default function CertificateComponent() {
   const screens = useBreakpoint();
 
   return (
-    <div style={{ padding: "24px", textAlign: "center" }}>
+    <div style={{ padding: screens.xs ? "0px" : "24px", textAlign: "center" }}>
       <Title level={3} style={{ marginBottom: "20px", color: "#1890ff" }}>
         Cetak Sertifikat
       </Title>
