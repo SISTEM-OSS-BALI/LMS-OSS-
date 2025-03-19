@@ -166,7 +166,6 @@ export default function Register() {
                       <Input
                         prefix={<IdcardOutlined />}
                         placeholder="Username"
-                        size="large"
                       />
                     </Form.Item>
                   </Col>
