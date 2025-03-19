@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useReportPlacementViewModel } from './useReportPlacementViewModel';
-import { Card, Table, Typography, Tag, Skeleton, Space, Row, Col, Button } from 'antd';
+import { Card, Table, Typography, Tag, Skeleton, Space, Row, Col, Button, Alert } from 'antd';
 import { UserOutlined, CalendarOutlined, PhoneOutlined, BankOutlined, CloseOutlined, DownloadOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 
@@ -150,16 +150,19 @@ export default function ReportPlacementTestComponent() {
   ];
 
   return (
-    <div style={{ padding: '20px' }}>
-      <Title
-        level={2}
-        style={{ textAlign: 'center', marginBottom: '20px' }}
-      >
+    <div style={{ padding: "20px" }}>
+      <Title level={2} style={{ textAlign: "center", marginBottom: "20px" }}>
         Laporan Placement Test
       </Title>
 
       {isLoadingPlacementReport ? (
         <SkeletonTable />
+      ) : placementTests.length === 0 ? (
+        <Alert
+          message="Tidak ada data mock test yang tersedia."
+          type="warning"
+          showIcon
+        />
       ) : (
         <>
           {/* 🔹 Daftar Placement Test */}
@@ -174,18 +177,27 @@ export default function ReportPlacementTestComponent() {
                 <Card
                   bordered={false}
                   style={{
-                    borderRadius: '12px',
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                    cursor: 'pointer',
-                    transition: '0.3s',
-                    background: selectedTest === session.placementTest.placement_test_id ? '#e6f7ff' : 'white',
+                    borderRadius: "12px",
+                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                    cursor: "pointer",
+                    transition: "0.3s",
+                    background:
+                      selectedTest === session.placementTest.placement_test_id
+                        ? "#e6f7ff"
+                        : "white",
                   }}
-                  onClick={() => setSelectedTest(session.placementTest.placement_test_id)}
+                  onClick={() =>
+                    setSelectedTest(session.placementTest.placement_test_id)
+                  }
                 >
-                  <Title level={4}>{session.placementTest.name || 'Unknown Placement Test'}</Title>
+                  <Title level={4}>
+                    {session.placementTest.name || "Unknown Placement Test"}
+                  </Title>
                   <Space>
                     <CalendarOutlined />
-                    <Text>{new Date(session.sessionDate).toLocaleDateString()}</Text>
+                    <Text>
+                      {new Date(session.sessionDate).toLocaleDateString()}
+                    </Text>
                   </Space>
                 </Card>
               </Col>
@@ -197,42 +209,42 @@ export default function ReportPlacementTestComponent() {
             <Card
               bordered={false}
               style={{
-                marginTop: '20px',
-                borderRadius: '12px',
-                boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                marginTop: "20px",
+                borderRadius: "12px",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
               }}
             >
               {/* 🔹 Header Card dengan Tombol Close dan Download */}
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '20px',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "20px",
                 }}
               >
                 <Button
-                  type='primary'
+                  type="primary"
                   icon={<DownloadOutlined />}
                   onClick={handleDownloadExcel}
                 >
                   Download Excel
                 </Button>
                 <Button
-                  type='text'
-                  shape='circle'
+                  type="text"
+                  shape="circle"
                   icon={<CloseOutlined />}
                   onClick={() => setSelectedTest(null)}
-                  style={{ fontSize: '16px', color: 'red' }}
+                  style={{ fontSize: "16px", color: "red" }}
                 />
               </div>
 
               <Table
                 columns={participantColumns}
                 dataSource={filteredParticipants}
-                rowKey='participant_id'
+                rowKey="participant_id"
                 pagination={{ pageSize: 10 }}
-                scroll={{ x: 'max-content' }} // Horizontal scrolling on mobile
+                scroll={{ x: "max-content" }} // Horizontal scrolling on mobile
               />
             </Card>
           )}

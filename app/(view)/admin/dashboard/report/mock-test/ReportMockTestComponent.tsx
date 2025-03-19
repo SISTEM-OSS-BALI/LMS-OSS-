@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Table, Typography, Tag, Skeleton, Space, Row, Col, Button } from 'antd';
+import { Card, Table, Typography, Tag, Skeleton, Space, Row, Col, Button, Alert } from 'antd';
 import { UserOutlined, CalendarOutlined, PhoneOutlined, BankOutlined, CloseOutlined, DownloadOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import { useReportMockViewModel } from './useReportMockViewModel';
@@ -161,6 +161,8 @@ export default function ReportMockTestComponent() {
 
       {isLoadingMockReport ? (
         <SkeletonTable />
+      ) : mockTests.length === 0 ? (
+        <Alert message="Tidak ada data mock test yang tersedia." type="warning" showIcon />
       ) : (
         <>
           {/* 🔹 Daftar Mock Test */}
