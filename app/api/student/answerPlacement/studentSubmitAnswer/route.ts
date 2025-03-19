@@ -128,16 +128,31 @@ export async function POST(request: NextRequest) {
       data: { is_completed: true },
     });
 
+    const updatedScores = await prisma.studentAnswerPlacementTest.findMany({
+      where: { student_id: user.user_id, placement_test_id: placement_test_id },
+      select: { score: true },
+    });
+
     // ✅ **Hitung skor akhir siswa dalam satu query**
-    const totalScore = studentAnswers.reduce(
+    const totalScore = updatedScores.reduce(
       (sum, answer) => sum + (answer.score ?? 0),
       0
     );
     const percentageScore = (totalScore / totalQuestionsCount) * 100 || 0;
 
-    let newLevel = "BASIC";
-    if (percentageScore >= 80) newLevel = "ADVANCED";
-    else if (percentageScore >= 50) newLevel = "INTERMEDIATE";
+    let newLevel = "Beginner";
+    // 🔹 Tentukan level baru siswa berdasarkan skor
+    if (totalScore >= 46) {
+      newLevel = "Advanced";
+    } else if (totalScore >= 40) {
+      newLevel = "Upper Intermediate";
+    } else if (totalScore >= 33) {
+      newLevel = "Intermediate";
+    } else if (totalScore >= 25) {
+      newLevel = "Pre-Intermediate";
+    } else if (totalScore >= 16) {
+      newLevel = "Elementary";
+    }
 
     // ✅ **Simpan level baru dalam satu transaksi**
     await prisma.$transaction([

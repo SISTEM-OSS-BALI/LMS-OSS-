@@ -99,8 +99,17 @@ export async function POST(request: NextRequest) {
     });
 
     // 🔹 Hitung skor akhir siswa
-    const totalScore = studentAnswers.reduce(
-      (sum, answer) => sum + (answer.score || 0),
+    const updatedScores = await prisma.studentAnswerFreePlacementTest.findMany({
+      where: {
+        participant_id: user?.participant_id,
+        placement_test_id: placement_test_id,
+      },
+      select: { score: true },
+    });
+
+    // ✅ **Hitung skor akhir siswa dalam satu query**
+    const totalScore = updatedScores.reduce(
+      (sum, answer) => sum + (answer.score ?? 0),
       0
     );
     const percentageScore = (totalScore / totalQuestionsCount) * 100 || 0;
@@ -122,7 +131,6 @@ export async function POST(request: NextRequest) {
 
     const no_tlp = formatPhoneNumber(user?.phone ?? "");
 
-  
     (async () => {
       const message = `
 🌟 *Halo, ${user?.name}!*
