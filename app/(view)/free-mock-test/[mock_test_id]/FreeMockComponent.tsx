@@ -99,7 +99,7 @@ export default function FreeMockComponent() {
                 size="large"
                 style={{ marginTop: "10px", width: "100%" }}
               >
-                Mulai mock Test
+                Mulai Mock Test
               </Button>
             </Card>
           )}

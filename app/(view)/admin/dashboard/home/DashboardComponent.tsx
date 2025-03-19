@@ -1,37 +1,72 @@
-import Title from 'antd/es/typography/Title';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts';
-import dayjs from 'dayjs';
-import { Card, Flex, Select, Skeleton } from 'antd';
-import { useState } from 'react';
-import { useDashboard } from './useDashboardViewModel';
+import Title from "antd/es/typography/Title";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  BarChart,
+  Bar,
+} from "recharts";
+import dayjs from "dayjs";
+import { Card, Flex, Select, Skeleton } from "antd";
+import { useState } from "react";
+import { useDashboard } from "./useDashboardViewModel";
 
-const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const monthNames = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
 
 const monthNameMap: { [key: string]: string } = {
-  January: 'Januari',
-  February: 'Februari',
-  March: 'Maret',
-  April: 'April',
-  May: 'Mei',
-  June: 'Juni',
-  July: 'Juli',
-  August: 'Agustus',
-  September: 'September',
-  October: 'Oktober',
-  November: 'November',
-  December: 'Desember',
+  January: "Januari",
+  February: "Februari",
+  March: "Maret",
+  April: "April",
+  May: "Mei",
+  June: "Juni",
+  July: "Juli",
+  August: "Agustus",
+  September: "September",
+  October: "Oktober",
+  November: "November",
+  December: "Desember",
 };
 
 export default function DashboardComponent() {
-  const { monthlyStudentData, selectedYear, changeYear, isLoadingMonthly, dataStudentNewPerWeek, isLoadingStudentNewPerWeek, dataStudentPerProgram, isLoadingStudentPerProgram } = useDashboard();
+  const {
+    monthlyStudentData,
+    selectedYear,
+    changeYear,
+    isLoadingMonthly,
+    dataStudentNewPerWeek,
+    isLoadingStudentNewPerWeek,
+    dataStudentPerProgram,
+    isLoadingStudentPerProgram,
+  } = useDashboard();
 
-  const [chartTypeMonthly, setChartTypeMonthly] = useState('bar');
-  const [chartTypeWeekly, setChartTypeWeekly] = useState('bar');
-  const [chartTypeProgram, setChartTypeProgram] = useState('bar');
-  const [selectedMonth, setSelectedMonth] = useState('January');
+  const [chartTypeMonthly, setChartTypeMonthly] = useState("bar");
+  const [chartTypeWeekly, setChartTypeWeekly] = useState("bar");
+  const [chartTypeProgram, setChartTypeProgram] = useState("bar");
+  const [selectedMonth, setSelectedMonth] = useState("January");
 
   // Filter data berdasarkan bulan yang dipilih
-  const filteredWeeklyData = dataStudentNewPerWeek?.data.filter((item) => item.month === selectedMonth);
+  const filteredWeeklyData = dataStudentNewPerWeek?.data.filter(
+    (item) => item.month === selectedMonth
+  );
 
   // Format Data untuk Chart
   const weeklyChartData = filteredWeeklyData?.map((item) => ({
@@ -40,15 +75,15 @@ export default function DashboardComponent() {
   }));
 
   return (
-    <div style={{ width: '100%', padding: '24px' }}>
+    <div style={{ width: "100%", padding: "24px" }}>
       <Flex
-        justify='space-between'
-        align='center'
-        wrap='wrap' // Allows for responsive layout
+        justify="space-between"
+        align="center"
+        wrap="wrap" // Allows for responsive layout
       >
         <Title
           level={3}
-          style={{ marginBottom: '24px', flex: '1 1 100%' }} // Ensure title takes full width on mobile
+          style={{ marginBottom: "24px", flex: "1 1 100%" }} // Ensure title takes full width on mobile
         >
           Dashboard Admin
         </Title>
@@ -57,11 +92,11 @@ export default function DashboardComponent() {
           style={{ width: 120 }}
           onChange={(value) => changeYear(value)}
         >
-          {Array.from(new Array(20), (val, index) => dayjs().year() - index).map((year, index) => (
-            <Select.Option
-              value={year}
-              key={index}
-            >
+          {Array.from(
+            new Array(20),
+            (val, index) => dayjs().year() - index
+          ).map((year, index) => (
+            <Select.Option value={year} key={index}>
               {year}
             </Select.Option>
           ))}
@@ -69,65 +104,54 @@ export default function DashboardComponent() {
       </Flex>
 
       {/* Chart Per Bulan */}
-      <Card style={{ marginBottom: '24px', padding: '20px' }}>
-        <Flex
-          justify='space-between'
-          align='center'
-          wrap='wrap'
-        >
-          <h2 style={{ flex: '1 1 100%' }}>Jumlah Siswa Per Bulan</h2>
+      <Card style={{ marginBottom: "24px", padding: "20px" }}>
+        <Flex justify="space-between" align="center" wrap="wrap">
+          <h2 style={{ flex: "1 1 100%" }}>Jumlah Siswa Per Bulan</h2>
           <Flex gap={16}>
             <Select
               defaultValue={chartTypeMonthly}
               style={{ width: 150 }}
               onChange={(value) => setChartTypeMonthly(value)}
             >
-              <Select.Option value='line'>Line Chart</Select.Option>
-              <Select.Option value='bar'>Bar Chart</Select.Option>
+              <Select.Option value="line">Line Chart</Select.Option>
+              <Select.Option value="bar">Bar Chart</Select.Option>
             </Select>
           </Flex>
         </Flex>
 
         {isLoadingMonthly ? (
-          <Skeleton
-            active
-            paragraph={{ rows: 6 }}
-          />
+          <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
-          <ResponsiveContainer
-            width='100%'
-            height={300}
-          >
-            {chartTypeMonthly === 'line' ? (
+          <ResponsiveContainer width="100%" height={300}>
+            {chartTypeMonthly === "line" ? (
               <LineChart
                 data={monthlyStudentData?.data}
                 margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
               >
-                <CartesianGrid strokeDasharray='3 3' />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
-                  dataKey='month'
+                  dataKey="month"
                   tickFormatter={(month) => monthNames[month - 1]}
                 />
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: 'Total Siswa',
+                    value: "Total Siswa",
                     angle: -90,
-                    position: 'insideLeft',
+                    position: "insideLeft",
                   }}
                 />
-                <Tooltip formatter={(value) => [`${value} Siswa`, 'Total Siswa']} />
-                <Legend
-                  verticalAlign='top'
-                  align='right'
+                <Tooltip
+                  formatter={(value) => [`${value} Siswa`, "Total Siswa"]}
                 />
+                <Legend verticalAlign="top" align="right" />
                 <Line
-                  type='monotone'
-                  dataKey='total_students'
-                  stroke='#0088FE'
+                  type="monotone"
+                  dataKey="total_students"
+                  stroke="#0088FE"
                   strokeWidth={2}
                   dot={{ r: 4 }}
-                  name='Total Siswa'
+                  name="Total Siswa"
                 />
               </LineChart>
             ) : (
@@ -135,29 +159,28 @@ export default function DashboardComponent() {
                 data={monthlyStudentData?.data}
                 margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
               >
-                <CartesianGrid strokeDasharray='3 3' />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
-                  dataKey='month'
+                  dataKey="month"
                   tickFormatter={(month) => monthNames[month - 1]}
                 />
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: 'Total Siswa',
+                    value: "Total Siswa",
                     angle: -90,
-                    position: 'insideLeft',
+                    position: "insideLeft",
                   }}
                 />
-                <Tooltip formatter={(value) => [`${value} Siswa`, 'Total Siswa']} />
-                <Legend
-                  verticalAlign='top'
-                  align='right'
+                <Tooltip
+                  formatter={(value) => [`${value} Siswa`, "Total Siswa"]}
                 />
+                <Legend verticalAlign="top" align="right" />
                 <Bar
-                  dataKey='total_students'
-                  fill='#0088FE'
+                  dataKey="total_students"
+                  fill="#0088FE"
                   barSize={40}
-                  name='Total Siswa'
+                  name="Total Siswa"
                 />
               </BarChart>
             )}
@@ -166,19 +189,16 @@ export default function DashboardComponent() {
       </Card>
 
       {/* Chart Per Minggu */}
-      <Card style={{ marginBottom: '24px', padding: '20px' }}>
-        <Flex
-          justify='space-between'
-          wrap='wrap'
-        >
-          <h2 style={{ flex: '1 1 100%' }}>Jumlah Siswa Baru Per Minggu</h2>
+      <Card style={{ marginBottom: "24px", padding: "20px" }}>
+        <Flex justify="space-between" wrap="wrap">
+          <h2 style={{ flex: "1 1 100%" }}>Jumlah Siswa Baru Per Minggu</h2>
           <Flex
             gap={16}
             style={{
-              width: '100%',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-              textAlign: 'center',
+              width: "100%",
+              justifyContent: "center",
+              flexWrap: "wrap",
+              textAlign: "center",
             }}
           >
             <Select
@@ -187,10 +207,7 @@ export default function DashboardComponent() {
               onChange={(value) => setSelectedMonth(value)}
             >
               {Object.keys(monthNameMap).map((month) => (
-                <Select.Option
-                  value={month}
-                  key={month}
-                >
+                <Select.Option value={month} key={month}>
                   {monthNameMap[month]}
                 </Select.Option>
               ))}
@@ -201,30 +218,24 @@ export default function DashboardComponent() {
               style={{ width: 150 }}
               onChange={(value) => setChartTypeWeekly(value)}
             >
-              <Select.Option value='line'>Line Chart</Select.Option>
-              <Select.Option value='bar'>Bar Chart</Select.Option>
+              <Select.Option value="line">Line Chart</Select.Option>
+              <Select.Option value="bar">Bar Chart</Select.Option>
             </Select>
           </Flex>
         </Flex>
 
         {isLoadingStudentNewPerWeek ? (
-          <Skeleton
-            active
-            paragraph={{ rows: 6 }}
-          />
+          <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
-          <ResponsiveContainer
-            width='100%'
-            height={300}
-          >
-            {chartTypeWeekly === 'line' ? (
+          <ResponsiveContainer width="100%" height={300}>
+            {chartTypeWeekly === "line" ? (
               <LineChart
                 data={weeklyChartData}
                 margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
               >
-                <CartesianGrid strokeDasharray='3 3' />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
-                  dataKey='name'
+                  dataKey="name"
                   height={50}
                   interval={0}
                   tick={{ fontSize: 12 }}
@@ -232,23 +243,22 @@ export default function DashboardComponent() {
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: 'Jumlah Siswa',
+                    value: "Jumlah Siswa",
                     angle: -90,
-                    position: 'insideLeft',
+                    position: "insideLeft",
                   }}
                 />
-                <Tooltip formatter={(value) => [value + ' Siswa', 'Total Siswa Baru']} />
-                <Legend
-                  verticalAlign='top'
-                  align='right'
+                <Tooltip
+                  formatter={(value) => [value + " Siswa", "Total Siswa Baru"]}
                 />
+                <Legend verticalAlign="top" align="right" />
                 <Line
-                  type='monotone'
-                  dataKey='total_students'
-                  stroke='#FF5733'
+                  type="monotone"
+                  dataKey="total_students"
+                  stroke="#FF5733"
                   strokeWidth={2}
                   dot={{ r: 4 }}
-                  name='Total Siswa Baru'
+                  name="Total Siswa Baru"
                 />
               </LineChart>
             ) : (
@@ -256,9 +266,9 @@ export default function DashboardComponent() {
                 data={weeklyChartData}
                 margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
               >
-                <CartesianGrid strokeDasharray='3 3' />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
-                  dataKey='name'
+                  dataKey="name"
                   height={50}
                   interval={0}
                   tick={{ fontSize: 12 }}
@@ -266,21 +276,20 @@ export default function DashboardComponent() {
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: 'Jumlah Siswa',
+                    value: "Jumlah Siswa",
                     angle: -90,
-                    position: 'insideLeft',
+                    position: "insideLeft",
                   }}
                 />
-                <Tooltip formatter={(value) => [value + ' Siswa', 'Total Siswa Baru']} />
-                <Legend
-                  verticalAlign='top'
-                  align='right'
+                <Tooltip
+                  formatter={(value) => [value + " Siswa", "Total Siswa Baru"]}
                 />
+                <Legend verticalAlign="top" align="right" />
                 <Bar
-                  dataKey='total_students'
-                  fill='#FF5733'
+                  dataKey="total_students"
+                  fill="#FF5733"
                   barSize={30}
-                  name='Total Siswa Baru'
+                  name="Total Siswa Baru"
                 />
               </BarChart>
             )}
@@ -289,64 +298,53 @@ export default function DashboardComponent() {
       </Card>
 
       {/* Chart Per Program */}
-      <Card style={{ marginBottom: '24px', padding: '20px' }}>
-        <Flex
-          justify='space-between'
-          align='center'
-          wrap='wrap'
-        >
-          <h2 style={{ flex: '1 1 100%' }}>Total Siswa Berdasarkan Program</h2>
+      <Card style={{ marginBottom: "24px", padding: "20px" }}>
+        <Flex justify="space-between" align="center" wrap="wrap">
+          <h2 style={{ flex: "1 1 100%" }}>Total Siswa Berdasarkan Program</h2>
           <Select
             defaultValue={chartTypeProgram}
             style={{ width: 150 }}
             onChange={(value) => setChartTypeProgram(value)}
           >
-            <Select.Option value='line'>Line Chart</Select.Option>
-            <Select.Option value='bar'>Bar Chart</Select.Option>
+            <Select.Option value="line">Line Chart</Select.Option>
+            <Select.Option value="bar">Bar Chart</Select.Option>
           </Select>
         </Flex>
 
         {isLoadingStudentPerProgram ? (
-          <Skeleton
-            active
-            paragraph={{ rows: 6 }}
-          />
+          <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
-          <ResponsiveContainer
-            width='100%'
-            height={300}
-          >
-            {chartTypeProgram === 'line' ? (
+          <ResponsiveContainer width="100%" height={300}>
+            {chartTypeProgram === "line" ? (
               <LineChart
                 data={dataStudentPerProgram?.data}
                 margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
               >
-                <CartesianGrid strokeDasharray='3 3' />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
-                  dataKey='program_name'
+                  dataKey="program_name"
                   tick={{ fontSize: 12 }}
                   interval={0}
                 />
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: 'Total Siswa',
+                    value: "Total Siswa",
                     angle: -90,
-                    position: 'insideLeft',
+                    position: "insideLeft",
                   }}
                 />
-                <Tooltip formatter={(value) => [`${value} Siswa`, 'Total Siswa']} />
-                <Legend
-                  verticalAlign='top'
-                  align='right'
+                <Tooltip
+                  formatter={(value) => [`${value} Siswa`, "Total Siswa"]}
                 />
+                <Legend verticalAlign="top" align="right" />
                 <Line
-                  type='monotone'
-                  dataKey='total_students'
-                  stroke='#82ca9d'
+                  type="monotone"
+                  dataKey="total_students"
+                  stroke="#82ca9d"
                   strokeWidth={2}
                   dot={{ r: 4 }}
-                  name='Total Siswa'
+                  name="Total Siswa"
                 />
               </LineChart>
             ) : (
@@ -354,30 +352,29 @@ export default function DashboardComponent() {
                 data={dataStudentPerProgram?.data}
                 margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
               >
-                <CartesianGrid strokeDasharray='3 3' />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
-                  dataKey='program_name'
+                  dataKey="program_name"
                   tick={{ fontSize: 12 }}
                   interval={0}
                 />
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: 'Total Siswa',
+                    value: "Total Siswa",
                     angle: -90,
-                    position: 'insideLeft',
+                    position: "insideLeft",
                   }}
                 />
-                <Tooltip formatter={(value) => [`${value} Siswa`, 'Total Siswa']} />
-                <Legend
-                  verticalAlign='top'
-                  align='right'
+                <Tooltip
+                  formatter={(value) => [`${value} Siswa`, "Total Siswa"]}
                 />
+                <Legend verticalAlign="top" align="right" />
                 <Bar
-                  dataKey='total_students'
-                  fill='#0088FE'
+                  dataKey="total_students"
+                  fill="#0088FE"
                   barSize={40}
-                  name='Total Siswa'
+                  name="Total Siswa"
                 />
               </BarChart>
             )}

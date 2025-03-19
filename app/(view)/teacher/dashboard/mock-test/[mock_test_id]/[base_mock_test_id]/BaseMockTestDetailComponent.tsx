@@ -39,7 +39,6 @@ export default function BaseMockTestDetailComponent() {
     options,
     correctAnswers,
     loading,
-    handleAddQuestion,
     handleDeleteQuestion,
     selectedQuestion,
     setOptions,

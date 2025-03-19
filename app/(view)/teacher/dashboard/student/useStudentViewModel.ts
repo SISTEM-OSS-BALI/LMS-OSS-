@@ -10,7 +10,7 @@ interface StudentResponse {
 
 export const useStudentViewModel = () => {
   const router = useRouter();
-  const { data: studentDataAll } = useSWR<StudentResponse>(
+  const { data: studentDataAll, isLoading } = useSWR<StudentResponse>(
     "/api/teacher/student/showAll",
     fetcher
   );
@@ -33,5 +33,6 @@ export const useStudentViewModel = () => {
     handleDetail,
     handleSearch,
     filteredStudent,
+    isLoading
   };
 };

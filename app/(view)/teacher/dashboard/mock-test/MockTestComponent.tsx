@@ -1,9 +1,27 @@
-import { Card, Skeleton, Row, Col, Button, Space, Flex, Modal, Form, Input, Alert, Image } from 'antd';
-import { useMockTestViewModel } from './useMockTestViewModel';
-import { EditOutlined, DeleteOutlined, PlusCircleFilled, QrcodeOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import { QRCodeCanvas } from 'qrcode.react';
-import { useRef } from 'react';
+import {
+  Card,
+  Skeleton,
+  Row,
+  Col,
+  Button,
+  Space,
+  Flex,
+  Modal,
+  Form,
+  Input,
+  Alert,
+  Image,
+} from "antd";
+import { useMockTestViewModel } from "./useMockTestViewModel";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PlusCircleFilled,
+  QrcodeOutlined,
+} from "@ant-design/icons";
+import Link from "next/link";
+import { QRCodeCanvas } from "qrcode.react";
+import { useRef } from "react";
 
 export default function MockTestComponent() {
   const {
@@ -49,22 +67,8 @@ export default function MockTestComponent() {
           const x = (qrSize - logoSize) / 2;
           const y = (qrSize - logoSize) / 2;
 
-          // **Buat logo berbentuk bulat**
-          context.save();
-          context.beginPath();
-          context.arc(
-            x + logoSize / 2,
-            y + logoSize / 2,
-            logoSize / 2,
-            0,
-            Math.PI * 2
-          );
-          context.closePath();
-          context.clip();
-
-          // Gambar logo
+          // Gambar logo tanpa clipping bulat
           context.drawImage(logo, x, y, logoSize, logoSize);
-          context.restore();
 
           // **Simpan QR Code sebagai gambar PNG**
           const link = document.createElement("a");
@@ -74,6 +78,17 @@ export default function MockTestComponent() {
         };
       }
     }
+  };
+
+  const showConfirmDelete = (mock_test_id: string) => {
+    Modal.confirm({
+      title: "Hapus Data",
+      content: "Apakah Anda yakin ingin menghapus data ini?",
+      okText: "Ya",
+      okType: "danger",
+      cancelText: "Tidak",
+      onOk: () => handleDelete(mock_test_id),
+    });
   };
 
   return (
@@ -164,9 +179,10 @@ export default function MockTestComponent() {
                         shape="circle"
                         icon={<DeleteOutlined />}
                         danger
-                        onClick={() => handleDelete(item.mock_test_id)}
+                        onClick={() => showConfirmDelete(item.mock_test_id)}
                       />
                       <Button
+                        key={`qr-${item.mock_test_id}`}
                         type="default"
                         shape="circle"
                         icon={<QrcodeOutlined />}
@@ -198,35 +214,45 @@ export default function MockTestComponent() {
         title={selectedMockTest ? "Edit Data" : "Tambah Data"}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          {/* Nama */}
           <Form.Item
-            label="Nama"
             name="name"
-            required
-            rules={[{ required: true, message: "Nama harus diisi" }]}
+            label="Nama"
+            rules={[{ required: true, message: "Nama wajib diisi!" }]}
           >
             <Input placeholder="Masukkan Nama" />
           </Form.Item>
+
+          {/* Deskripsi */}
           <Form.Item
-            label="Deskripsi"
             name="description"
-            required
-            rules={[{ required: true, message: "Deskripsi harus diisi" }]}
+            label="Deskripsi"
+            rules={[{ required: true, message: "Deskripsi wajib diisi!" }]}
           >
-            <Input placeholder="Masukkan Deskripsi" />
+            <Input.TextArea placeholder="Masukkan Deskripsi" />
           </Form.Item>
+
+          {/* Lama Pengerjaan */}
           <Form.Item
-            label="Waktu"
-            name="time_limit"
-            required
-            rules={[{ required: true, message: "Waktu harus diisi" }]}
+            name="timeLimit"
+            label="Lama Pengerjaan"
+            rules={[
+              { required: true, message: "Lama pengerjaan wajib diisi!" },
+              {
+                pattern: /^[0-9]+$/,
+                message: "Lama pengerjaan harus berupa angka!",
+              },
+            ]}
           >
-            <Input type="number" placeholder="Masukkan Durasi Pengerjaan" />
+            <Input placeholder="Lama Pengerjaan (menit)" />
           </Form.Item>
+
+          {/* Tombol Submit */}
           <Form.Item>
             <Button
               type="primary"
-              style={{ width: "100%" }}
               htmlType="submit"
+              style={{ width: "100%" }}
               loading={loading}
             >
               Submit
@@ -234,12 +260,11 @@ export default function MockTestComponent() {
           </Form.Item>
         </Form>
       </Modal>
-
       <Modal
         open={qrModalVisible}
         onCancel={() => handleCancelOpenModalQr()}
         footer={null}
-        title="QR Code Placement Test"
+        title="QR Code Mock Test"
       >
         <div
           ref={qrRef}

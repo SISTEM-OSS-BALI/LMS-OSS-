@@ -264,13 +264,13 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
         components: {
           Layout: {
             siderBg: primaryColor,
-            triggerBg: 'white',
-            triggerColor: 'black',
-            footerBg: 'white',
+            triggerBg: "white",
+            triggerColor: "black",
+            footerBg: "white",
           },
           Menu: {
             colorBgContainer: primaryColor,
-            colorText: 'white',
+            colorText: "white",
           },
         },
         token: {
@@ -278,42 +278,42 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
         },
       }}
     >
-      <Layout style={{ height: '100vh' }}>
+      <Layout style={{ height: "100vh" }}>
         <Sider
           collapsible
           collapsed={collapsed}
           onCollapse={(value) => setCollapsed(value)}
           style={{
-            position: 'fixed',
-            height: '100vh',
-            overflow: 'hidden',
+            position: "fixed",
+            height: "100vh",
+            overflow: "hidden",
             width: 200,
             left: 0,
             zIndex: 1000,
-            boxShadow: '8px 0 10px -5px rgba(0, 0, 0, 0.2)',
+            boxShadow: "8px 0 10px -5px rgba(0, 0, 0, 0.2)",
             // ✅ Agar sidebar tidak hilang total di mobile saat collapsed:
-            display: isMobile && collapsed ? 'none' : 'block',
+            display: isMobile && collapsed ? "none" : "block",
           }}
         >
           <div
-            className='logo'
+            className="logo"
             style={{
-              color: 'white',
-              padding: '16px',
-              textAlign: 'center',
-              fontSize: '18px',
+              color: "white",
+              padding: "16px",
+              textAlign: "center",
+              fontSize: "18px",
             }}
           >
             <Image
-              src='/assets/images/logo.jpg'
-              alt='Logo'
+              src="/assets/images/logo.jpg"
+              alt="Logo"
               width={60}
               preview={false}
             />
           </div>
           <Menu
-            mode='inline'
-            defaultSelectedKeys={['/student/dashboard/home']}
+            mode="inline"
+            defaultSelectedKeys={["/student/dashboard/home"]}
             selectedKeys={selectedKeys}
             items={items}
           />
@@ -323,36 +323,36 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
           style={{
             marginLeft: collapsed ? (isMobile ? 0 : 80) : 200,
             marginTop: 50,
-            transition: 'margin-left 0.2s',
+            transition: "margin-left 0.2s",
           }}
         >
           <Flex
-            align='center'
-            justify='space-between'
+            align="center"
+            justify="space-between"
             style={{
-              paddingBlock: '1rem',
-              paddingInline: '3rem',
-              position: 'fixed',
+              paddingBlock: "1rem",
+              paddingInline: "3rem",
+              position: "fixed",
               top: 0,
               left: 0,
               right: 0,
               zIndex: 998,
-              backgroundColor: '#FFFFFF',
-              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+              backgroundColor: "#FFFFFF",
+              boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
             }}
           >
             {/* ✅ Tambahkan hamburger button jika mobile */}
             {isMobile && (
               <Button
-                type='text'
+                type="text"
                 icon={<MenuOutlined />}
                 onClick={() => setCollapsed(!collapsed)}
               />
             )}
             <Flex
               style={{
-                display: 'flex',
-                listStyleType: 'none',
+                display: "flex",
+                listStyleType: "none",
                 padding: 0,
                 margin: 0,
                 gap: 20,
@@ -360,18 +360,14 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
               // eslint-disable-next-line react/no-children-prop
               children={undefined}
             ></Flex>
-            <Flex
-              justify='center'
-              align='center'
-              gap={20}
-            >
+            <Flex justify="center" align="center" gap={20}>
               <Dropdown
                 overlay={
                   <Menu
                     items={[
                       {
-                        key: 'logout',
-                        label: 'Logout',
+                        key: "logout",
+                        label: "Logout",
                         icon: <LogoutOutlined />,
                         onClick: () => showConfirmLogout(),
                       },
@@ -382,26 +378,25 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
                 <a
                   onClick={(e) => e.preventDefault()}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: 'white',
+                    display: "flex",
+                    alignItems: "center",
+                    color: "white",
                   }}
                 >
                   <Flex
                     gap={20}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
+                      display: "flex",
+                      alignItems: "center",
                       marginRight: 20,
                     }}
                   >
-                    <Avatar
-                      icon={<UserOutlined />}
-                      style={{}}
-                    />
-                    <div style={{ color: 'black', textAlign: 'right' }}>
+                    <Avatar icon={<UserOutlined />} style={{}} />
+                    <div style={{ color: "black", textAlign: "right" }}>
                       <div>{username}</div>
-                      <div style={{ fontSize: 'smaller', marginTop: 5 }}>Admin</div>
+                      <div style={{ fontSize: "smaller", marginTop: 5 }}>
+                        Admin
+                      </div>
                     </div>
                   </Flex>
                 </a>
@@ -411,10 +406,10 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
 
           <Content
             style={{
-              margin: '20px 12px',
-              padding: screens.xs ? '20px 10px' : '20px', // Padding lebih kecil di mobile
-              height: 'auto',
-              overflow: 'auto',
+              margin: "20px 12px",
+              padding: screens.xs ? "20px 10px" : "20px", // Padding lebih kecil di mobile
+              height: "auto",
+              overflow: "auto",
             }}
           >
             <div>{children}</div>
@@ -422,12 +417,12 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
 
           <Footer
             style={{
-              height: '50px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              textAlign: 'center',
-              boxShadow: '0px -5px 10px rgba(0, 0, 0, 0.1)',
+              height: "50px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              textAlign: "center",
+              boxShadow: "0px -5px 10px rgba(0, 0, 0, 0.1)",
             }}
           >
             LMS OSS ©{new Date().getFullYear()}
