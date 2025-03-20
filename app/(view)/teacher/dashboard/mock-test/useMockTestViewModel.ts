@@ -50,6 +50,7 @@ export const useMockTestViewModel = () => {
     setLoading(true);
     const payload = {
       ...values,
+      time_limit: values.timeLimit,
     };
 
     try {
