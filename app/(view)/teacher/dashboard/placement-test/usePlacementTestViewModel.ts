@@ -93,6 +93,10 @@ export const usePlacementTestViewModel = () => {
       mutatePlacementTest();
     } catch (error) {
       console.error(error);
+      notification.error({
+        message: "Gagal",
+        description: "Data gagal dihapus",
+      });
     }
   };
 

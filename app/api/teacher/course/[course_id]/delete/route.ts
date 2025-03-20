@@ -25,7 +25,7 @@ export async function DELETE(
 
     // Periksa apakah course dimiliki oleh pengguna
     const course = await prisma.course.findFirst({
-      where: { course_id, teacher_id: user.user_id },
+      where: { course_id },
     });
 
     if (!course) {
