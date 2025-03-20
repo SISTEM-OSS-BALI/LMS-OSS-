@@ -138,7 +138,8 @@ export async function POST(request: NextRequest) {
       (sum, answer) => sum + (answer.score ?? 0),
       0
     );
-    const percentageScore = (totalScore / totalQuestionsCount) * 100 || 0;
+   const percentageScore =
+     Math.min((totalScore / totalQuestionsCount) * 100, 100) || 0;
 
     let newLevel = "Beginner";
     // 🔹 Tentukan level baru siswa berdasarkan skor

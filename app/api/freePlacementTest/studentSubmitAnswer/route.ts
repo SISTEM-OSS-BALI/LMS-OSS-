@@ -112,11 +112,22 @@ export async function POST(request: NextRequest) {
       (sum, answer) => sum + (answer.score ?? 0),
       0
     );
-    const percentageScore = (totalScore / totalQuestionsCount) * 100 || 0;
+    const percentageScore =
+      Math.min((totalScore / totalQuestionsCount) * 100, 100) || 0;
 
-    let newLevel = "BASIC";
-    if (percentageScore >= 80) newLevel = "ADVANCED";
-    else if (percentageScore >= 50) newLevel = "INTERMEDIATE";
+    let newLevel = "Beginner";
+    // 🔹 Tentukan level baru siswa berdasarkan skor
+    if (totalScore >= 46) {
+      newLevel = "Advanced";
+    } else if (totalScore >= 40) {
+      newLevel = "Upper Intermediate";
+    } else if (totalScore >= 33) {
+      newLevel = "Intermediate";
+    } else if (totalScore >= 25) {
+      newLevel = "Pre-Intermediate";
+    } else if (totalScore >= 16) {
+      newLevel = "Elementary";
+    }
 
     // 🔹 Simpan skor akhir siswa
     await prisma.scoreFreePlacementTest.create({
