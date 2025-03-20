@@ -69,10 +69,8 @@ export const useMeetings = () => {
   const { data: courseData, isLoading: isLoadingCourse } =
     useSWR<CourseResponse>("/api/student/course/show", fetcher);
 
-  const { data: accessMockTestData, isLoading: isLoadingAccessMock } = useSWR<AccessMockTestResponse>(
-    "/api/student/accessMockTest/show",
-    fetcher
-  );
+  const { data: accessMockTestData, isLoading: isLoadingAccessMock } =
+    useSWR<AccessMockTestResponse>("/api/student/accessMockTest/show", fetcher);
 
   const { data: mockTestData, isLoading: isLoadingMock } =
     useSWR<MockTestResponse>("/api/teacher/mockTest/show", fetcher);
@@ -165,7 +163,7 @@ export const useMeetings = () => {
   const events =
     showMeetingById?.data?.map((meeting: any) => {
       const formatDateTimeToUTC = (dateTime: string) => {
-        return dayjs.utc(dateTime).toISOString();
+        return dayjs.utc(dateTime).subtract(1, "day").toISOString();
       };
 
       const filteredData = dataTeacher?.data.find(
@@ -209,6 +207,6 @@ export const useMeetings = () => {
     isLoadingCourse,
     isLoadingAccessMock,
     isLoadingShowMeetingById,
-    checkMeetingToday
+    checkMeetingToday,
   };
 };
