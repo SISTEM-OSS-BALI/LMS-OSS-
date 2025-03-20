@@ -259,14 +259,12 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
                       size={45}
                       style={{ backgroundColor: "#1890ff" }}
                     />
-                    {!isMobile && (
                       <div style={{ color: "black", textAlign: "right" }}>
                         <div>{username}</div>
                         <div style={{ fontSize: "smaller", marginTop: 5 }}>
                           Teacher
                         </div>
                       </div>
-                    )}
                   </Flex>
                 </a>
               </Dropdown>

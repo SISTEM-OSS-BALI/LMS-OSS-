@@ -72,7 +72,7 @@ export default function CoursesTeacherComponent() {
             display: "grid",
             gridTemplateColumns: screens.xs
               ? "1fr"
-              : "repeat(auto-fill, minmax(300px, 1fr))",
+              : "repeat(auto-fill, minmax(250px, 1fr))",
             gap: "16px",
           }}
         >
@@ -88,17 +88,34 @@ export default function CoursesTeacherComponent() {
             </Card>
           ))}
         </div>
+      ) : !filteredCourses || filteredCourses.length === 0 ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "200px", // Pastikan alert berada di tengah
+            width: "100%",
+          }}
+        >
+          <Alert
+            style={{ width: "50%", textAlign: "center" }}
+            type="info"
+            message="Tidak ada data modul"
+          />
+        </div>
       ) : (
+        // Menampilkan daftar modul jika ada data
         <div
           style={{
             display: "grid",
             gridTemplateColumns: screens.xs
               ? "1fr"
-              : "repeat(auto-fill, minmax(300px, 1fr))",
+              : "repeat(auto-fill, minmax(250px, 1fr))",
             gap: "16px",
           }}
         >
-          {filteredCourses && filteredCourses.length > 0 ? (
+          {filteredCourses &&
             filteredCourses.map((course: any, index: number) => (
               <Card
                 key={course.course_id}
@@ -113,7 +130,7 @@ export default function CoursesTeacherComponent() {
                   )
                 }
                 hoverable
-                style={{ width: "100%" }} // Responsive card width
+                style={{ width: "100%" }}
               >
                 <Meta
                   title={
@@ -150,22 +167,7 @@ export default function CoursesTeacherComponent() {
                   </Tooltip>
                 </Flex>
               </Card>
-            ))
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Alert
-                style={{ width: "100%", textAlign: "center" }}
-                type="info"
-                message="Tidak ada data modul"
-              />
-            </div>
-          )}
+            ))}
         </div>
       )}
 
