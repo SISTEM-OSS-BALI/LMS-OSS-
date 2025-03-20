@@ -12,7 +12,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import locale from 'dayjs/locale/id'; // Menggunakan lokal Indonesia
+import locale from 'dayjs/locale/id'; 
 dayjs.extend(utc);
 dayjs.locale(locale);
 
