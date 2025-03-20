@@ -184,9 +184,13 @@ export async function PUT(
     const messages = [
       {
         phone: formattedTeacherPhone,
-        text: `🔄 *Update Pertemuan!*\n\n👨‍🏫 *Guru:* ${teacherName}\n👨‍🎓 *Siswa:* ${studentName}\n📅 *Tanggal Baru:* ${formattedDate}\n📝 *Metode:* ${method}\n📍 *Platform:* ${
+        text: `🔄💡 *Update Pertemuan!*\n\n👨‍🏫 *Guru:* ${teacherName} 👋\n👨‍🎓 *Siswa:* ${studentName} 👋\n📚 *Program:* ${
+          getProgramStudent?.name
+        } 📖\n📅 *Tanggal Baru:* ${formattedDate} 📆\n📝 *Metode:* ${method} 📝\n📍 *Platform:* ${
           platform || "-"
-        }\n🔗 *Link:* ${meetLink || "-"}\n\nHarap periksa jadwal terbaru.`,
+        } 📱\n🔗 *Link:* ${
+          meetLink || "-"
+        } 📈\n\n🙏 Harap periksa jadwal terbaru. 👍`,
       },
       {
         phone: formattedStudentPhone,

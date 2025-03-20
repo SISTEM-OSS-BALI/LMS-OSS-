@@ -199,15 +199,17 @@ export async function POST(request: NextRequest) {
       },
       {
         phone: formattedStudentPhone,
-        text: `📅 *Pengingat Meeting*\n\n👨‍🏫 *Guru:* ${teacherName}\n📅 *Tanggal:* ${dayjs(
+        text: `📅🔔 *Pengingat Meeting* 📅\n\n👨‍🏫 *Guru:* ${teacherName} 👋\n📆 *Tanggal:* ${dayjs(
           dateTime
-        ).format("dddd, DD MMMM YYYY")}\n🕒 *Waktu:* ${dayjs(dateTime).format(
-          "HH:mm"
-        )}\n📝 *Metode:* ${method}\n📍 *Platform:* ${
+        ).format("dddd, DD MMMM YYYY")} 📆\n🕒 *Waktu:* ${dayjs(
+          dateTime
+        ).format("HH:mm")} ⏰\n *Program:* ${
+          programData.name
+        } 📚\n📝 *Metode:* ${method} 📝\n📍 *Platform:* ${
           platform || "-"
-        }\n🔗 *Link:* ${
+        } 📱\n🔗 *Link:* ${
           meetLink || "-"
-        }\n\nMohon bersiap sebelum meeting dimulai!`,
+        } 📈\n\n🙏 Mohon bersiap sebelum meeting dimulai! 👍`,
       },
     ];
 
