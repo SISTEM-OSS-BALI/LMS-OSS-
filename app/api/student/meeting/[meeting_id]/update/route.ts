@@ -74,7 +74,7 @@ export async function PUT(
 
     const [hours, minutes] = time.split(":").map(Number);
     const dateTime = dayjs
-      .utc(dayjsDate.add(1, "day"))
+      .utc(dayjsDate)
       .set("hour", hours)
       .set("minute", minutes);
 

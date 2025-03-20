@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from "react";
 import {
   BookOutlined,
   CalendarFilled,
@@ -13,8 +13,8 @@ import {
   TableOutlined,
   UserOutlined,
   MenuOutlined, // <-- Import icon hamburger
-} from '@ant-design/icons';
-import type { MenuProps } from 'antd';
+} from "@ant-design/icons";
+import type { MenuProps } from "antd";
 import {
   Avatar,
   ConfigProvider,
@@ -28,21 +28,26 @@ import {
   Badge,
   Button,
   Grid, // <-- Tambah Button (untuk hamburger)
-} from 'antd';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { primaryColor, secondaryColor } from '@/app/lib/utils/colors';
-import { crudService } from '@/app/lib/services/crudServices';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/lib/auth/authServices';
-import { signOut } from 'next-auth/react';
+} from "antd";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { primaryColor, secondaryColor } from "@/app/lib/utils/colors";
+import { crudService } from "@/app/lib/services/crudServices";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/lib/auth/authServices";
+import { signOut } from "next-auth/react";
 
 const { Content, Footer, Sider } = Layout;
 const { useBreakpoint } = Grid;
 
-type MenuItem = Required<MenuProps>['items'][number];
+type MenuItem = Required<MenuProps>["items"][number];
 
-function getItem(label: React.ReactNode, key: React.Key, icon?: React.ReactNode, children?: MenuItem[]): MenuItem {
+function getItem(
+  label: React.ReactNode,
+  key: React.Key,
+  icon?: React.ReactNode,
+  children?: MenuItem[]
+): MenuItem {
   return {
     key,
     icon,
@@ -52,22 +57,28 @@ function getItem(label: React.ReactNode, key: React.Key, icon?: React.ReactNode,
 }
 
 const menuMap: { [key: string]: string } = {
-  '/admin/dashboard/home': '/admin/dashboard/home',
-  '/admin/dashboard/consultant': '/admin/dashboard/consultant',
-  '/admin/dashboard/teacher': '/admin/dashboard/teacher',
-  '/admin/dashboard/teacher/calendar': '/admin/dashboard/teacher/calendar',
-  '/admin/dashboard/program': '/admin/dashboard/program',
-  '/admin/dashboard/queue': '/admin/dashboard/queue',
-  '/admin/dashboard/teacher/absent': '/admin/dashboard/teacher/absent',
-  '/admin/dashboard/teacher/data-teacher': '/admin/dashboard/teacher/data-teacher',
-  '/admin/dashboard/student/reschedule': '/admin/dashboard/student/reschedule',
-  '/admin/dashboard/student/data-student': '/admin/dashboard/student/data-student',
-  '/admin/dashboard/student/calendar/confirm-account': '/admin/dashboard/student/calendar/confirm-account',
-  '/admin/dashboard/report/placement-test': '/admin/dashboard/report/placement-test',
-  '/admin/dashboard/report/mock-test': '/admin/dashboard/report/mock-test',
+  "/admin/dashboard/home": "/admin/dashboard/home",
+  "/admin/dashboard/consultant": "/admin/dashboard/consultant",
+  "/admin/dashboard/teacher": "/admin/dashboard/teacher",
+  "/admin/dashboard/teacher/calendar": "/admin/dashboard/teacher/calendar",
+  "/admin/dashboard/program": "/admin/dashboard/program",
+  "/admin/dashboard/queue": "/admin/dashboard/queue",
+  "/admin/dashboard/teacher/absent": "/admin/dashboard/teacher/absent",
+  "/admin/dashboard/teacher/data-teacher":
+    "/admin/dashboard/teacher/data-teacher",
+  "/admin/dashboard/student/reschedule": "/admin/dashboard/student/reschedule",
+  "/admin/dashboard/student/data-student":
+    "/admin/dashboard/student/data-student",
+  "/admin/dashboard/student/calendar/confirm-account":
+    "/admin/dashboard/student/calendar/confirm-account",
+  "/admin/dashboard/report/placement-test":
+    "/admin/dashboard/report/placement-test",
+  "/admin/dashboard/report/mock-test": "/admin/dashboard/report/mock-test",
 };
 
-const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   // STATE bawaan
   const [collapsed, setCollapsed] = useState(false);
 
@@ -94,18 +105,18 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
     };
 
     handleResize(); // Panggil saat pertama kali dimuat
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const showConfirmLogout = async () => {
     Modal.confirm({
-      title: 'Logout',
-      content: 'Apakah anda yakin ingin logout?',
-      okText: 'Logout',
-      okType: 'danger',
+      title: "Logout",
+      content: "Apakah anda yakin ingin logout?",
+      okText: "Logout",
+      okType: "danger",
       onOk: async () => {
-        await signOut({ callbackUrl: '/' });
+        await signOut({ callbackUrl: "/" });
       },
     });
   };
@@ -115,8 +126,8 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
     <Menu
       items={[
         {
-          key: 'logout',
-          label: 'Logout',
+          key: "logout",
+          label: "Logout",
           icon: <LogoutOutlined />,
           onClick: () => {
             showConfirmLogout();
@@ -127,59 +138,101 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
   );
 
   // LOGIKA FETCH (Tetap)
-  const fetchDataWithLastChecked = useCallback(async (endpoint: string, lastCheckedKey: string, setStateCallback: React.Dispatch<React.SetStateAction<number>>) => {
-    const lastChecked = sessionStorage.getItem(lastCheckedKey) || '';
+  const fetchDataWithLastChecked = useCallback(
+    async (
+      endpoint: string,
+      lastCheckedKey: string,
+      setStateCallback: React.Dispatch<React.SetStateAction<number>>
+    ) => {
+      const lastChecked = sessionStorage.getItem(lastCheckedKey) || "";
 
-    try {
-      const query = lastChecked ? `?lastChecked=${lastChecked}` : '';
-      const response = await crudService.get(`${endpoint}${query}`);
-      setStateCallback(response.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  }, []);
+      try {
+        const query = lastChecked ? `?lastChecked=${lastChecked}` : "";
+        const response = await crudService.get(`${endpoint}${query}`);
+        setStateCallback(response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    },
+    []
+  );
 
   const handleRescheduleClick = () => {
-    sessionStorage.setItem('lastCheckedRescheduleTime', Date.now().toString());
+    sessionStorage.setItem("lastCheckedRescheduleTime", Date.now().toString());
     setNewRescheduleCount(0);
-    router.push('/admin/dashboard/student/reschedule');
+    router.push("/admin/dashboard/student/reschedule");
   };
 
   const handleAbsentClick = () => {
-    sessionStorage.setItem('lastCheckedTeacherAbsence', Date.now().toString());
+    sessionStorage.setItem("lastCheckedTeacherAbsence", Date.now().toString());
     setNewTeacherAbsance(0);
-    router.push('/admin/dashboard/teacher/absent');
+    router.push("/admin/dashboard/teacher/absent");
   };
 
   useEffect(() => {
-    fetchDataWithLastChecked('/api/admin/rescheduleMeeting/count', 'lastCheckedRescheduleTime', setNewRescheduleCount);
+    fetchDataWithLastChecked(
+      "/api/admin/rescheduleMeeting/count",
+      "lastCheckedRescheduleTime",
+      setNewRescheduleCount
+    );
 
-    fetchDataWithLastChecked('/api/admin/teacher/countAbsent', 'lastCheckedTeacherAbsence', setNewTeacherAbsance);
+    fetchDataWithLastChecked(
+      "/api/admin/teacher/countAbsent",
+      "lastCheckedTeacherAbsence",
+      setNewTeacherAbsance
+    );
 
     const intervalId = setInterval(() => {
-      fetchDataWithLastChecked('/api/admin/teacher/countAbsent', 'lastCheckedRescheduleTime', setNewRescheduleCount);
+      fetchDataWithLastChecked(
+        "/api/admin/teacher/countAbsent",
+        "lastCheckedRescheduleTime",
+        setNewRescheduleCount
+      );
 
-      fetchDataWithLastChecked('/api/admin/teacher/countAbsent', 'lastCheckedTeacherAbsence', setNewTeacherAbsance);
+      fetchDataWithLastChecked(
+        "/api/admin/teacher/countAbsent",
+        "lastCheckedTeacherAbsence",
+        setNewTeacherAbsance
+      );
     }, 50000);
 
     return () => clearInterval(intervalId);
-  }, [newRescheduleCount, newTeacherAbsance, setNewRescheduleCount, setNewTeacherAbsance, fetchDataWithLastChecked]);
+  }, [
+    newRescheduleCount,
+    newTeacherAbsance,
+    setNewRescheduleCount,
+    setNewTeacherAbsance,
+    fetchDataWithLastChecked,
+  ]);
 
   // MENU SIDEBAR (Tetap)
   const items: MenuItem[] = [
-    getItem(<Link href='/admin/dashboard/home'>Dashboard</Link>, '/admin/dashboard/home', <PieChartOutlined />),
-    getItem(<Link href='/admin/dashboard/consultant'>Konsultan</Link>, '/admin/dashboard/consultant', <UserOutlined />),
-    getItem(<span>Guru</span>, '/admin/dashboard/teacher', <UserOutlined />, [
-      getItem(<Link href='/admin/dashboard/teacher/data-teacher'>Data Guru</Link>, '/admin/dashboard/teacher/data-teacher', <UserOutlined />),
-      getItem(<Link href='/admin/dashboard/teacher/calendar'>Kalender</Link>, '/admin/dashboard/teacher/calendar', <CalendarFilled />),
+    getItem(
+      <Link href="/admin/dashboard/home">Dashboard</Link>,
+      "/admin/dashboard/home",
+      <PieChartOutlined />
+    ),
+    getItem(
+      <Link href="/admin/dashboard/consultant">Konsultan</Link>,
+      "/admin/dashboard/consultant",
+      <UserOutlined />
+    ),
+    getItem(<span>Guru</span>, "/admin/dashboard/teacher", <UserOutlined />, [
+      getItem(
+        <Link href="/admin/dashboard/teacher/data-teacher">Data Guru</Link>,
+        "/admin/dashboard/teacher/data-teacher",
+        <UserOutlined />
+      ),
+      getItem(
+        <Link href="/admin/dashboard/teacher/calendar">Kalender</Link>,
+        "/admin/dashboard/teacher/calendar",
+        <CalendarFilled />
+      ),
       getItem(
         newTeacherAbsance > 0 ? (
-          <Badge
-            count={newTeacherAbsance}
-            offset={[10, 0]}
-          >
+          <Badge count={newTeacherAbsance} offset={[10, 0]}>
             <Link
-              href='/admin/dashboard/teacher/absent'
+              href="/admin/dashboard/teacher/absent"
               onClick={handleAbsentClick}
             >
               Absen
@@ -187,27 +240,34 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
           </Badge>
         ) : (
           <Link
-            href='/admin/dashboard/teacher/absent'
+            href="/admin/dashboard/teacher/absent"
             onClick={handleAbsentClick}
           >
             Absen
           </Link>
         ),
-        '/admin/dashboard/teacher/absent',
+        "/admin/dashboard/teacher/absent",
         <ScheduleFilled />
       ),
     ]),
-    getItem(<span>Siswa</span>, '/admin/dashboard/student', <UserOutlined />, [
-      getItem(<Link href='/admin/dashboard/student/data-student'>Data Siswa</Link>, '/admin/dashboard/student/data-student', <UserOutlined />),
-      getItem(<Link href='/admin/dashboard/student/confirm-account'>Konfirmasi Akun</Link>, '/admin/dashboard/student/calendar/confirm-account', <CheckCircleFilled />),
+    getItem(<span>Siswa</span>, "/admin/dashboard/student", <UserOutlined />, [
+      getItem(
+        <Link href="/admin/dashboard/student/data-student">Data Siswa</Link>,
+        "/admin/dashboard/student/data-student",
+        <UserOutlined />
+      ),
+      getItem(
+        <Link href="/admin/dashboard/student/confirm-account">
+          Konfirmasi Akun
+        </Link>,
+        "/admin/dashboard/student/calendar/confirm-account",
+        <CheckCircleFilled />
+      ),
       getItem(
         newRescheduleCount > 0 ? (
-          <Badge
-            count={newRescheduleCount}
-            offset={[10, 0]}
-          >
+          <Badge count={newRescheduleCount} offset={[10, 0]}>
             <Link
-              href='/admin/dashboard/student/reschedule'
+              href="/admin/dashboard/student/reschedule"
               onClick={handleRescheduleClick}
             >
               Reschedule
@@ -215,21 +275,39 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
           </Badge>
         ) : (
           <Link
-            href='/admin/dashboard/student/reschedule'
+            href="/admin/dashboard/student/reschedule"
             onClick={handleRescheduleClick}
           >
             Reschedule
           </Link>
         ),
-        '/admin/dashboard/student/reschedule',
+        "/admin/dashboard/student/reschedule",
         <ScheduleFilled />
       ),
     ]),
-    getItem(<Link href='/admin/dashboard/program'>Program</Link>, '/admin/dashboard/program', <BookOutlined />),
-    getItem(<Link href='/admin/dashboard/queue'>Antrian</Link>, '/admin/dashboard/queue', <TableOutlined />),
-    getItem(<span>Laporan</span>, '/admin/dashboard/report', <FileOutlined />, [
-      getItem(<Link href='/admin/dashboard/report/placement-test'>Placement Test</Link>, '/admin/dashboard/report/placement-test', <FileTextOutlined />),
-      getItem(<Link href='/admin/dashboard/report/mock-test'>Mock Test</Link>, '/admin/dashboard/report/mock-test', <FileTextOutlined />),
+    getItem(
+      <Link href="/admin/dashboard/program">Program</Link>,
+      "/admin/dashboard/program",
+      <BookOutlined />
+    ),
+    getItem(
+      <Link href="/admin/dashboard/queue">Antrian</Link>,
+      "/admin/dashboard/queue",
+      <TableOutlined />
+    ),
+    getItem(<span>Laporan</span>, "/admin/dashboard/report", <FileOutlined />, [
+      getItem(
+        <Link href="/admin/dashboard/report/placement-test">
+          Placement Test
+        </Link>,
+        "/admin/dashboard/report/placement-test",
+        <FileTextOutlined />
+      ),
+      getItem(
+        <Link href="/admin/dashboard/report/mock-test">Mock Test</Link>,
+        "/admin/dashboard/report/mock-test",
+        <FileTextOutlined />
+      ),
     ]),
   ];
 
@@ -241,16 +319,18 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
       return [exactMatch[1]];
     }
 
-    const matchedEntry = Object.entries(menuMap).find(([key]) => path.startsWith(key));
+    const matchedEntry = Object.entries(menuMap).find(([key]) =>
+      path.startsWith(key)
+    );
 
-    if (path.startsWith('/admin/dashboard/teacher')) {
-      return ['/admin/dashboard/teacher'];
+    if (path.startsWith("/admin/dashboard/teacher")) {
+      return ["/admin/dashboard/teacher"];
     }
-    if (path.startsWith('/admin/dashboard/student')) {
-      return ['/admin/dashboard/student'];
+    if (path.startsWith("/admin/dashboard/student")) {
+      return ["/admin/dashboard/student"];
     }
-    if (path.startsWith('/admin/dashboard/consultant')) {
-      return ['/admin/dashboard/consultant'];
+    if (path.startsWith("/admin/dashboard/consultant")) {
+      return ["/admin/dashboard/consultant"];
     }
 
     return matchedEntry ? [matchedEntry[1]] : [];
@@ -391,7 +471,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({ children })
                       marginRight: 20,
                     }}
                   >
-                    <Avatar icon={<UserOutlined />} style={{}} />
+                    <Avatar src="/assets/images/admin_picture.jpg" style={{}} />
                     <div style={{ color: "black", textAlign: "right" }}>
                       <div>{username}</div>
                       <div style={{ fontSize: "smaller", marginTop: 5 }}>
