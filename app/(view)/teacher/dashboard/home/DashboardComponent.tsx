@@ -54,7 +54,7 @@ export default function DashboardComponent() {
   const events = meetingData?.data.map((meeting) => ({
     id: meeting.meeting_id,
     title: `Meeting (${meeting.method})`, // Menampilkan metode meeting
-    start: dayjs.utc(meeting.startTime).subtract(1, "day").toDate(),
+    start: dayjs.utc(meeting.startTime).format("YYYY-MM-DD HH:mm"), // Format waktu UTC
     end: dayjs.utc(meeting.endTime).toDate(),
     backgroundColor: meeting.method === "ONLINE" ? "#1890ff" : "#52c41a", // Warna event (online biru, offline hijau)
     borderColor: "transparent", // Hapus border event agar lebih clean

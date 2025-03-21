@@ -163,7 +163,7 @@ export const useMeetings = () => {
   const events =
     showMeetingById?.data?.map((meeting: any) => {
       const formatDateTimeToUTC = (dateTime: string) => {
-        return dayjs.utc(dateTime).subtract(1, "day").toISOString();
+       return dayjs.utc(dateTime).format("YYYY-MM-DD HH:mm:ss");
       };
 
       const filteredData = dataTeacher?.data.find(
