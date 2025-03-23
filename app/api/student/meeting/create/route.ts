@@ -187,22 +187,26 @@ export async function POST(request: NextRequest) {
     const messages = [
       {
         phone: formattedTeacherPhone,
-        text: `📅 *Jadwal Meeting*\n\n👨‍🎓 *Siswa:* ${studentName}\n📅 *Tanggal:* ${dayjs(
+        text: `📅 *Jadwal Meeting*\n\n👨‍🎓 *Siswa:* ${studentName}\n📆 *Tanggal:* ${dayjs(
           dateTime
-        ).format("dddd, DD MMMM YYYY")}\n🕒 *Waktu:* ${dayjs(dateTime).format(
-          "HH:mm"
-        )}\n📝 *Metode:* ${method}\n📍 *Platform:* ${
+        ).format("dddd, DD MMMM YYYY")}\n🕒 *Waktu Mulai:* ${dayjs(
+          dateTime
+        ).format("HH:mm")} ⏰\n🕒 *Waktu Selesai:* ${dayjs(
+          dateTime.add(programData.duration, "minute")
+        ).format("HH:mm")} ⏰\n📝 *Metode:* ${method}\n📍 *Platform:* ${
           platform || "-"
         }\n🔗 *Link:* ${
           meetLink || "-"
-        }\n\nHarap siapkan pertemuan dengan baik!`,
+        }\n\nHarap siapkan pertemuan dengan baik! 👍`,
       },
       {
         phone: formattedStudentPhone,
         text: `📅🔔 *Pengingat Meeting* 📅\n\n👨‍🏫 *Guru:* ${teacherName} 👋\n📆 *Tanggal:* ${dayjs(
           dateTime
-        ).format("dddd, DD MMMM YYYY")} 📆\n🕒 *Waktu:* ${dayjs(
+        ).format("dddd, DD MMMM YYYY")} 📆\n🕒 *Waktu Mulai:* ${dayjs(
           dateTime
+        ).format("HH:mm")} ⏰\n🕒 *Waktu Selesai:* ${dayjs(
+          dateTime.add(programData.duration, "minute")
         ).format("HH:mm")} ⏰\n *Program:* ${
           programData.name
         } 📚\n📝 *Metode:* ${method} 📝\n📍 *Platform:* ${
