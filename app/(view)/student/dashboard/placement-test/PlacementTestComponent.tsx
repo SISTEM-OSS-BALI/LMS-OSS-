@@ -163,7 +163,13 @@ export default function PlacementTestComponent() {
               style={{ marginBottom: "15px" }}
             >
               <Col>
-                <Title level={screens.xs ? 5 : 4} style={{ marginBottom: 0 }}>
+                <Title
+                  level={screens.xs ? 5 : 4}
+                  style={{
+                    marginBottom: 0,
+                    fontSize: screens.xs ? "12px" : undefined, 
+                  }}
+                >
                   {handleNameChange(currentSection?.name ?? "") || "Loading..."}
                 </Title>
               </Col>

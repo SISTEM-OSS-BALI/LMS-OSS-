@@ -1,4 +1,6 @@
+import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
+import { notification } from "antd";
 import useSWR from "swr";
 
 interface PlacementTest {
@@ -40,11 +42,33 @@ interface PlacementTestReportResponse {
   data: PlacementTestParticipant[];
 }
 
-
 export const useReportPlacementViewModel = () => {
-    const {data: placementReportData, isLoading: isLoadingPlacementReport} = useSWR<PlacementTestReportResponse>("/api/admin/report/freePlacementTest/show", fetcher);
-    return {
-        placementReportData,
-        isLoadingPlacementReport
-    };
+  const {
+    data: placementReportData,
+    isLoading: isLoadingPlacementReport,
+    mutate,
+  } = useSWR<PlacementTestReportResponse>(
+    "/api/admin/report/freePlacementTest/show",
+    fetcher
+  );
+
+  const handleDelete = async (session_id: string) => {
+    try {
+      await crudService.delete(
+        `/api/admin/report/freePlacementTest/${session_id}/delete`,
+        session_id
+      );
+      mutate();
+      notification.success({ message: "Data berhasil dihapus" });
+    } catch (error) {
+      console.error(error);
+      notification.error({ message: "Data gagal dihapus" });
+    }
+  };
+
+  return {
+    placementReportData,
+    isLoadingPlacementReport,
+    handleDelete,
+  };
 };

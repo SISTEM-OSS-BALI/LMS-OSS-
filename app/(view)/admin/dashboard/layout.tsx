@@ -74,6 +74,7 @@ const menuMap: { [key: string]: string } = {
   "/admin/dashboard/report/placement-test":
     "/admin/dashboard/report/placement-test",
   "/admin/dashboard/report/mock-test": "/admin/dashboard/report/mock-test",
+  "/admin/dashboard/testimoni": "/admin/dashboard/testimoni",
 };
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
@@ -309,6 +310,11 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <FileTextOutlined />
       ),
     ]),
+    getItem(
+      <Link href="/admin/dashboard/testimoni">Testimoni</Link>,
+      "/admin/dashboard/testimoni",
+      <FileTextOutlined />
+    ),
   ];
 
   // LOGIKA UNTUK SELECTED KEYS (Tetap)
@@ -471,7 +477,10 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
                       marginRight: 20,
                     }}
                   >
-                    <Avatar src="/assets/images/admin_picture.jpg" style={{}} />
+                    <Avatar
+                      src="/assets/images/admin_picture.jpg"
+                      size={50}
+                    />
                     <div style={{ color: "black", textAlign: "right" }}>
                       <div>{username}</div>
                       <div style={{ fontSize: "smaller", marginTop: 5 }}>

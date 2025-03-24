@@ -16,11 +16,18 @@ interface StudentNewPerWeek {
   month: string;
   year: number;
 }
-
 interface StudentPerProgram {
   program_id: string;
   program_name: string;
   total_students: number;
+}
+
+interface StudentCanceled {
+  week: number;
+  month: string;
+  total_meetings: number;
+  cancelled_meetings: boolean;
+  year: number;
 }
 
 interface MonthlyStudentDataResponse {
@@ -33,6 +40,10 @@ interface StudentNewPerWeekResponse {
 
 interface StudentPerProgramResponse {
   data: StudentPerProgram[];
+}
+
+interface StudentCanceledResponse {
+  data: StudentCanceled[];
 }
 
 export const useDashboard = () => {
@@ -62,6 +73,13 @@ export const useDashboard = () => {
     return `${url}?${params.toString()}`;
   }, [year]);
 
+  const fetchUrlMonthlyStudentCanceled = useMemo(() => {
+    let url = "/api/admin/student/totalStudentCanceled";
+    const params = new URLSearchParams();
+    if (year) params.append("year", year);
+    return `${url}?${params.toString()}`;
+  }, [year]);
+
   const { data: monthlyStudentData, isLoading: isLoadingMonthly } =
     useSWR<MonthlyStudentDataResponse>(fetchUrlMonthlyStudentData, fetcher);
 
@@ -70,6 +88,9 @@ export const useDashboard = () => {
 
   const { data: dataStudentPerProgram, isLoading: isLoadingStudentPerProgram } =
     useSWR<StudentPerProgramResponse>(fetchUrlStudentPerProgram, fetcher);
+
+  const { data: dataStudentCanceled, isLoading: isLoadingStudentCanceled } =
+    useSWR<StudentCanceledResponse>(fetchUrlMonthlyStudentCanceled, fetcher);
 
   const changeYear = (year: number) => {
     setSelectedYear(year);
@@ -88,5 +109,7 @@ export const useDashboard = () => {
     isLoadingStudentNewPerWeek,
     dataStudentPerProgram,
     isLoadingStudentPerProgram,
+    dataStudentCanceled,
+    isLoadingStudentCanceled,
   };
 };

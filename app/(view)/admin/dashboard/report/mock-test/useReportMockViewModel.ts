@@ -1,4 +1,6 @@
+import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
+import { notification } from "antd";
 import useSWR from "swr";
 
 // 🔹 Interface untuk Mock Test
@@ -52,14 +54,32 @@ interface MockTestReportResponse {
 
 // 🔹 Hook untuk Mengambil Data Mock Test Report
 export const useReportMockViewModel = () => {
-  const { data: mockReportData, isLoading: isLoadingMockReport } =
-    useSWR<MockTestReportResponse>(
-      "/api/admin/report/freeMockTest/show",
-      fetcher
-    );
+  const {
+    data: mockReportData,
+    isLoading: isLoadingMockReport,
+    mutate,
+  } = useSWR<MockTestReportResponse>(
+    "/api/admin/report/freeMockTest/show",
+    fetcher
+  );
+
+  const handleDelete = async (session_id: string) => {
+    try {
+      await crudService.delete(
+        `/api/admin/report/freeMockTest/${session_id}/delete`,
+        session_id
+      );
+      mutate();
+      notification.success({ message: "Data berhasil dihapus" });
+    } catch (error) {
+      console.error(error);
+      notification.error({ message: "Data gagal dihapus" });
+    }
+  };
 
   return {
     mockReportData,
     isLoadingMockReport,
+    handleDelete,
   };
 };

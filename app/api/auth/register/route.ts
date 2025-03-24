@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { getData } from "@/app/lib/db/getData";
+import {
+  formatPhoneNumber,
+  sendWhatsAppMessage,
+} from "@/app/lib/utils/notificationHelper";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +19,9 @@ export async function POST(request: NextRequest) {
       region,
       signature,
     } = body;
+
+    const apiKey = process.env.API_KEY_WATZAP!;
+    const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
     if (!username || !email || !password) {
       return NextResponse.json(
@@ -66,6 +73,30 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    const admin = await prisma.user.findFirst({
+      where: {
+        role: "ADMIN",
+      },
+    });
+
+    // Format nomor WhatsApp admin
+    const formattedPhoneNumber = formatPhoneNumber(admin?.no_phone || "");
+
+    // Pesan WhatsApp profesional untuk admin
+    const message = `📢 *Notifikasi Pendaftaran Pengguna Baru*
+
+Halo Admin 👋, ada pendaftaran baru di platform:
+
+📧 *Email*: ${user.email}
+👤 *Nama*: ${user.username}
+📱 *No. Telp*: ${user.no_phone || "-"}
+📘 *Program*: ${user.program_id || "-"}
+🌍 *Region*: ${user.region || "-"}
+
+Silakan cek dan lakukan verifikasi jika diperlukan. ✅`;
+
+    await sendWhatsAppMessage(apiKey, numberKey, formattedPhoneNumber, message);
 
     // Simpan persetujuan Terms & Conditions di dalam transaksi
 

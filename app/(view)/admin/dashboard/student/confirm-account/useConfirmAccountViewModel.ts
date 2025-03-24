@@ -81,6 +81,22 @@ export const useConfirmAccountViewModel = () => {
     }
   };
 
+  const handleDelete = async (userId: string) => {
+    setLoadingId(userId);
+    try {
+      await crudService.delete(
+        `/api/admin/confirmAccount/${userId}/delete`,
+        userId
+      );
+      notification.success({ message: "Data berhasil dihapus" });
+      confirmAccountMutate();
+    } catch (error) {
+      notification.error({ message: "Terjadi kesalahan saat menghapus data" });
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
   return {
     confirmAccount,
     isLoadingConfirmAccount,
@@ -92,6 +108,7 @@ export const useConfirmAccountViewModel = () => {
     form,
     consultantData,
     handleFinish,
-    loading
+    loading,
+    handleDelete,
   };
 };

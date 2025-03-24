@@ -56,17 +56,32 @@ export default function DashboardComponent() {
     isLoadingStudentNewPerWeek,
     dataStudentPerProgram,
     isLoadingStudentPerProgram,
+    dataStudentCanceled,
+    isLoadingStudentCanceled,
   } = useDashboard();
 
   const [chartTypeMonthly, setChartTypeMonthly] = useState("bar");
   const [chartTypeWeekly, setChartTypeWeekly] = useState("bar");
   const [chartTypeProgram, setChartTypeProgram] = useState("bar");
-  const [selectedMonth, setSelectedMonth] = useState("January");
+  const [chartTypeCanceled, setChartTypeCanceled] = useState("bar");
+  const [selectedMonthProgram, setSelectedMonthProgram] = useState("January");
+  const [selectedMonthCanceled, setSelectedMonthCanceled] = useState("January");
 
   // Filter data berdasarkan bulan yang dipilih
   const filteredWeeklyData = dataStudentNewPerWeek?.data.filter(
-    (item) => item.month === selectedMonth
+    (item) => item.month === selectedMonthProgram
   );
+
+  const filteredCanceledData = dataStudentCanceled?.data.filter(
+    (item) => item.month === selectedMonthCanceled
+  );
+
+  const weeklyChartDataCanceled = filteredCanceledData?.map((item) => ({
+    name: `Minggu ${item.week}`,
+    total_meetings: item.total_meetings,
+    total_cancelled_meetings: item.cancelled_meetings,
+  }));
+
 
   // Format Data untuk Chart
   const weeklyChartData = filteredWeeklyData?.map((item) => ({
@@ -89,7 +104,7 @@ export default function DashboardComponent() {
         </Title>
         <Select
           defaultValue={selectedYear}
-          style={{ width: 120 }}
+          style={{ width: 120, marginBottom: "24px" }}
           onChange={(value) => changeYear(value)}
         >
           {Array.from(
@@ -110,7 +125,7 @@ export default function DashboardComponent() {
           <Flex gap={16}>
             <Select
               defaultValue={chartTypeMonthly}
-              style={{ width: 150 }}
+              style={{ width: 150, marginTop: 16 }}
               onChange={(value) => setChartTypeMonthly(value)}
             >
               <Select.Option value="line">Line Chart</Select.Option>
@@ -196,15 +211,15 @@ export default function DashboardComponent() {
             gap={16}
             style={{
               width: "100%",
-              justifyContent: "center",
+              justifyContent: "start",
               flexWrap: "wrap",
               textAlign: "center",
             }}
           >
             <Select
-              defaultValue={selectedMonth}
-              style={{ width: 150 }}
-              onChange={(value) => setSelectedMonth(value)}
+              defaultValue={selectedMonthProgram}
+              style={{ width: 150, marginTop: 16 }}
+              onChange={(value) => setSelectedMonthProgram(value)}
             >
               {Object.keys(monthNameMap).map((month) => (
                 <Select.Option value={month} key={month}>
@@ -215,7 +230,7 @@ export default function DashboardComponent() {
 
             <Select
               defaultValue={chartTypeWeekly}
-              style={{ width: 150 }}
+              style={{ width: 150, marginTop: 16 }}
               onChange={(value) => setChartTypeWeekly(value)}
             >
               <Select.Option value="line">Line Chart</Select.Option>
@@ -303,7 +318,7 @@ export default function DashboardComponent() {
           <h2 style={{ flex: "1 1 100%" }}>Total Siswa Berdasarkan Program</h2>
           <Select
             defaultValue={chartTypeProgram}
-            style={{ width: 150 }}
+            style={{ width: 150, marginTop: 16 }}
             onChange={(value) => setChartTypeProgram(value)}
           >
             <Select.Option value="line">Line Chart</Select.Option>
@@ -380,6 +395,118 @@ export default function DashboardComponent() {
             )}
           </ResponsiveContainer>
         )}
+      </Card>
+
+      {/* Chart Siswa Batal */}
+      <Card style={{ marginBottom: "24px", padding: "20px" }}>
+        <Flex justify="space-between" wrap="wrap">
+          <h2 style={{ flex: "1 1 100%" }}>Jumlah Siswa Cancel Per Minggu</h2>
+          <Flex
+            gap={16}
+            style={{
+              width: "100%",
+              justifyContent: "start",
+              flexWrap: "wrap",
+              textAlign: "center",
+            }}
+          >
+            {/* Pilih Bulan */}
+            <Select
+              value={selectedMonthCanceled}
+              style={{ width: 150, marginTop: 16 }}
+              onChange={(value) => setSelectedMonthCanceled(value)}
+            >
+              {Object.keys(monthNameMap).map((month) => (
+                <Select.Option value={month} key={month}>
+                  {monthNameMap[month]}
+                </Select.Option>
+              ))}
+            </Select>
+
+            {/* Pilih Tipe Chart */}
+            <Select
+              value={chartTypeCanceled}
+              style={{ width: 150, marginTop: 16 }}
+              onChange={(value) => setChartTypeCanceled(value)}
+            >
+              <Select.Option value="line">Line Chart</Select.Option>
+              <Select.Option value="bar">Bar Chart</Select.Option>
+            </Select>
+          </Flex>
+
+          {/* Chart */}
+          {isLoadingStudentCanceled ? (
+            <Skeleton active paragraph={{ rows: 6 }} />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              {chartTypeCanceled === "line" ? (
+                <LineChart
+                  data={weeklyChartDataCanceled}
+                  margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="name"
+                    height={50}
+                    interval={0}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    label={{
+                      value: "Jumlah Cancel",
+                      angle: -90,
+                      position: "insideLeft",
+                    }}
+                  />
+                  <Tooltip
+                    formatter={(value) => [`${value} Siswa`, "Siswa Cancel"]}
+                  />
+                  <Legend verticalAlign="top" align="right" />
+                  <Line
+                    type="monotone"
+                    dataKey="total_cancelled_meetings"
+                    stroke="#FF4D4F"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                    name="Siswa Cancel"
+                  />
+                </LineChart>
+              ) : (
+                <BarChart
+                  data={weeklyChartDataCanceled}
+                  margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="name"
+                    height={50}
+                    interval={0}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    label={{
+                      value: "Jumlah Cancel",
+                      angle: -90,
+                      position: "insideLeft",
+                    }}
+                  />
+                  <Tooltip
+                    formatter={(value) => [`${value} Siswa`, "Siswa Cancel"]}
+                  />
+                  <Legend verticalAlign="top" align="right" />
+                  <Bar
+                    dataKey="total_cancelled_meetings"
+                    fill="#FF4D4F"
+                    barSize={30}
+                    name="Siswa Cancel"
+                  />
+                </BarChart>
+              )}
+            </ResponsiveContainer>
+          )}
+        </Flex>
       </Card>
     </div>
   );

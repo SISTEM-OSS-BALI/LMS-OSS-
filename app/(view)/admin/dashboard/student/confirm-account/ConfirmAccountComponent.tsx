@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Table, { ColumnsType } from "antd/es/table";
 import { useConfirmAccountViewModel } from "./useConfirmAccountViewModel";
 import { TermsAgreement } from "@prisma/client";
@@ -18,6 +17,7 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import Title from "antd/es/typography/Title";
+import { DeleteOutlined } from "@ant-design/icons";
 
 export default function ConfirmAccountComponent() {
   const {
@@ -32,10 +32,24 @@ export default function ConfirmAccountComponent() {
     consultantData,
     handleFinish,
     loading,
+    handleDelete,
   } = useConfirmAccountViewModel();
 
   const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
+
+  const showDeleteConfirm = (userId: string) => {
+    Modal.confirm({
+      title: "Hapus Data",
+      content: "Apakah Anda yakin ingin menghapus data ini?",
+      okText: "Ya",
+      okType: "danger",
+      cancelText: "Tidak",
+      onOk() {
+        handleDelete(userId);
+      },
+    });
+  };
 
   const columns: ColumnsType<TermsAgreement> = [
     {
@@ -128,6 +142,12 @@ export default function ConfirmAccountComponent() {
           >
             Tambah Data
           </Button>
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            loading={loadingId === record.user_id}
+            onClick={() => showDeleteConfirm(record.user_id)}
+          />
         </Space>
       ),
     },

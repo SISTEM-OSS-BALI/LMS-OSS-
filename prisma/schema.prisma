@@ -450,7 +450,7 @@ model PlacementTest {
 model PlacementTestSession {
   session_id      String                     @id @default(uuid())
   placementTestId String                     @map("placement_test_id")
-  placementTest   PlacementTest              @relation(fields: [placementTestId], references: [placement_test_id])
+  placementTest   PlacementTest              @relation(fields: [placementTestId], references: [placement_test_id], onDelete: Cascade)
   sessionDate     DateTime                   @default(now()) // Tanggal sesi placement test
   participants    PlacementTestParticipant[]
 }
@@ -458,7 +458,7 @@ model PlacementTestSession {
 model PlacementTestParticipant {
   participant_id String               @id @default(uuid())
   sessionId      String               @map("session_id")
-  session        PlacementTestSession @relation(fields: [sessionId], references: [session_id])
+  session        PlacementTestSession @relation(fields: [sessionId], references: [session_id], onDelete: Cascade)
   name           String
   email          String               @unique
   phone          String
@@ -474,7 +474,7 @@ model PlacementTestParticipant {
 model StudentAnswerFreePlacementTest {
   answer_id         String        @id @default(uuid())
   participant_id    String
-  placementTest     PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
+  placementTest     PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id], onDelete: Cascade)
   placement_test_id String
 
   multipleChoice MultipleChoicePlacementTest? @relation(fields: [mcq_id], references: [mc_id])
@@ -495,7 +495,7 @@ model StudentAnswerFreePlacementTest {
   score         Int
   submittedAt   DateTime @default(now())
 
-  participant PlacementTestParticipant @relation(fields: [participant_id], references: [participant_id])
+  participant PlacementTestParticipant @relation(fields: [participant_id], references: [participant_id], onDelete: Cascade)
 
   // Pastikan ada index untuk performa query yang lebih baik
   @@index([participant_id, placement_test_id])
@@ -504,13 +504,13 @@ model StudentAnswerFreePlacementTest {
 model ScoreFreePlacementTest {
   score_placement_test_id String        @id @default(uuid())
   participant_id          String
-  placementTest           PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
+  placementTest           PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id], onDelete: Cascade)
   placement_test_id       String
   totalScore              Int
   percentageScore         Float
   level                   String
 
-  participant PlacementTestParticipant @relation(fields: [participant_id], references: [participant_id])
+  participant PlacementTestParticipant @relation(fields: [participant_id], references: [participant_id], onDelete: Cascade)
 }
 
 model BasePlacementTest {
@@ -615,14 +615,14 @@ model ScorePlacementTest {
 }
 
 model ScoreMockTest {
-  score_mock_test_id      String        @id @default(uuid())
-  user                    User     @relation(fields: [student_id], references: [user_id])
-  student_id              String
-  mockTest                MockTest @relation(fields: [mock_test_id], references: [mock_test_id])
-  mock_test_id            String
-  totalScore              Int
-  percentageScore         Float
-  level                   String
+  score_mock_test_id String   @id @default(uuid())
+  user               User     @relation(fields: [student_id], references: [user_id])
+  student_id         String
+  mockTest           MockTest @relation(fields: [mock_test_id], references: [mock_test_id])
+  mock_test_id       String
+  totalScore         Int
+  percentageScore    Float
+  level              String
 }
 
 model AccessPlacementTest {
@@ -792,15 +792,15 @@ model StudentAnswerFreeMockTest {
 }
 
 model ScoreFreeMockTest {
-  score_placement_test_id String   @id @default(uuid())
-  participant_id          String
-  mockTest                MockTest @relation(fields: [mock_test_id], references: [mock_test_id])
-  mock_test_id            String
-  totalScore              Int
-  percentageScore         Float
-  level                   String
+  score_mock_test_id String   @id @default(uuid())
+  participant_id     String
+  mockTest           MockTest @relation(fields: [mock_test_id], references: [mock_test_id], onDelete: Cascade)
+  mock_test_id       String
+  totalScore         Int
+  percentageScore    Float
+  level              String
 
-  participant MockTestParticipant @relation(fields: [participant_id], references: [participant_id])
+  participant MockTestParticipant @relation(fields: [participant_id], references: [participant_id], onDelete: Cascade)
 }
 
 model BaseMockTest {

@@ -1,16 +1,51 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, Table, Typography, Tag, Skeleton, Space, Row, Col, Button, Alert } from 'antd';
-import { UserOutlined, CalendarOutlined, PhoneOutlined, BankOutlined, CloseOutlined, DownloadOutlined } from '@ant-design/icons';
-import * as XLSX from 'xlsx';
-import { useReportMockViewModel } from './useReportMockViewModel';
+import { useState } from "react";
+import {
+  Card,
+  Table,
+  Typography,
+  Tag,
+  Skeleton,
+  Space,
+  Row,
+  Col,
+  Button,
+  Alert,
+  Modal,
+  Divider,
+} from "antd";
+import {
+  UserOutlined,
+  CalendarOutlined,
+  PhoneOutlined,
+  BankOutlined,
+  CloseOutlined,
+  DownloadOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
+import * as XLSX from "xlsx";
+import { useReportMockViewModel } from "./useReportMockViewModel";
 
 const { Title, Text } = Typography;
 
 export default function ReportMockTestComponent() {
-  const { mockReportData, isLoadingMockReport } = useReportMockViewModel();
+  const { mockReportData, isLoadingMockReport, handleDelete } =
+    useReportMockViewModel();
   const [selectedTest, setSelectedTest] = useState<string | null>(null);
+
+  const showDeleteConfirm = (session_id: string) => {
+    Modal.confirm({
+      title: "Hapus Data",
+      content: "Apakah Anda yakin ingin menghapus data ini?",
+      okText: "Ya",
+      okType: "danger",
+      cancelText: "Tidak",
+      onOk() {
+        handleDelete(session_id);
+      },
+    });
+  };
 
   // 🔹 Ambil daftar unik Mock Test dari data
   const mockTests = mockReportData?.data?.reduce((acc: any, item: any) => {
@@ -22,34 +57,42 @@ export default function ReportMockTestComponent() {
   }, []);
 
   // 🔹 Filter peserta berdasarkan test yang dipilih
-  const filteredParticipants = mockReportData?.data?.filter((item: any) => item.session.mockTest.mock_test_id === selectedTest);
+  const filteredParticipants = mockReportData?.data?.filter(
+    (item: any) => item.session.mockTest.mock_test_id === selectedTest
+  );
 
   // 🔹 Fungsi untuk mengunduh Excel
   const handleDownloadExcel = () => {
     if (!selectedTest) return;
 
-    const selectedTestData = mockTests.find((p: any) => p.mockTest.mock_test_id === selectedTest);
+    const selectedTestData = mockTests.find(
+      (p: any) => p.mockTest.mock_test_id === selectedTest
+    );
 
     if (!selectedTestData) return;
 
-    const testName = selectedTestData.mockTest.name || 'MockTest';
-    const sessionDate = new Date(selectedTestData.sessionDate).toLocaleDateString().replace(/\//g, '-');
+    const testName = selectedTestData.mockTest.name || "MockTest";
+    const sessionDate = new Date(selectedTestData.sessionDate)
+      .toLocaleDateString()
+      .replace(/\//g, "-");
     const fileName = `MockTest_${testName}_Sesi_${sessionDate}.xlsx`;
 
     const data = filteredParticipants?.map((participant: any) => ({
       Nama: participant.name,
       Grade: participant.grade,
-      'No. HP': participant.phone,
+      "No. HP": participant.phone,
       Institusi: participant.institution,
-      'Total Skor': participant.ScoreFreeMockTest?.[0]?.totalScore || '0',
-      Persentase: participant.ScoreFreeMockTest?.[0]?.percentageScore ? `${participant.ScoreFreeMockTest[0].percentageScore}%` : '0',
-      Level: participant.ScoreFreeMockTest?.[0]?.level || 'BASIC',
+      "Total Skor": participant.ScoreFreeMockTest?.[0]?.totalScore || "0",
+      Persentase: participant.ScoreFreeMockTest?.[0]?.percentageScore
+        ? `${participant.ScoreFreeMockTest[0].percentageScore}%`
+        : "0",
+      Level: participant.ScoreFreeMockTest?.[0]?.level || "BASIC",
     }));
 
     if (!data) return;
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Participants');
+    XLSX.utils.book_append_sheet(wb, ws, "Participants");
 
     XLSX.writeFile(wb, fileName);
   };
@@ -59,16 +102,13 @@ export default function ReportMockTestComponent() {
     <Card
       bordered={false}
       style={{
-        borderRadius: '12px',
-        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+        borderRadius: "12px",
+        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
       }}
     >
       <Row gutter={[16, 16]}>
         {[...Array(3)].map((_, index) => (
-          <Col
-            span={24}
-            key={index}
-          >
+          <Col span={24} key={index}>
             <Skeleton active />
           </Col>
         ))}
@@ -79,9 +119,9 @@ export default function ReportMockTestComponent() {
   // 🔹 Konfigurasi kolom tabel partisipan
   const participantColumns = [
     {
-      title: 'Nama',
-      dataIndex: 'name',
-      key: 'name',
+      title: "Nama",
+      dataIndex: "name",
+      key: "name",
       render: (text: string) => (
         <Space>
           <UserOutlined />
@@ -90,14 +130,14 @@ export default function ReportMockTestComponent() {
       ),
     },
     {
-      title: 'Grade',
-      dataIndex: 'grade',
-      key: 'grade',
+      title: "Grade",
+      dataIndex: "grade",
+      key: "grade",
     },
     {
-      title: 'No. HP',
-      dataIndex: 'phone',
-      key: 'phone',
+      title: "No. HP",
+      dataIndex: "phone",
+      key: "phone",
       render: (text: string) => (
         <Space>
           <PhoneOutlined />
@@ -106,9 +146,9 @@ export default function ReportMockTestComponent() {
       ),
     },
     {
-      title: 'Institusi',
-      dataIndex: 'institution',
-      key: 'institution',
+      title: "Institusi",
+      dataIndex: "institution",
+      key: "institution",
       render: (text: string) => (
         <Space>
           <BankOutlined />
@@ -117,33 +157,34 @@ export default function ReportMockTestComponent() {
       ),
     },
     {
-      title: 'Total Skor',
-      dataIndex: 'ScoreFreeMockTest',
-      key: 'score',
+      title: "Total Skor",
+      dataIndex: "ScoreFreeMockTest",
+      key: "score",
       render: (scoreArray: { totalScore: number }[]) => {
         const score = scoreArray?.[0]?.totalScore;
-        return <Text strong>{score !== undefined ? score : '-'}</Text>;
+        return <Text strong>{score !== undefined ? score : "-"}</Text>;
       },
     },
     {
-      title: 'Persentase',
-      dataIndex: 'ScoreFreeMockTest',
-      key: 'percentage',
+      title: "Persentase",
+      dataIndex: "ScoreFreeMockTest",
+      key: "percentage",
       render: (scoreArray: { percentageScore: number }[]) => {
         const percentage = scoreArray?.[0]?.percentageScore;
-        return <Text>{percentage !== undefined ? `${percentage}%` : '-'}</Text>;
+        return <Text>{percentage !== undefined ? `${percentage}%` : "-"}</Text>;
       },
     },
     {
-      title: 'Level',
-      dataIndex: 'ScoreFreeMockTest',
-      key: 'level',
+      title: "Level",
+      dataIndex: "ScoreFreeMockTest",
+      key: "level",
       render: (scoreArray: { level: string }[]) => {
-        const level = (scoreArray?.[0]?.level || 'BASIC') as keyof typeof levelColors;
+        const level = (scoreArray?.[0]?.level ||
+          "BASIC") as keyof typeof levelColors;
         const levelColors = {
-          BASIC: 'red',
-          INTERMEDIATE: 'orange',
-          ADVANCED: 'green',
+          BASIC: "red",
+          INTERMEDIATE: "orange",
+          ADVANCED: "green",
         };
         return <Tag color={levelColors[level]}>{level}</Tag>;
       },
@@ -151,44 +192,65 @@ export default function ReportMockTestComponent() {
   ];
 
   return (
-    <div style={{ padding: '20px' }}>
-      <Title
-        level={2}
-        style={{ textAlign: 'center', marginBottom: '20px' }}
-      >
+    <div style={{ padding: "20px" }}>
+      <Title level={2} style={{ textAlign: "center", marginBottom: "20px" }}>
         Laporan Mock Test
       </Title>
+
+      <Divider />
 
       {isLoadingMockReport ? (
         <SkeletonTable />
       ) : mockTests.length === 0 ? (
-        <Alert message="Tidak ada data mock test yang tersedia." type="warning" showIcon />
+        <Alert
+          message="Tidak ada data mock test yang tersedia."
+          type="warning"
+          showIcon
+        />
       ) : (
         <>
           {/* 🔹 Daftar Mock Test */}
           <Row gutter={[16, 16]}>
             {mockTests?.map((session: any) => (
-              <Col
-                key={session.mockTest.mock_test_id}
-                xs={24}
-                sm={12}
-                md={8}
-              >
+              <Col key={session.mockTest.mock_test_id} xs={24} sm={12} md={8}>
                 <Card
                   bordered={false}
                   style={{
-                    borderRadius: '12px',
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                    cursor: 'pointer',
-                    transition: '0.3s',
-                    background: selectedTest === session.mockTest.mock_test_id ? '#e6f7ff' : 'white',
+                    borderRadius: "12px",
+                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                    cursor: "pointer",
+                    transition: "0.3s",
+                    background:
+                      selectedTest === session.mockTest.mock_test_id
+                        ? "#e6f7ff"
+                        : "white",
                   }}
                   onClick={() => setSelectedTest(session.mockTest.mock_test_id)}
                 >
-                  <Title level={4}>{session.mockTest.name || 'Unknown Mock Test'}</Title>
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    danger
+                    style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      zIndex: 10,
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation(); // agar tidak trigger onClick Card
+                      showDeleteConfirm(session.session_id);
+                    }}
+                  />
+
+                  <Title level={4}>
+                    {session.mockTest.name || "Unknown Mock Test"}
+                  </Title>
                   <Space>
                     <CalendarOutlined />
-                    <Text>{new Date(session.sessionDate).toLocaleDateString()}</Text>
+                    <Text>
+                      {new Date(session.sessionDate).toLocaleDateString()}
+                    </Text>
                   </Space>
                 </Card>
               </Col>
@@ -200,42 +262,42 @@ export default function ReportMockTestComponent() {
             <Card
               bordered={false}
               style={{
-                marginTop: '20px',
-                borderRadius: '12px',
-                boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                marginTop: "20px",
+                borderRadius: "12px",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
               }}
             >
               {/* 🔹 Header Card dengan Tombol Close dan Download */}
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '20px',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "20px",
                 }}
               >
                 <Button
-                  type='primary'
+                  type="primary"
                   icon={<DownloadOutlined />}
                   onClick={handleDownloadExcel}
                 >
                   Download Excel
                 </Button>
                 <Button
-                  type='text'
-                  shape='circle'
+                  type="text"
+                  shape="circle"
                   icon={<CloseOutlined />}
                   onClick={() => setSelectedTest(null)}
-                  style={{ fontSize: '16px', color: 'red' }}
+                  style={{ fontSize: "16px", color: "red" }}
                 />
               </div>
 
               <Table
                 columns={participantColumns}
                 dataSource={filteredParticipants}
-                rowKey='participant_id'
+                rowKey="participant_id"
                 pagination={{ pageSize: 10 }}
-                scroll={{ x: 'max-content' }} // Horizontal scrolling on mobile
+                scroll={{ x: "max-content" }} // Horizontal scrolling on mobile
               />
             </Card>
           )}

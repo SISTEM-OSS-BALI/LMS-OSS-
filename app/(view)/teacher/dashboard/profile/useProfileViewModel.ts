@@ -109,10 +109,9 @@ export const useProfileViewModel = () => {
     } catch (error) {
       setLoading(false);
       notification.error({
-        message: "Error",
+        message: "Gagal",
         description:
-          (error as Error).message ||
-          "Terjadi kesalahan saat mengunggah avatar",
+          "Terjadi kesalahan saat mengunggah avatar, silahkan coba lagi, usahakan ukuran gambar tidak terlalu besar",
       });
     }
   };
@@ -134,8 +133,8 @@ export const useProfileViewModel = () => {
     } catch (error) {
       setLoadingChangePassword(false);
       notification.error({
-        message: "Error",
-        description: (error as Error).message || "Terjadi kesalahan",
+        message: "Gagal",
+        description: "Terjadi kesalahan saat mengirim notifikasi",
       });
     }
   };
