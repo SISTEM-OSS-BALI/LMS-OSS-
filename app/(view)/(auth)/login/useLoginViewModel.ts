@@ -78,8 +78,8 @@ export function useLoginViewModel() {
     } catch (error) {
       setLoadingForgotPassword(false);
       notification.error({
-        message: "Error",
-        description: (error as Error).message || "Terjadi kesalahan",
+        message: "Gagal",
+        description: "Gagal saat mengirim notifikasi, pastikan email benar",
       });
     }
   };

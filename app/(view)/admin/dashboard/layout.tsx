@@ -74,7 +74,7 @@ const menuMap: { [key: string]: string } = {
   "/admin/dashboard/report/placement-test":
     "/admin/dashboard/report/placement-test",
   "/admin/dashboard/report/mock-test": "/admin/dashboard/report/mock-test",
-  "/admin/dashboard/testimoni": "/admin/dashboard/testimoni",
+  "/admin/dashboard/student/testimoni": "/admin/dashboard/student/testimoni",
 };
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
@@ -285,6 +285,11 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         "/admin/dashboard/student/reschedule",
         <ScheduleFilled />
       ),
+      getItem(
+        <Link href="/admin/dashboard/student/testimoni">Testimoni</Link>,
+        "/admin/dashboard/student/testimoni",
+        <FileTextOutlined />
+      ),
     ]),
     getItem(
       <Link href="/admin/dashboard/program">Program</Link>,
@@ -310,11 +315,6 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <FileTextOutlined />
       ),
     ]),
-    getItem(
-      <Link href="/admin/dashboard/testimoni">Testimoni</Link>,
-      "/admin/dashboard/testimoni",
-      <FileTextOutlined />
-    ),
   ];
 
   // LOGIKA UNTUK SELECTED KEYS (Tetap)
@@ -477,10 +477,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
                       marginRight: 20,
                     }}
                   >
-                    <Avatar
-                      src="/assets/images/admin_picture.jpg"
-                      size={50}
-                    />
+                    <Avatar src="/assets/images/admin_picture.jpg" size={50} />
                     <div style={{ color: "black", textAlign: "right" }}>
                       <div>{username}</div>
                       <div style={{ fontSize: "smaller", marginTop: 5 }}>
