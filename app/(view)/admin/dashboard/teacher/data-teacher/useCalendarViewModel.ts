@@ -274,6 +274,14 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
       setIsDrawerVisible(false);
       mutateShowScheduleTeacher();
       setSelectedTeacher(null);
+      setSchedule(
+        DAYS.map((day) => ({
+          schedule_id: "",
+          day,
+          isAvailable: false,
+          times: [{ start: null, end: null }],
+        }))
+      );
     } catch (error) {
       console.error("Error:", error);
       notification.error({
@@ -313,6 +321,7 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
       setIsModalVisible(false);
       await mutateDataTeacher();
       setSelectedTeacher(null);
+      form.resetFields();
     } catch (error) {
       console.log(error);
     } finally {
