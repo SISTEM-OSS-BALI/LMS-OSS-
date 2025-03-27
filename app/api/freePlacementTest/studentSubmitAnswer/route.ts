@@ -14,15 +14,54 @@ export async function POST(request: NextRequest) {
   const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
   try {
+    const user = await prisma.placementTestParticipant.findFirst({
+      where: { email },
+    });
+
+    if (!user) {
+      return NextResponse.json({
+        status: 404,
+        error: true,
+        message: "Peserta tidak ditemukan.",
+      });
+    }
+
     // 🔹 Ambil data user dan jumlah soal sekaligus untuk menghindari banyak query
-    const [user, totalQuestionsCount] = await prisma.$transaction([
-      prisma.placementTestParticipant.findFirst({
-        where: { email },
+    const [mcCount, tfCount, writingCount] = await prisma.$transaction([
+      prisma.multipleChoicePlacementTest.count({
+        where: {
+          basePlacementTest: {
+            placementTestId: placement_test_id,
+          },
+        },
       }),
-      prisma.basePlacementTest.count({
-        where: { placementTestId: placement_test_id },
+      prisma.trueFalseQuestion.count({
+        where: {
+          trueFalseGroup: {
+            basePlacementTest: {
+              placementTestId: placement_test_id,
+            },
+          },
+        },
+      }),
+      prisma.writingPlacementTest.count({
+        where: {
+          basePlacementTest: {
+            placementTestId: placement_test_id,
+          },
+        },
       }),
     ]);
+
+    const totalQuestionsCount = mcCount + tfCount + writingCount;
+
+    if (totalQuestionsCount === 0) {
+      return NextResponse.json({
+        status: 400,
+        error: true,
+        message: "Placement test tidak memiliki soal.",
+      });
+    }
 
     if (!totalQuestionsCount) {
       return NextResponse.json({
@@ -140,11 +179,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const no_tlp = formatPhoneNumber(user?.phone ?? "");
-
-    (async () => {
-      const message = `
-🌟 *Halo, ${user?.name}!*
+    const no_tlp = formatPhoneNumber(user.phone ?? "");
+    const message = `
+🌟 *Halo, ${user.name}!*
 
 Terima kasih telah mengikuti *Placement Test* bersama *One Step Solution (OSS)*. Berikut adalah hasil tes Anda:
 
@@ -171,8 +208,8 @@ Hasil tes menunjukkan bahwa masih ada ruang untuk perbaikan dalam kemampuan baha
 Terima kasih,  
 *One Step Solution (OSS)* 🌍✨
 `;
-      await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
-    })();
+
+    await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
 
     return NextResponse.json({
       status: 200,
