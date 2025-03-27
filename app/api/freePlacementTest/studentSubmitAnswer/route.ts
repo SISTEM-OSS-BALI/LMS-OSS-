@@ -174,12 +174,12 @@ export async function POST(request: NextRequest) {
         participant_id: user?.participant_id ?? "",
         placement_test_id,
         totalScore,
-        percentageScore,
+        percentageScore: parseFloat(percentageScore.toFixed(2)),
         level: newLevel,
       },
     });
 
-    const no_tlp = formatPhoneNumber(user.phone ?? "");
+    const no_tlp = formatPhoneNumber(user?.phone ?? "");
     const message = `
 🌟 *Halo, ${user.name}!*
 
@@ -210,11 +210,17 @@ Terima kasih,
 `;
 
     await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
+    const formattedPercentageScore = percentageScore.toFixed(2);
 
     return NextResponse.json({
       status: 200,
       error: false,
-      data: { totalScore, percentageScore, level: newLevel, writingFeedback },
+      data: {
+        totalScore,
+        percentageScore: formattedPercentageScore,
+        level: newLevel,
+        writingFeedback,
+      },
     });
   } catch (error) {
     console.error("Error accessing database:", error);

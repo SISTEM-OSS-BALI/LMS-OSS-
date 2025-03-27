@@ -21,10 +21,33 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 🔹 Ambil jumlah total soal dalam satu query
-    const totalQuestionsCount = await prisma.basePlacementTest.count({
-      where: { placementTestId: placement_test_id },
-    });
+    const [mcCount, tfCount, writingCount] = await prisma.$transaction([
+      prisma.multipleChoicePlacementTest.count({
+        where: {
+          basePlacementTest: {
+            placementTestId: placement_test_id,
+          },
+        },
+      }),
+      prisma.trueFalseQuestion.count({
+        where: {
+          trueFalseGroup: {
+            basePlacementTest: {
+              placementTestId: placement_test_id,
+            },
+          },
+        },
+      }),
+      prisma.writingPlacementTest.count({
+        where: {
+          basePlacementTest: {
+            placementTestId: placement_test_id,
+          },
+        },
+      }),
+    ]);
+
+    const totalQuestionsCount = mcCount + tfCount + writingCount;
 
     if (totalQuestionsCount === 0) {
       return NextResponse.json({
@@ -138,8 +161,8 @@ export async function POST(request: NextRequest) {
       (sum, answer) => sum + (answer.score ?? 0),
       0
     );
-   const percentageScore =
-     Math.min((totalScore / totalQuestionsCount) * 100, 100) || 0;
+    const percentageScore =
+      Math.min((totalScore / totalQuestionsCount) * 100, 100) || 0;
 
     let newLevel = "Beginner";
     // 🔹 Tentukan level baru siswa berdasarkan skor
@@ -166,16 +189,19 @@ export async function POST(request: NextRequest) {
           student_id: user.user_id,
           placement_test_id,
           totalScore,
-          percentageScore,
+          percentageScore: parseFloat(percentageScore.toFixed(2)),
           level: newLevel,
         },
       }),
     ]);
 
+    const formattedPercentageScore = percentageScore.toFixed(2);
+
+
     return NextResponse.json({
       status: 200,
       error: false,
-      data: { totalScore, percentageScore, level: newLevel, writingFeedback },
+      data: { totalScore, percentageScore: formattedPercentageScore, level: newLevel, writingFeedback },
     });
   } catch (error) {
     console.error("Error accessing database:", error);

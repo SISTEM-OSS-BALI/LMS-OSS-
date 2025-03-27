@@ -225,68 +225,75 @@ export default function QuestionComponent() {
                 </Title>
 
                 {/* Multiple Choice */}
-                {currentSection?.name === "MULTIPLE_CHOICE" &&
-                  currentQuestions[currentQuestionIndex] && (
-                    <Radio.Group
-                      onChange={(e) =>
-                        handleAnswerChange(
-                          (
-                            currentQuestions[
-                              currentQuestionIndex
-                            ] as MultipleChoicePlacementTest
-                          )?.mc_id || "",
-                          e.target.value
-                        )
-                      }
-                      value={
-                        selectedAnswers[
-                          (
-                            currentQuestions[
-                              currentQuestionIndex
-                            ] as MultipleChoicePlacementTest
-                          )?.mc_id || ""
-                        ] || null
-                      }
-                    >
-                      <Space direction="vertical" style={{ width: "100%" }}>
-                        {(
+                {"mc_id" in currentQuestions[currentQuestionIndex] && (
+                  <Radio.Group
+                    onChange={(e) =>
+                      handleAnswerChange(
+                        (
                           currentQuestions[
                             currentQuestionIndex
                           ] as MultipleChoicePlacementTest
-                        )?.options?.map((option, idx) => (
-                          <Radio
-                            key={idx}
-                            value={option}
-                            style={{ width: "100%" }}
-                          >
-                            {option}
-                          </Radio>
-                        ))}
-                      </Space>
-                    </Radio.Group>
-                  )}
+                        )?.mc_id || "",
+                        e.target.value
+                      )
+                    }
+                    value={
+                      selectedAnswers[
+                        (
+                          currentQuestions[
+                            currentQuestionIndex
+                          ] as MultipleChoicePlacementTest
+                        )?.mc_id || ""
+                      ] || null
+                    }
+                  >
+                    <Space direction="vertical" style={{ width: "100%" }}>
+                      {(
+                        currentQuestions[
+                          currentQuestionIndex
+                        ] as MultipleChoicePlacementTest
+                      )?.options?.map((option, idx) => (
+                        <Radio
+                          key={idx}
+                          value={option}
+                          style={{ width: "100%" }}
+                        >
+                          {option}
+                        </Radio>
+                      ))}
+                    </Space>
+                  </Radio.Group>
+                )}
 
                 {/* Writing */}
-                {currentSection?.name === "WRITING" &&
-                  currentQuestions[currentQuestionIndex] && (
-                    <Input.TextArea
-                      rows={5}
-                      placeholder="Jawaban Anda..."
-                      onChange={(e) =>
-                        handleAnswerChange(
-                          (
-                            currentQuestions[
-                              currentQuestionIndex
-                            ] as WritingPlacementTest
-                          )?.writing_id || "",
-                          e.target.value
-                        )
-                      }
-                    />
-                  )}
+                {"writing_id" in currentQuestions[currentQuestionIndex] && (
+                  <Input.TextArea
+                    rows={5}
+                    placeholder="Jawaban Anda..."
+                    onChange={(e) =>
+                      handleAnswerChange(
+                        (
+                          currentQuestions[
+                            currentQuestionIndex
+                          ] as WritingPlacementTest
+                        )?.writing_id || "",
+                        e.target.value
+                      )
+                    }
+                    value={
+                      selectedAnswers[
+                        (
+                          currentQuestions[
+                            currentQuestionIndex
+                          ] as WritingPlacementTest
+                        )?.writing_id || ""
+                      ] || ""
+                    }
+                  />
+                )}
 
                 {/* True/False */}
-                {isReadingSection && currentQuestions[currentQuestionIndex] && (
+                {"tf_id" in currentQuestions[currentQuestionIndex] && (
                   <Radio.Group
                     onChange={(e) =>
                       handleAnswerChange(

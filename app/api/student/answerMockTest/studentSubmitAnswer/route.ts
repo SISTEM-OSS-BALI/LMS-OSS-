@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     } else if (totalScore >= 16) {
       newLevel = "Elementary";
     }
-    
+
     await prisma.user.update({
       where: { user_id: user.user_id },
       data: { level: newLevel },
@@ -198,15 +198,22 @@ export async function POST(request: NextRequest) {
         student_id: user.user_id,
         mock_test_id: testId,
         totalScore: totalScore,
-        percentageScore: percentageScore,
+        percentageScore: parseFloat(percentageScore.toFixed(2)),
         level: newLevel,
       },
     });
 
+    const formattedPercentageScore = percentageScore.toFixed(2);
+
     return NextResponse.json({
       status: 200,
       error: false,
-      data: { totalScore, percentageScore, level: newLevel, speakingFeedback },
+      data: {
+        totalScore,
+        percentageScore: formattedPercentageScore,
+        level: newLevel,
+        speakingFeedback,
+      },
     });
   } catch (error) {
     console.error("Error accessing database:", error);

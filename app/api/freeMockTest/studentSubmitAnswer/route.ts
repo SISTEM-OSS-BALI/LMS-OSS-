@@ -173,8 +173,8 @@ export async function POST(request: NextRequest) {
       (sum, answer) => sum + (answer.score ?? 0),
       0
     );
-   const percentageScore =
-     Math.min((totalScore / totalQuestionsCount) * 100, 100) || 0;
+    const percentageScore =
+      Math.min((totalScore / totalQuestionsCount) * 100, 100) || 0;
 
     let newLevel = "Beginner";
     // 🔹 Tentukan level baru siswa berdasarkan skor
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
         participant_id: user?.participant_id ?? "",
         mock_test_id: testId,
         totalScore: totalScore,
-        percentageScore: percentageScore,
+        percentageScore: parseFloat(percentageScore.toFixed(2)),
         level: newLevel,
       },
     });
@@ -236,10 +236,17 @@ Terima kasih,
       await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
     })();
 
+    const formattedPercentageScore = percentageScore.toFixed(2);
+
     return NextResponse.json({
       status: 200,
       error: false,
-      data: { totalScore, percentageScore, level: newLevel, speakingFeedback },
+      data: {
+        totalScore,
+        percentageScore: formattedPercentageScore,
+        level: newLevel,
+        speakingFeedback,
+      },
     });
   } catch (error) {
     console.error("Error accessing database:", error);
