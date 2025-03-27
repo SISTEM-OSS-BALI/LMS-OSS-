@@ -372,56 +372,52 @@ export default function QuestionComponent() {
             }}
           >
             <Row gutter={[10, 10]}>
-              {[...(basePlacementTestData?.data ?? [])]
-                .sort((a, b) => {
-                  const aIsWriting = (a.writingQuestions?.length ?? 0) > 0;
-                  const bIsWriting = (b.writingQuestions?.length ?? 0) > 0;
-                  return Number(aIsWriting) - Number(bIsWriting);
-                })
-                .map((section, index) => {
-                  const sectionQuestions = [
-                    ...(section.multipleChoices ?? []),
-                    ...(section.writingQuestions ?? []),
-                    ...(section.trueFalseGroups?.flatMap(
-                      (group) => group.trueFalseQuestions
-                    ) ?? []),
-                  ];
+              {basePlacementTestData?.data.map((section, index) => {
+                // Ambil semua soal dalam section ini
+                const sectionQuestions = [
+                  ...(section.multipleChoices ?? []),
+                  ...(section.writingQuestions ?? []),
+                  ...(section.trueFalseGroups?.flatMap(
+                    (group) => group.trueFalseQuestions
+                  ) ?? []),
+                ];
 
-                  const isSectionCompleted = sectionQuestions.every((q) =>
-                    "mc_id" in q
-                      ? selectedAnswers[q.mc_id]
-                      : "writing_id" in q
-                      ? selectedAnswers[q.writing_id]
-                      : "tf_id" in q
-                      ? selectedAnswers[q.tf_id]
-                      : false
-                  );
+                // Cek apakah semua soal dalam section ini sudah dijawab
+                const isSectionCompleted = sectionQuestions.every((q) =>
+                  "mc_id" in q
+                    ? selectedAnswers[q.mc_id]
+                    : "writing_id" in q
+                    ? selectedAnswers[q.writing_id]
+                    : "tf_id" in q
+                    ? selectedAnswers[q.tf_id]
+                    : false
+                );
 
-                  return (
-                    <Col key={index} span={8} style={{ textAlign: "center" }}>
-                      <Button
-                        type={
-                          currentSectionIndex === index ? "primary" : "default"
-                        }
-                        onClick={() => {
-                          setCurrentSectionIndex(index);
-                          setCurrentQuestionIndex(0);
-                        }}
-                        style={{
-                          width: "100%",
-                          fontWeight: "bold",
-                          borderRadius: "8px",
-                          backgroundColor: isSectionCompleted
-                            ? "#52c41a"
-                            : undefined,
-                          color: isSectionCompleted ? "white" : undefined,
-                        }}
-                      >
-                        {handleNameChange(section.name)}
-                      </Button>
-                    </Col>
-                  );
-                })}
+                return (
+                  <Col key={index} span={8} style={{ textAlign: "center" }}>
+                    <Button
+                      type={
+                        currentSectionIndex === index ? "primary" : "default"
+                      }
+                      onClick={() => {
+                        setCurrentSectionIndex(index);
+                        setCurrentQuestionIndex(0);
+                      }}
+                      style={{
+                        width: "100%",
+                        fontWeight: "bold",
+                        borderRadius: "8px",
+                        backgroundColor: isSectionCompleted
+                          ? "#52c41a"
+                          : undefined, // Beri warna hijau jika sudah selesai
+                        color: isSectionCompleted ? "white" : undefined,
+                      }}
+                    >
+                      {handleNameChange(section.name)}
+                    </Button>
+                  </Col>
+                );
+              })}
             </Row>
           </Card>
 
