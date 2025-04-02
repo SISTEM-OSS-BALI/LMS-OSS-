@@ -235,7 +235,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       interval: number = 30
     ): string[] => {
       const occupied: string[] = [];
-      const start = dayjs.utc(startTime);
+      const start = dayjs(startTime);
       const end = start.add(duration, "minute");
 
       let current = start;
@@ -261,15 +261,27 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
               ? dayjs(meeting.endTime).diff(dayjs(meeting.startTime), "minute")
               : 60;
 
-          const startTime = dayjs
-            .utc(meeting.startTime)
-            .format("YYYY-MM-DD HH:mm");
+          const startTime = dayjs(meeting.startTime).format("YYYY-MM-DD HH:mm");
           return getOccupiedTimesFromMeeting(startTime, duration);
         }) || [];
 
-    const filteredTimes = generatedTimes.filter(
-      (time) => !occupiedTimes.includes(time)
-    );
+    const filteredTimes = generatedTimes.filter((time) => {
+      const startTime = dayjs(`${selectedDate} ${time}`, "YYYY-MM-DD HH:mm");
+      const endTime = startTime.add(
+        filterProgram?.[0].duration ?? 60,
+        "minute"
+      );
+
+      let current = startTime;
+      while (current.isBefore(endTime)) {
+        if (occupiedTimes.includes(current.format("HH:mm"))) {
+          return false; // Bentrok
+        }
+        current = current.add(30, "minute");
+      }
+
+      return true;
+    });
 
     if (filteredTimes.length === 0) {
       setAvailableTimes([]);
@@ -416,7 +428,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const selectedDayReschedule = dayjs(date).format("dddd").toUpperCase();
 
     if (!showScheduleAllTeacher?.data) {
-      console.log("Show Schedule All or Show Schedule All Data is undefined");
+      console.warn("Jadwal guru tidak tersedia.");
       return;
     }
 
@@ -425,7 +437,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     );
 
     if (!teacherSchedule) {
-      message.warning("Tidak ada guru yang tersedia pada tanggal ini.");
+      message.warning("Tidak ada jadwal guru pada tanggal ini.");
       return;
     }
 
@@ -434,20 +446,23 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     );
 
     if (availableDays.length === 0) {
-      message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
+      message.warning("Guru tidak tersedia pada hari ini.");
       return;
     }
 
     const teacherTimes = availableDays.flatMap((day: any) => day.times);
+
+    // ⏱️ Generate slot waktu berdasarkan durasi program
     const generatedTimes = generateTimeIntervals(teacherTimes); // e.g. ["09:00", "09:30", ...]
 
+    // 🧠 Fungsi untuk menghitung waktu yang sudah terpakai
     const getOccupiedTimesFromMeeting = (
       startTime: string,
       duration: number,
       interval: number = 30
     ): string[] => {
       const occupied: string[] = [];
-      const start = dayjs.utc(startTime);
+      const start = dayjs(startTime);
       const end = start.add(duration, "minute");
 
       let current = start;
@@ -458,11 +473,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
       return occupied;
     };
+
+    // 🛑 Hitung waktu yang bentrok (booked)
     const occupiedTimes =
       showMeeting?.data
         ?.filter(
           (meeting) =>
-            meeting.teacher_id === selectedTeacher?.user_id &&
+            meeting.teacher_id === selectedTeacherId &&
             dayjs(meeting.dateTime).isSame(dayjs(date), "day")
         )
         ?.flatMap((meeting) => {
@@ -471,15 +488,31 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
               ? dayjs(meeting.endTime).diff(dayjs(meeting.startTime), "minute")
               : 60;
 
-          const startTime = dayjs
-            .utc(meeting.startTime)
-            .format("YYYY-MM-DD HH:mm");
+          const startTime = dayjs(meeting.startTime).format("YYYY-MM-DD HH:mm");
           return getOccupiedTimesFromMeeting(startTime, duration);
         }) || [];
 
-    const filteredTimes = generatedTimes.filter(
-      (time) => !occupiedTimes.includes(time)
-    );
+    // 💡 Filter: pastikan semua durasi program tidak ada bentrok
+    const filteredTimes = generatedTimes.filter((time) => {
+      const slotStart = dayjs(
+        `${dayjs(date).format("YYYY-MM-DD")} ${time}`,
+        "YYYY-MM-DD HH:mm"
+      );
+      const slotEnd = slotStart.add(
+        filterProgram?.[0].duration ?? 60,
+        "minute"
+      );
+
+      let current = slotStart;
+      while (current.isBefore(slotEnd)) {
+        if (occupiedTimes.includes(current.format("HH:mm"))) {
+          return false; // Bentrok
+        }
+        current = current.add(30, "minute"); // tetap pakai 30 karena itu base interval
+      }
+
+      return true;
+    });
 
     if (filteredTimes.length > 0) {
       setAvailableTeachers([teacherSchedule]);
