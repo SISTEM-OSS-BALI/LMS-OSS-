@@ -3,12 +3,10 @@ import readline from "readline";
 
 const credentials = {
   client_id:
-    "457654145804-q321cb9epbjt0kl6ia6d3b8cegg1mad6.apps.googleusercontent.com",
-  client_secret: "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",
+    "457654145804-20e0kfl4ot8kqgjd0ks82ni22ai0o05s.apps.googleusercontent.com",
+  client_secret: "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",
   redirect_uris: ["http://localhost:3000"],
 };
-
-
 
 async function getRefreshToken() {
   const { client_id, client_secret, redirect_uris } = credentials;

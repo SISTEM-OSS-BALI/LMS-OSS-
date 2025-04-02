@@ -1,6 +1,6 @@
 import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { Consultant, TermsAgreement } from "@prisma/client";
+import { Consultant, TermsAgreement, User } from "@prisma/client";
 import { Form, notification } from "antd";
 import { useState } from "react";
 import useSWR from "swr";
@@ -11,6 +11,10 @@ interface ConfirmAccountResponse {
 
 interface ConsultantResponse {
   data: Consultant[];
+}
+
+interface StudentResponse {
+  data: User[];
 }
 export const useConfirmAccountViewModel = () => {
   const {
@@ -24,6 +28,12 @@ export const useConfirmAccountViewModel = () => {
     isLoading: isLoadingConsultant,
     mutate: consultantMutate,
   } = useSWR<ConsultantResponse>("/api/admin/consultant/show", fetcher);
+
+  const {
+    data: studentData,
+    isLoading: isLoadingStudent,
+    mutate: studentMutate,
+  } = useSWR<StudentResponse>("/api/admin/student/show", fetcher);
 
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [isModalDataVisible, setIsModalDataVisible] = useState(false);
@@ -56,6 +66,17 @@ export const useConfirmAccountViewModel = () => {
   const handleOpenModal = (user_id: string) => {
     setIsModalDataVisible(true);
     setSelectedStudentId(user_id);
+
+    const selectedStudent = studentData?.data.find(
+      (student) => student.user_id === user_id
+    );
+
+    if (selectedStudent) {
+      form.setFieldsValue({
+        target: selectedStudent.target,
+        consultant_id: selectedStudent.consultant_id,
+      });
+    }
   };
 
   const handleCloseModal = () => {

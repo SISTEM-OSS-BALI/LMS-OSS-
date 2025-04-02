@@ -69,8 +69,8 @@ const menuMap: { [key: string]: string } = {
   "/admin/dashboard/student/reschedule": "/admin/dashboard/student/reschedule",
   "/admin/dashboard/student/data-student":
     "/admin/dashboard/student/data-student",
-  "/admin/dashboard/student/calendar/confirm-account":
-    "/admin/dashboard/student/calendar/confirm-account",
+  "/admin/dashboard/student/confirm-account":
+    "/admin/dashboard/student/confirm-account",
   "/admin/dashboard/report/placement-test":
     "/admin/dashboard/report/placement-test",
   "/admin/dashboard/report/mock-test": "/admin/dashboard/report/mock-test",
@@ -261,7 +261,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <Link href="/admin/dashboard/student/confirm-account">
           Konfirmasi Akun
         </Link>,
-        "/admin/dashboard/student/calendar/confirm-account",
+        "/admin/dashboard/student/confirm-account",
         <CheckCircleFilled />
       ),
       getItem(

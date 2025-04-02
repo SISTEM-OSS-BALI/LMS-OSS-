@@ -1,0 +1,15 @@
+import { NextRequest, NextResponse } from "next/server";
+import { oauth2Client } from "@/app/lib/utils/google";
+
+export async function GET(req: NextRequest) {
+  const code = req.nextUrl.searchParams.get("code");
+
+  if (!code) return new NextResponse("Code not found", { status: 400 });
+
+  const { tokens } = await oauth2Client.getToken(code);
+  oauth2Client.setCredentials(tokens);
+
+  console.log("Refresh Token:", tokens.refresh_token);
+
+  return NextResponse.redirect("/dashboard");
+}

@@ -389,64 +389,81 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   };
 
   const handleChangeDateReschedule = (date: any) => {
-    if (date && selectedTeacherId) {
-      const selectedDayReschedule = dayjs(date).format("dddd").toUpperCase();
+    if (!date || !selectedTeacherId) return;
 
-      if (showScheduleAllTeacher && showScheduleAllTeacher.data) {
-        const teacherSchedule = showScheduleAllTeacher.data.find(
-          (schedule: any) => schedule.teacher_id === selectedTeacherId
-        );
+    const selectedDayReschedule = dayjs(date).format("dddd").toUpperCase();
 
-        if (teacherSchedule) {
-          const availableDays = teacherSchedule.days.filter(
-            (day: any) => day.day === selectedDayReschedule && day.isAvailable
-          );
+    if (!showScheduleAllTeacher?.data) {
+      console.log("Show Schedule All or Show Schedule All Data is undefined");
+      return;
+    }
 
-          if (availableDays.length > 0) {
-            const teacherTimes = availableDays.flatMap((day: any) => day.times);
+    const teacherSchedule = showScheduleAllTeacher.data.find(
+      (schedule: any) => schedule.teacher_id === selectedTeacherId
+    );
 
-            const generatedTimes = generateTimeIntervals(teacherTimes);
+    if (!teacherSchedule) {
+      message.warning("Tidak ada guru yang tersedia pada tanggal ini.");
+      return;
+    }
 
-            const formatDateTimeToUTC = (dateTime: any) => {
-              return dayjs.utc(dateTime).format("YYYY-MM-DD HH:mm");
-            };
+    const availableDays = teacherSchedule.days.filter(
+      (day: any) => day.day === selectedDayReschedule && day.isAvailable
+    );
 
-            const bookedTimes = showMeeting?.data
-              ?.map((meeting) => ({
-                ...meeting,
-                dateTime: formatDateTimeToUTC(meeting.dateTime),
-              }))
-              ?.filter(
-                (meeting) =>
-                  meeting.teacher_id === selectedTeacherId &&
-                  dayjs(meeting.dateTime).isSame(dayjs(date), "day")
-              )
-              ?.map((meeting) => ({
-                time: dayjs(meeting.dateTime).format("HH:mm"),
-              }));
+    if (availableDays.length === 0) {
+      message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
+      return;
+    }
 
-            const filteredTimes = generatedTimes.filter(
-              (time) => !bookedTimes?.some((booked) => booked.time === time)
-            );
+    const teacherTimes = availableDays.flatMap((day: any) => day.times);
+    const generatedTimes = generateTimeIntervals(teacherTimes); // e.g. ["09:00", "09:30", ...]
 
-            if (filteredTimes.length > 0) {
-              setAvailableTeachers([teacherSchedule]);
-              setSelectedDate(dayjs(date).format("YYYY-MM-DD"));
-              setAvailableTimes(filteredTimes);
-            } else {
-              message.warning(
-                "Tidak ada waktu yang tersedia pada tanggal ini."
-              );
-            }
-          } else {
-            message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
-          }
-        } else {
-          message.warning("Tidak ada guru yang tersedia pada tanggal ini.");
-        }
-      } else {
-        console.log("Show Schedule All or Show Schedule All Data is undefined");
+    const getOccupiedTimesFromMeeting = (
+      start: string,
+      duration: number,
+      interval: number = 30
+    ): string[] => {
+      const times: string[] = [];
+      const startTime = dayjs(start);
+      const endTime = startTime.add(duration, "minute");
+
+      let current = startTime;
+      while (current.isBefore(endTime)) {
+        times.push(current.format("HH:mm"));
+        current = current.add(interval, "minute");
       }
+
+      return times;
+    };
+
+    const bookedTimes = showMeeting?.data
+      ?.filter(
+        (meeting) =>
+          meeting.teacher_id === selectedTeacherId &&
+          dayjs.utc(meeting.dateTime).isSame(dayjs.utc(date), "day")
+      )
+      ?.flatMap((meeting) => {
+        const duration =
+          meeting.endTime && meeting.startTime
+            ? dayjs(meeting.endTime).diff(dayjs(meeting.startTime), "minute")
+            : 60; // fallback default 60 menit
+
+        const utcStart = dayjs.utc(meeting.dateTime).format("YYYY-MM-DD HH:mm");
+        return getOccupiedTimesFromMeeting(utcStart, duration);
+      });
+
+    // Filter waktu yang masih tersedia
+    const filteredTimes = generatedTimes.filter(
+      (time) => !bookedTimes?.includes(time)
+    );
+
+    if (filteredTimes.length > 0) {
+      setAvailableTeachers([teacherSchedule]);
+      setSelectedDate(dayjs(date).format("YYYY-MM-DD"));
+      setAvailableTimes(filteredTimes);
+    } else {
+      message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
     }
   };
 

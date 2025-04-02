@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
           imageUrl: true,
           region: true,
           is_evaluation: true,
+          consultant_id: true,
           target: true,
         },
       },
