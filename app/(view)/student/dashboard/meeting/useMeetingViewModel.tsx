@@ -190,77 +190,99 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       return;
     }
 
+    // 🟢 Gunakan lokal time untuk label dan nama hari
     const selectedDay = dayjs(arg.date)
       .locale("id")
       .format("dddd, DD MMMM YYYY");
     setSelectedDate(selectedDay);
-    const dayName = dayjs(arg.date).locale("id").format("dddd");
+
+    const dayName = dayjs(arg.date).locale("id").format("dddd"); // LOKAL!
     const translatedDayName = DAY_TRANSLATION[dayName];
 
-    if (showScheduleTeacher?.data) {
-      const teacherSchedule = showScheduleTeacher.data[0];
+    if (!showScheduleTeacher?.data || showScheduleTeacher.data.length === 0) {
+      setAvailableTimes([]);
+      setCurrentStep(1);
+      message.warning("Tidak ada jadwal guru yang tersedia.");
+      return;
+    }
 
-      if (Array.isArray(teacherSchedule.days)) {
-        const daySchedule = teacherSchedule.days.find(
-          (d: any) => d.day === translatedDayName
-        );
+    const teacherSchedule = showScheduleTeacher.data[0];
 
-        if (daySchedule) {
-          const generatedTimes = generateTimeIntervals(daySchedule.times);
+    if (!Array.isArray(teacherSchedule.days)) {
+      setAvailableTimes([]);
+      setCurrentStep(1);
+      message.warning("Tidak ada jadwal guru yang tersedia.");
+      return;
+    }
 
-          const formatDateTimeToUTC = (dateTime: any) => {
-            return dayjs.utc(dateTime).format("YYYY-MM-DD HH:mm:ss");
-          };
+    const daySchedule = teacherSchedule.days.find(
+      (d: any) => d.day === translatedDayName
+    );
 
-          // **Filter waktu yang sudah dipesan dari showMeeting**
-          const bookedTimes = showMeeting?.data
-            ?.map((meeting) => ({
-              ...meeting,
-              dateTime: formatDateTimeToUTC(meeting.dateTime), // Konversi dateTime ke UTC
-            }))
-            ?.filter(
-              (meeting) =>
-                meeting.teacher_id === selectedTeacher?.user_id && // Pastikan teacher_id sama
-                dayjs(meeting.dateTime).isSame(dayjs(arg.date), "day") // Konversi dateTime dan arg.date ke UTC dan cek tanggal yang sama
-            )
-            ?.map((meeting) => ({
-              time: dayjs(meeting.dateTime).format("HH:mm"), // Konversi ke UTC dan format ke HH:mm
-            }));
+    if (!daySchedule) {
+      setAvailableTimes([]);
+      setCurrentStep(1);
+      message.warning("Tidak ada jadwal guru pada hari ini.");
+      return;
+    }
 
-          // console.log("Booked Times:", bookedTimes);
+    // ✅ Ambil semua time slot dari range yang disediakan guru
+    const generatedTimes = generateTimeIntervals(daySchedule.times);
 
-          // Filter hanya waktu yang belum dipesan
-          const filteredTimes = generatedTimes.filter(
-            (time) => !bookedTimes?.some((booked) => booked.time === time) // Pastikan `time` tidak ada di daftar waktu yang sudah dipesan
-          );
+    const getOccupiedTimesFromMeeting = (
+      startTime: string,
+      duration: number,
+      interval: number = 30
+    ): string[] => {
+      const occupied: string[] = [];
+      const start = dayjs.utc(startTime);
+      const end = start.add(duration, "minute");
 
-          if (filteredTimes.length === 0) {
-            message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
-            return;
-          }
-
-          setAvailableTimes(filteredTimes);
-          setCurrentStep(2);
-          handleOpenModalDateClick();
-        } else {
-          setAvailableTimes([]);
-          setCurrentStep(1);
-          message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
-        }
-      } else {
-        setAvailableTimes([]);
-        setCurrentStep(1);
-        message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
+      let current = start;
+      while (current.isBefore(end)) {
+        occupied.push(current.format("HH:mm"));
+        current = current.add(interval, "minute");
       }
-    } else {
+
+      return occupied;
+    };
+
+    // ✅ Gunakan UTC untuk filtering jadwal bentrok
+    const occupiedTimes =
+      showMeeting?.data
+        ?.filter(
+          (meeting) =>
+            meeting.teacher_id === selectedTeacher?.user_id &&
+            dayjs(meeting.dateTime).isSame(dayjs(arg.date), "day")
+        )
+        ?.flatMap((meeting) => {
+          const duration =
+            meeting.endTime && meeting.startTime
+              ? dayjs(meeting.endTime).diff(dayjs(meeting.startTime), "minute")
+              : 60;
+
+          const startTime = dayjs
+            .utc(meeting.startTime)
+            .format("YYYY-MM-DD HH:mm");
+          return getOccupiedTimesFromMeeting(startTime, duration);
+        }) || [];
+
+    const filteredTimes = generatedTimes.filter(
+      (time) => !occupiedTimes.includes(time)
+    );
+
+    if (filteredTimes.length === 0) {
       setAvailableTimes([]);
       setCurrentStep(1);
       message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
+      return;
     }
 
-    // setIsModalVisible(true);
-    // message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
+    setAvailableTimes(filteredTimes);
+    setCurrentStep(2);
+    handleOpenModalDateClick();
   };
+
   const generateTimeIntervals = (timeRanges: TimeSlot[]): string[] => {
     const intervals: string[] = [];
     timeRanges.forEach(({ startTime, endTime }) => {
@@ -420,42 +442,43 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const generatedTimes = generateTimeIntervals(teacherTimes); // e.g. ["09:00", "09:30", ...]
 
     const getOccupiedTimesFromMeeting = (
-      start: string,
+      startTime: string,
       duration: number,
       interval: number = 30
     ): string[] => {
-      const times: string[] = [];
-      const startTime = dayjs(start);
-      const endTime = startTime.add(duration, "minute");
+      const occupied: string[] = [];
+      const start = dayjs.utc(startTime);
+      const end = start.add(duration, "minute");
 
-      let current = startTime;
-      while (current.isBefore(endTime)) {
-        times.push(current.format("HH:mm"));
+      let current = start;
+      while (current.isBefore(end)) {
+        occupied.push(current.format("HH:mm"));
         current = current.add(interval, "minute");
       }
 
-      return times;
+      return occupied;
     };
+    const occupiedTimes =
+      showMeeting?.data
+        ?.filter(
+          (meeting) =>
+            meeting.teacher_id === selectedTeacher?.user_id &&
+            dayjs(meeting.dateTime).isSame(dayjs(date), "day")
+        )
+        ?.flatMap((meeting) => {
+          const duration =
+            meeting.endTime && meeting.startTime
+              ? dayjs(meeting.endTime).diff(dayjs(meeting.startTime), "minute")
+              : 60;
 
-    const bookedTimes = showMeeting?.data
-      ?.filter(
-        (meeting) =>
-          meeting.teacher_id === selectedTeacherId &&
-          dayjs.utc(meeting.dateTime).isSame(dayjs.utc(date), "day")
-      )
-      ?.flatMap((meeting) => {
-        const duration =
-          meeting.endTime && meeting.startTime
-            ? dayjs(meeting.endTime).diff(dayjs(meeting.startTime), "minute")
-            : 60; // fallback default 60 menit
+          const startTime = dayjs
+            .utc(meeting.startTime)
+            .format("YYYY-MM-DD HH:mm");
+          return getOccupiedTimesFromMeeting(startTime, duration);
+        }) || [];
 
-        const utcStart = dayjs.utc(meeting.dateTime).format("YYYY-MM-DD HH:mm");
-        return getOccupiedTimesFromMeeting(utcStart, duration);
-      });
-
-    // Filter waktu yang masih tersedia
     const filteredTimes = generatedTimes.filter(
-      (time) => !bookedTimes?.includes(time)
+      (time) => !occupiedTimes.includes(time)
     );
 
     if (filteredTimes.length > 0) {
