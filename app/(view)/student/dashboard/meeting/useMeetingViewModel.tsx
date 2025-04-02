@@ -196,6 +196,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       .format("dddd, DD MMMM YYYY");
     setSelectedDate(selectedDay);
 
+    const selectedDateISO = dayjs(arg.date).format("YYYY-MM-DD");
+
     const dayName = dayjs(arg.date).locale("id").format("dddd"); // LOKAL!
     const translatedDayName = DAY_TRANSLATION[dayName];
 
@@ -266,7 +268,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         }) || [];
 
     const filteredTimes = generatedTimes.filter((time) => {
-      const startTime = dayjs(`${selectedDate} ${time}`, "YYYY-MM-DD HH:mm");
+      const startTime = dayjs(`${selectedDateISO} ${time}`, "YYYY-MM-DD HH:mm");
       const endTime = startTime.add(
         filterProgram?.[0].duration ?? 60,
         "minute"
