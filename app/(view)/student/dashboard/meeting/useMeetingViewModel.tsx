@@ -188,7 +188,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     setIsModalInfoVisible(false);
   };
 
-
   const handleDateClick = (arg: any) => {
     if (!selectedTeacher) {
       message.warning("Silakan pilih guru terlebih dahulu.");
@@ -204,9 +203,11 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const dayName = dayjs(arg.date).locale("id").format("dddd");
     const translatedDayName = DAY_TRANSLATION[dayName];
 
-    const teacherSchedule = showScheduleTeacher.data.find(
-      (schedule: any) => schedule.teacher_id === selectedTeacher?.user_id
-    );
+    // const teacherSchedule = showScheduleTeacher.data.find(
+    //   (schedule: any) => schedule.teacher_id === selectedTeacher?.user_id
+    // );
+
+    const teacherSchedule = showScheduleTeacher.data[0];
 
     if (!teacherSchedule || !Array.isArray(teacherSchedule.days)) {
       setAvailableTimes([]);
@@ -231,13 +232,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const meetingsToday =
       showMeeting?.data?.filter(
         (meeting) =>
-          meeting.teacher_id === selectedTeacher.user_id &&
-          dayjs(meeting.dateTime).isSame(selectedDateISO, "day")
+          selectedTeacher && meeting.teacher_id === selectedTeacher.user_id &&
+          dayjs.utc(meeting.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
-    // console.log("📆 Selected Date:", selectedDateISO);
-    // console.log("⏱ Program Duration:", programDuration);
-    // console.log("📚 Raw Meetings:", meetingsToday);
+    console.log("📆 Selected Date:", selectedDateISO);
+    console.log("⏱ Program Duration:", programDuration);
+    console.log("📚 Raw Meetings:", meetingsToday);
 
     const availableTimes = generateAvailableSlots(
       daySchedule.times,
@@ -302,13 +303,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const meetingsToday =
       showMeeting?.data?.filter(
         (meeting) =>
-          meeting.teacher_id === selectedTeacherId &&
-          dayjs(meeting.dateTime).isSame(selectedDateISO, "day")
+          selectedTeacher && meeting.teacher_id === selectedTeacher.user_id &&
+          dayjs.utc(meeting.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
-    // console.log("📆 Reschedule Date:", selectedDateISO);
-    // console.log("⏱ Program Duration:", programDuration);
-    // console.log("📚 Meetings Today:", meetingsToday);
+    console.log("📆 Reschedule Date:", selectedDateISO);
+    console.log("⏱ Program Duration:", programDuration);
+    console.log("📚 Meetings Today:", meetingsToday);
 
     // ✅ Gunakan fungsi generateAvailableSlots
     const availableTimes = generateAvailableSlots(
@@ -327,65 +328,65 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     }
   };
 
-   const generateAvailableSlots = (
-     dayScheduleTimes: TimeSlot[],
-     meetings: any[],
-     selectedDateISO: string,
-     programDuration: number
-   ): string[] => {
-     const slots: string[] = [];
+  const generateAvailableSlots = (
+    dayScheduleTimes: TimeSlot[],
+    meetings: any[],
+    selectedDateISO: string,
+    programDuration: number
+  ): string[] => {
+    const slots: string[] = [];
 
-     dayScheduleTimes.forEach(({ startTime, endTime }, index) => {
-       const scheduleStart = dayjs.utc(
-         `${selectedDateISO} ${dayjs.utc(startTime).format("HH:mm")}`
-       );
-       const scheduleEnd = dayjs.utc(
-         `${selectedDateISO} ${dayjs.utc(endTime).format("HH:mm")}`
-       );
+    dayScheduleTimes.forEach(({ startTime, endTime }, index) => {
+      const scheduleStart = dayjs.utc(
+        `${selectedDateISO} ${dayjs.utc(startTime).format("HH:mm")}`
+      );
+      const scheduleEnd = dayjs.utc(
+        `${selectedDateISO} ${dayjs.utc(endTime).format("HH:mm")}`
+      );
 
-       let cursor = scheduleStart;
+      let cursor = scheduleStart;
 
-       while (
-         cursor.add(programDuration, "minute").isSameOrBefore(scheduleEnd)
-       ) {
-         const slotStart = cursor;
-         const slotEnd = slotStart.add(programDuration, "minute");
+      while (
+        cursor.add(programDuration, "minute").isSameOrBefore(scheduleEnd)
+      ) {
+        const slotStart = cursor;
+        const slotEnd = slotStart.add(programDuration, "minute");
 
-         const hasOverlap = meetings.some((meeting) => {
-           const meetingStart = dayjs.utc(meeting.startTime);
-           const meetingEnd = dayjs.utc(meeting.endTime);
-           const overlap =
-             slotStart.isBefore(meetingEnd) && slotEnd.isAfter(meetingStart);
+        const hasOverlap = meetings.some((meeting) => {
+          const meetingStart = dayjs.utc(meeting.startTime);
+          const meetingEnd = dayjs.utc(meeting.endTime);
+          const overlap =
+            slotStart.isBefore(meetingEnd) && slotEnd.isAfter(meetingStart);
 
-           if (overlap) {
-            //  console.log(
-            //    `❌ Overlap: ${slotStart.format("HH:mm")}–${slotEnd.format(
-            //      "HH:mm"
-            //    )} with meeting ${meetingStart.format(
-            //      "HH:mm"
-            //    )}–${meetingEnd.format("HH:mm")}`
-            //  );
-           }
+          if (overlap) {
+            console.log(
+              `❌ Overlap: ${slotStart.format("HH:mm")}–${slotEnd.format(
+                "HH:mm"
+              )} with meeting ${meetingStart.format(
+                "HH:mm"
+              )}–${meetingEnd.format("HH:mm")}`
+            );
+          }
 
-           return overlap;
-         });
+          return overlap;
+        });
 
-         if (!hasOverlap) {
-           slots.push(slotStart.format("HH:mm"));
-          //  console.log(
-          //    `✅ Available Slot: ${slotStart.format("HH:mm")}–${slotEnd.format(
-          //      "HH:mm"
-          //    )}`
-          //  );
-         }
+        if (!hasOverlap) {
+          slots.push(slotStart.format("HH:mm"));
+          console.log(
+            `✅ Available Slot: ${slotStart.format("HH:mm")}–${slotEnd.format(
+              "HH:mm"
+            )}`
+          );
+        }
 
-         cursor = cursor.add(programDuration, "minute"); // interval mengikuti durasi
-       }
-     });
+        cursor = cursor.add(programDuration, "minute"); // interval mengikuti durasi
+      }
+    });
 
-     // console.log("🧩 Final Available Slots:", slots);
-     return slots;
-   };
+    console.log("🧩 Final Available Slots:", slots);
+    return slots;
+  };
 
   const handleSubmit = async (values: any) => {
     setLoading(true);
@@ -493,8 +494,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const handleTeacherChange = (value: string) => {
     setSelectedTeacherId(value);
   };
-
-
 
   const showDate = useMemo(() => {
     let uniqueDates = new Set<string>();
