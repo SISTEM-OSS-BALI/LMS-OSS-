@@ -11,8 +11,8 @@ export default function StudentComponent() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Flex justify="space-between">
-        <Title level={3} style={{ marginBottom: "20px", marginBlock: 0 }}>
+      <Flex justify="space-between" style={{ marginBottom: "20px" }}>
+        <Title level={3} style={{ marginBlock: 0 }}>
           Daftar Siswa
         </Title>
         <Input
@@ -33,7 +33,7 @@ export default function StudentComponent() {
             </Col>
           ))}
         </Row>
-      ) : (filteredStudent && filteredStudent.length > 0) ? (
+      ) : filteredStudent && filteredStudent.length > 0 ? (
         <Row gutter={[16, 16]}>
           {filteredStudent.map((student) => (
             <Col key={student.user_id} xs={24} sm={12} md={8} lg={6}>

@@ -33,6 +33,8 @@ export default function ConfirmAccountComponent() {
     handleFinish,
     loading,
     handleDelete,
+    handleSearch,
+    filteredStudent,
   } = useConfirmAccountViewModel();
 
   const { useBreakpoint } = Grid;
@@ -163,6 +165,11 @@ export default function ConfirmAccountComponent() {
         >
           Konfirmasi Akun Siswa
         </Title>
+        <Input
+          placeholder="Cari nama siswa"
+          onChange={handleSearch}
+          style={{ width: "30%" }}
+        />
       </Flex>
 
       {/* Skeleton Loading untuk Tabel */}
@@ -178,7 +185,7 @@ export default function ConfirmAccountComponent() {
         >
           <Table
             columns={columns}
-            dataSource={confirmAccount?.data
+            dataSource={filteredStudent
               ?.slice()
               ?.sort((a, b) => Number(a.is_approved) - Number(b.is_approved))}
             loading={isLoadingConfirmAccount}

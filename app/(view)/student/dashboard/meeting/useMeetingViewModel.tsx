@@ -236,9 +236,9 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
           dayjs.utc(meeting.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
-    console.log("📆 Selected Date:", selectedDateISO);
-    console.log("⏱ Program Duration:", programDuration);
-    console.log("📚 Raw Meetings:", meetingsToday);
+    // console.log("📆 Selected Date:", selectedDateISO);
+    // console.log("⏱ Program Duration:", programDuration);
+    // console.log("📚 Raw Meetings:", meetingsToday);
 
     const availableTimes = generateAvailableSlots(
       daySchedule.times,
@@ -307,9 +307,9 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
           dayjs.utc(meeting.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
-    console.log("📆 Reschedule Date:", selectedDateISO);
-    console.log("⏱ Program Duration:", programDuration);
-    console.log("📚 Meetings Today:", meetingsToday);
+    // console.log("📆 Reschedule Date:", selectedDateISO);
+    // console.log("⏱ Program Duration:", programDuration);
+    // console.log("📚 Meetings Today:", meetingsToday);
 
     // ✅ Gunakan fungsi generateAvailableSlots
     const availableTimes = generateAvailableSlots(
@@ -359,13 +359,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
             slotStart.isBefore(meetingEnd) && slotEnd.isAfter(meetingStart);
 
           if (overlap) {
-            console.log(
-              `❌ Overlap: ${slotStart.format("HH:mm")}–${slotEnd.format(
-                "HH:mm"
-              )} with meeting ${meetingStart.format(
-                "HH:mm"
-              )}–${meetingEnd.format("HH:mm")}`
-            );
+            // console.log(
+            //   `❌ Overlap: ${slotStart.format("HH:mm")}–${slotEnd.format(
+            //     "HH:mm"
+            //   )} with meeting ${meetingStart.format(
+            //     "HH:mm"
+            //   )}–${meetingEnd.format("HH:mm")}`
+            // );
           }
 
           return overlap;
@@ -373,18 +373,18 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
         if (!hasOverlap) {
           slots.push(slotStart.format("HH:mm"));
-          console.log(
-            `✅ Available Slot: ${slotStart.format("HH:mm")}–${slotEnd.format(
-              "HH:mm"
-            )}`
-          );
+          // console.log(
+          //   `✅ Available Slot: ${slotStart.format("HH:mm")}–${slotEnd.format(
+          //     "HH:mm"
+          //   )}`
+          // );
         }
 
         cursor = cursor.add(programDuration, "minute"); // interval mengikuti durasi
       }
     });
 
-    console.log("🧩 Final Available Slots:", slots);
+    // console.log("🧩 Final Available Slots:", slots);
     return slots;
   };
 

@@ -208,7 +208,6 @@ export const useQueueViewModel = () => {
       abilityScale: values.ability_scale,
       studentPerformance: values.student_performance,
     };
-    console.log(payload);
     try {
       await crudService.patch(
         `/api/teacher/meeting/addProgressStudent/${meetingId}`,
@@ -223,7 +222,9 @@ export const useQueueViewModel = () => {
       setMeetingId("");
       setIsModalVisibleAddProgesStudent(false);
     } catch (error) {
-      console.log(error);
+      notification.error({
+        message: "Gagal Menambahkan Progress",
+      });
     } finally {
       setLoading(false);
     }

@@ -8,6 +8,8 @@ import {
   Col,
   Skeleton,
   Alert,
+  Flex,
+  Input,
 } from "antd";
 import { useStudentViewModel } from "./useStudentViewModel";
 import { useEffect } from "react";
@@ -51,11 +53,15 @@ export default function StudentComponent() {
     meetingDataLoading,
     programDataLoading,
     teacherDataLoading,
+    handleSearch,
+    filteredStudent,
   }: {
     mergedStudent: Student[];
     meetingDataLoading: boolean;
     programDataLoading: boolean;
     teacherDataLoading: boolean;
+    handleSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    filteredStudent: Student[];
   } = useStudentViewModel();
 
   const isLoading =
@@ -200,7 +206,16 @@ export default function StudentComponent() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Title level={3}>Data Siswa</Title>
+      <Flex justify="space-between" style={{ marginBottom: "20px" }}>
+        <Title level={3} style={{ marginBlock: 0 }}>
+          Data Siswa
+        </Title>
+        <Input
+          placeholder="Cari nama siswa"
+          onChange={handleSearch} // ✅ Gunakan handleSearch
+          style={{ width: "30%" }}
+        />
+      </Flex>
       <Card>
         {/* Skeleton Loading */}
         {isLoading ? (
@@ -218,7 +233,7 @@ export default function StudentComponent() {
         ) : (
           <Table
             columns={columns}
-            dataSource={mergedStudent}
+            dataSource={filteredStudent} // ✅ Gunakan filteredStudent
             rowKey="user_id"
             scroll={{ x: "max-content" }}
           />

@@ -85,7 +85,7 @@ export const useProgramViewModel = () => {
       notification.success({ message: "Program berhasil dihapus." });
       programDataMutate();
     } catch (error) {
-      console.log(error);
+      notification.success({ message: "Program gagal dihapus." });
     }
   };
 

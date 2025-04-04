@@ -60,7 +60,7 @@ export default function DetailCourseTeacherComponent() {
     handleCancelModalAccess,
     handleOpenModalAccess,
     isModalAccessVisible,
-    handleSubmitAccess
+    handleSubmitAccess,
   } = useCourseViewModel();
 
   if (courseError || studentEnrolledError || materialsError)
@@ -139,7 +139,6 @@ export default function DetailCourseTeacherComponent() {
                   <Popconfirm
                     title="Yakin ingin menghapus?"
                     onConfirm={() => handleDelete(item.base_id)}
-                    onCancel={() => console.log("Batal menghapus")}
                     okText="Ya"
                     cancelText="Tidak"
                   >

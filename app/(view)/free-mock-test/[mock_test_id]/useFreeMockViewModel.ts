@@ -62,7 +62,6 @@ export const useFreeMockTestViewModel = () => {
       setEmail(values.email);
       setIsModalVisible(false);
     } catch (error) {
-      console.log(error);
       message.error("Terjadi kesalahan saat mengirim data");
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { Meeting, Program, User } from "@prisma/client";
+import { useState } from "react";
 import useSWR from "swr";
 
 interface UserResponse {
@@ -19,6 +20,15 @@ export const useStudentViewModel = () => {
     "/api/admin/student/show",
     fetcher
   );
+
+
+    const [searchTerm, setSearchTerm] = useState<string>("");
+
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchTerm(e.target.value.toLowerCase());
+    };
+
+
 
   const { data: meetingDataAll, isLoading: meetingDataLoading } =
     useSWR<MeetingResponse>("/api/admin/meeting/show", fetcher);
@@ -61,11 +71,18 @@ export const useStudentViewModel = () => {
       };
     }) ?? [];
 
+    const filteredStudent =
+      mergedStudent.filter((student: any) =>
+        student.username.toLowerCase().includes(searchTerm)
+      ) ?? [];
+
   return {
     mergedStudent,
     studentDataAll,
     meetingDataLoading,
     programDataLoading,
     teacherDataLoading,
+    handleSearch,
+    filteredStudent,
   };
 };

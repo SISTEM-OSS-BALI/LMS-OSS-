@@ -151,7 +151,6 @@ export const useQuestionViewModel = () => {
       const base64Audio = reader.result as string; // Simpan hasil konversi
       setAudioBlob(base64Audio);
       setSpeakingId(speaking_id);
-      console.log(speakingId);
       message.success("Audio berhasil dikonversi dan disimpan!");
     };
   };

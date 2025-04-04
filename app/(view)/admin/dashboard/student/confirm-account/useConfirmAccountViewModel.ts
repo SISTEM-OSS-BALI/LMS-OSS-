@@ -42,6 +42,7 @@ export const useConfirmAccountViewModel = () => {
     null
   );
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const handleApprove = async (userId: string, isApproved: boolean) => {
     const payload = {
@@ -118,6 +119,14 @@ export const useConfirmAccountViewModel = () => {
     }
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  };
+
+  const filteredStudent = confirmAccount?.data.filter((student: any) =>
+    student.username.toLowerCase().includes(searchTerm)
+  );
+
   return {
     confirmAccount,
     isLoadingConfirmAccount,
@@ -131,5 +140,7 @@ export const useConfirmAccountViewModel = () => {
     handleFinish,
     loading,
     handleDelete,
+    handleSearch,
+    filteredStudent,
   };
 };

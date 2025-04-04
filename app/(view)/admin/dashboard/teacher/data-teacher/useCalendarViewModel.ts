@@ -223,13 +223,11 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
           if (!response.ok) {
             throw new Error(`Error: ${response.statusText}`);
           }
-
-          const result = await response.json();
-          console.log("Delete successful:", result);
           mutateShowScheduleTeacher();
         } catch (error) {
-          console.error("Error deleting time slot:", error);
-          // Handle error (e.g., show notification)
+          notification.error({
+            message: "Terjadi kesalahan saat menghapus waktu.",
+          });
         }
       },
     });
@@ -323,7 +321,9 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
       setSelectedTeacher(null);
       form.resetFields();
     } catch (error) {
-      console.log(error);
+      notification.error({
+        message: "Terjadi kesalahan saat menyimpan data guru.",
+      });
     } finally {
       setLoading(false);
     }
@@ -341,7 +341,9 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
       notification.success({ message: "Guru berhasil dihapus." });
       await mutateDataTeacher();
     } catch (error) {
-      console.log(error);
+      notification.error({
+        message: "Terjadi kesalahan saat menghapus data guru.",
+      });
     }
   };
 
@@ -362,7 +364,9 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
         setIsModalVisible(true);
       }
     } catch (error) {
-      console.log(error);
+      notification.error({
+        message: "Terjadi kesalahan saat mengedit data guru.",
+      });
     }
   };
   return {

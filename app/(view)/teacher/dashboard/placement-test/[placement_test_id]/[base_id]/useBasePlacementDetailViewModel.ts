@@ -247,7 +247,6 @@ export const useBasePlacementDetailViewModel = () => {
         };
       }
 
-      console.log(payload);
 
       // ✅ UPDATE QUESTION (Jika Ada `selectedQuestionId`)
       if (selectedQuestionId) {
