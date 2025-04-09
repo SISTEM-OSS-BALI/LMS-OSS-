@@ -154,36 +154,6 @@ export async function POST(request: NextRequest) {
     const studentName = studentData.username;
     const teacherName = teacherData.username;
 
-    const now = dayjs().add(8, "hour");
-    const reminderTime = dateTime.subtract(1, "hour").toDate();
-
-    if (now.isBefore(reminderTime)) {
-      schedule.scheduleJob(reminderTime, async () => {
-        await sendWhatsAppMessage(
-          apiKey,
-          numberKey,
-          formattedTeacherPhone,
-          `⏰ *Pengingat Meeting!*\n\n👨‍🏫 *Guru:* Anda memiliki meeting dengan siswa *${studentName}*.\n📅 *Tanggal:* ${dayjs(
-            dateTime
-          ).format("dddd, DD MMMM YYYY")}\n⏳ *Waktu:* ${dayjs(dateTime).format(
-            "HH:mm"
-          )} (Dimulai dalam 1 jam)\n\nMohon bersiap untuk sesi ini. Terima kasih! 🙌`
-        );
-        await sendWhatsAppMessage(
-          apiKey,
-          numberKey,
-          formattedStudentPhone,
-          `⏰ *Pengingat Meeting!*\n\n📚 *Siswa:* Meeting Anda dengan guru *${teacherName}* akan segera dimulai.\n📅 *Tanggal:* ${dayjs(
-            dateTime
-          ).format("dddd, DD MMMM YYYY")}\n⏳ *Waktu:* ${dayjs(dateTime).format(
-            "HH:mm"
-          )} (Dimulai dalam 1 jam)\n\nMohon bersiap untuk sesi ini. Terima kasih! 🙌`
-        );
-      });
-    } else {
-      console.warn("Waktu pengingat sudah lewat, tidak dapat dijadwalkan.");
-    }
-
     const messages = [
       {
         phone: formattedTeacherPhone,

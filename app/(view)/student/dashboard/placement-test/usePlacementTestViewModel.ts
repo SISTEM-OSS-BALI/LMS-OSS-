@@ -95,7 +95,7 @@ export const usePlacementTestViewModel = () => {
     return [];
   }, [currentSection]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const selectedData = Object.keys(selectedAnswers).map((id) => ({
       id,
       selectedAnswer: selectedAnswers[id],
@@ -109,32 +109,39 @@ export const usePlacementTestViewModel = () => {
 
     try {
       setLoading(true);
+
       const response = await crudService.post(
         "/api/student/answerPlacement/studentSubmitAnswer",
         payload
       );
 
-      if (response.status === 200 && !response.error) {
+      if (response?.status === 200 && !response.error) {
+        // Simpan hasil ke sessionStorage
         sessionStorage.setItem(
           "placementTestResult",
           JSON.stringify(response.data)
         );
+
         notification.success({ message: "Berhasil mengirim jawaban" });
-        router.push("/student/dashboard/placement-test/result");
+
+        // Bersihkan sessionStorage
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("answersPlacementTest");
           sessionStorage.removeItem("remainingTimePlacement");
         }
-        setLoading(false);
+
+        // Arahkan ke halaman hasil
+        router.push("/student/dashboard/placement-test/result");
       } else {
-        setLoading(false);
         message.error("Terjadi kesalahan saat mengirim jawaban.");
       }
     } catch (error) {
-      setLoading(false);
       message.error("Gagal menghubungi server. Coba lagi.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [selectedAnswers, selectedPlacementId, access_id, router]);
+
 
   // Timer countdown
   useEffect(() => {

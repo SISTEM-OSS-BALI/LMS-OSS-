@@ -1,4 +1,4 @@
-import { Divider, Tag, Badge, Card, Skeleton, Grid } from "antd";
+import { Divider, Tag, Badge, Card, Skeleton, Grid, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { useQueueViewModel } from "./useQueueViewModel";
 import dayjs from "dayjs";
@@ -7,6 +7,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { secondaryColor } from "@/app/lib/utils/colors";
 dayjs.extend(utc);
 
 const { useBreakpoint } = Grid;
@@ -38,51 +39,60 @@ export default function QueueComponent() {
     return (
       <div
         style={{
-          backgroundColor: "#fff",
-          padding: "12px",
-          borderRadius: "8px",
-          boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
+          position: "relative",
+          background: "#fff",
+          borderRadius: "10px",
+          padding: "10px",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+          minHeight: "60px",
           width: "100%",
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
         }}
       >
-        <strong
+        {/* Waktu di pojok atas dalam bentuk bubble */}
+        <div
           style={{
-            fontSize: screens.xs ? "12px" : "14px",
-            marginBottom: "4px",
+            position: "absolute",
+            top: "-10px",
+            left: "10px",
+            background: "#1677ff",
+            color: "#fff",
+            fontWeight: "bold",
+            padding: "2px 10px",
+            borderRadius: "8px",
+            fontSize: "12px",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
         >
           {time}
-        </strong>
+        </div>
+
+        {/* Konten utama */}
         <div
           style={{
-            fontSize: screens.xs ? "10px" : "12px",
-            fontWeight: "bold",
-            marginBottom: "4px",
+            marginTop: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+            textAlign: "center",
           }}
         >
-          {teacher}
+          <Typography.Text
+            strong
+            style={{ alignItems: "center", color: "#c08c3e", fontSize: "14px" }}
+          >
+            {teacher}
+          </Typography.Text>
+          <Typography.Text
+            strong
+            style={{ color: "#1677ff", fontSize: "14px" }}
+          >
+            {student}
+          </Typography.Text>
         </div>
-        <div
-          style={{
-            fontSize: screens.xs ? "10px" : "12px",
-            fontWeight: "bold",
-            marginBottom: "4px",
-          }}
-        >
-          {student}
-        </div>
-        <div style={{ fontSize: "10px", color: "#666" }}>{title}</div>
       </div>
     );
   };
+
 
   return (
     <div

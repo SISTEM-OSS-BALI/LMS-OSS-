@@ -199,6 +199,16 @@ export const useQueueViewModel = () => {
   const handleOpenModalAddProges = (meeting_id: string) => {
     setIsModalVisibleAddProgesStudent(true);
     setMeetingId(meeting_id);
+    const findProgres = meetingData?.data.find(
+      (meeting: Meeting) => meeting.meeting_id === meeting_id
+    );
+    if (findProgres) {
+      form.setFieldsValue({
+        progress_student: findProgres.progress_student,
+        ability_scale: findProgres.abilityScale,
+        student_performance: findProgres.studentPerformance,
+      });
+    }
   };
 
   const handleAddProgresStudent = async (values: any) => {

@@ -90,12 +90,12 @@ export default function CertificateComponent() {
                     borderRadius: "8px",
                     width: "100%",
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: screens.xs ? "wrap" : "nowrap",
+                    flexDirection: "column", // << penting
+                    alignItems: "flex-start",
+                    gap: "8px",
                   }}
                 >
-                  <Text strong>Melakukan Jadwal Pertemuan:</Text>
+                  <Text strong>Melakukan Jadwal Pertemuan</Text>
                   {certificate.is_complated_meeting ? (
                     <Text strong style={{ color: "green" }}>
                       Selesai
@@ -121,12 +121,12 @@ export default function CertificateComponent() {
                     borderRadius: "8px",
                     width: "100%",
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: screens.xs ? "wrap" : "nowrap",
+                    flexDirection: "column", // << penting
+                    alignItems: "flex-start",
+                    gap: "8px",
                   }}
                 >
-                  <Text strong>Melakukan Testimoni:</Text>
+                  <Text strong>Melakukan Testimoni</Text>
                   {certificate.is_complated_testimoni ? (
                     <Text strong style={{ color: "green" }}>
                       Selesai

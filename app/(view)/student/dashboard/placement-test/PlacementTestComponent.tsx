@@ -167,7 +167,7 @@ export default function PlacementTestComponent() {
                   level={screens.xs ? 5 : 4}
                   style={{
                     marginBottom: 0,
-                    fontSize: screens.xs ? "12px" : undefined, 
+                    fontSize: screens.xs ? "16px" : undefined, 
                   }}
                 >
                   {handleNameChange(currentSection?.name ?? "") || "Loading..."}
@@ -405,6 +405,7 @@ export default function PlacementTestComponent() {
                         width: "100%",
                         fontWeight: "bold",
                         borderRadius: "8px",
+                        fontSize: screens.xs ? "10px" : "16px",
                         backgroundColor: isSectionCompleted
                           ? "#52c41a"
                           : undefined, // Beri warna hijau jika sudah selesai

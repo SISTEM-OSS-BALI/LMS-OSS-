@@ -73,10 +73,22 @@ export async function GET(
       return baseData;
     });
 
+    const order = {
+      READING: 1,
+      LISTENING: 2,
+      WRITING: 3,
+      SPEAKING: 4,
+    };
+
+    const sortedData = formattedData.sort(
+      (a: { type: keyof typeof order }, b: { type: keyof typeof order }) =>
+        order[a.type] - order[b.type]
+    );
+
     return NextResponse.json({
       status: 200,
       error: false,
-      data: formattedData, // ✅ Mengembalikan array baseMockTest
+      data: sortedData,
     });
   } catch (error) {
     console.error("Error accessing database:", error);
