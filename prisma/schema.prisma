@@ -197,6 +197,7 @@ model Meeting {
   endTime            DateTime?
   name_program       String?
   is_cancelled       Boolean?
+  reminder_sent_at   DateTime?
   createdAt          DateTime            @default(now())
   TeacherAbsence     TeacherAbsence[]    @relation("TeacherAbsences")
   RescheduleMeetings RescheduleMeeting[] @relation("MeetingReschedules")

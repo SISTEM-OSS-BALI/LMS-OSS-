@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       const dateTime = dayjs.utc(meeting.dateTime);
       const reminderTime = dateTime.subtract(2, "hour");
 
-      // ✅ Kirim pengingat hanya jika sekarang adalah 2 jam sebelum meeting
+      // ✅ Kirim pengingat hanya jika sekarang dalam range pengingat
       if (now.isAfter(reminderTime) && now.isBefore(dateTime)) {
         const teacher = await prisma.user.findUnique({
           where: { user_id: meeting.teacher_id },
@@ -38,10 +38,12 @@ export async function POST(request: NextRequest) {
         const formattedTeacherPhone = teacher?.no_phone
           ? formatPhoneNumber(teacher.no_phone)
           : null;
+
         const formattedStudentPhone = student?.no_phone
           ? formatPhoneNumber(student.no_phone)
           : null;
 
+        // Kirim ke guru
         if (formattedTeacherPhone) {
           await sendWhatsAppMessage(
             apiKey,
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Kirim ke siswa
         if (formattedStudentPhone) {
           await sendWhatsAppMessage(
             apiKey,
@@ -72,8 +75,14 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // ✅ Tandai bahwa reminder sudah dikirim
+        await prisma.meeting.update({
+          where: { meeting_id: meeting.meeting_id },
+          data: { reminder_sent_at: new Date() },
+        });
+
         console.log(
-          `✅ Pengingat dikirim ke ${student?.username} & ${teacher?.username}`
+          `✅ Reminder sent to ${student?.username} & ${teacher?.username}`
         );
       } else {
         console.log("⏳ Bukan waktu pengingat atau sudah lewat.");
@@ -86,7 +95,7 @@ export async function POST(request: NextRequest) {
       data: "Processed reminders",
     });
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error("❌ Error sending reminder:", error);
     return new NextResponse(
       JSON.stringify({ error: "Internal Server Error" }),
       {
@@ -99,9 +108,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// 🔍 Ambil meeting yang akan datang dan belum dikirim reminder
 async function getUpcomingMeetings() {
   const now = new Date();
-  const next = dayjs(now).add(2, "hour").add(5, "minutes").toDate(); // buffer 5 menit
+  const next = dayjs(now).add(2, "hour").add(5, "minutes").toDate(); // buffer waktu
 
   return await prisma.meeting.findMany({
     where: {
@@ -110,6 +120,7 @@ async function getUpcomingMeetings() {
         lte: next,
       },
       is_cancelled: null,
+      reminder_sent_at: null,
     },
     select: {
       meeting_id: true,
