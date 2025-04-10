@@ -222,7 +222,7 @@ model Course {
 model AccessCourse {
   access_id String   @id @default(uuid())
   course    Course   @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
-  user      User     @relation(fields: [user_id], references: [user_id])
+  user      User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   user_id   String
   createdAt DateTime @default(now())
   course_id String
@@ -296,7 +296,7 @@ model CourseProgress {
   completed                      Boolean  @default(false)
   progress                       Float    @default(0)
   totalMaterialAssigement        Int      @default(0) // Jumlah assignment
-  user                           User     @relation("StudentMaterialCourseProgress", fields: [user_id], references: [user_id])
+  user                           User     @relation("StudentMaterialCourseProgress", fields: [user_id], references: [user_id], onDelete: Cascade)
   user_id                        String
   currentMaterialAssigmentBaseId String?
   course                         Course   @relation(fields: [course_id], references: [course_id])
@@ -310,7 +310,7 @@ model CourseProgress {
 model MaterialProgress {
   progress_id String                @id @default(uuid())
   completed   Boolean               @default(false)
-  user        User                  @relation("StudentMaterialProgress", fields: [user_id], references: [user_id])
+  user        User                  @relation("StudentMaterialProgress", fields: [user_id], references: [user_id], onDelete: Cascade)
   user_id     String
   material    Material              @relation(fields: [material_id], references: [material_id])
   material_id String
@@ -326,7 +326,7 @@ model AssignmentProgress {
   progress_id   String                @id @default(uuid())
   completed     Boolean               @default(false)
   score         Int?
-  user          User                  @relation("StudentAssignmentProgress", fields: [user_id], references: [user_id])
+  user          User                  @relation("StudentAssignmentProgress", fields: [user_id], references: [user_id], onDelete: Cascade)
   user_id       String
   base          MaterialAssigmentBase @relation(fields: [base_id], references: [base_id]) // Relates to material base
   base_id       String
@@ -393,7 +393,7 @@ model Pair {
 
 model StudentAnswerAssigment {
   answer_id      String          @id @default(uuid())
-  student        User            @relation("StudentAnswersAssignment", fields: [student_id], references: [user_id])
+  student        User            @relation("StudentAnswersAssignment", fields: [student_id], references: [user_id], onDelete: Cascade)
   student_id     String
   assignment     Assignment      @relation(fields: [assignment_id], references: [assignment_id])
   assignment_id  String
@@ -577,7 +577,7 @@ model WritingPlacementTest {
 
 model StudentAnswerPlacementTest {
   answer_id         String        @id @default(uuid())
-  student           User          @relation("StudentAnswersPlacementTest", fields: [student_id], references: [user_id])
+  student           User          @relation("StudentAnswersPlacementTest", fields: [student_id], references: [user_id], onDelete: Cascade)
   student_id        String
   placementTest     PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
   placement_test_id String
@@ -606,7 +606,7 @@ model StudentAnswerPlacementTest {
 
 model ScorePlacementTest {
   score_placement_test_id String        @id @default(uuid())
-  user                    User          @relation(fields: [student_id], references: [user_id])
+  user                    User          @relation(fields: [student_id], references: [user_id], onDelete: Cascade)
   student_id              String
   placementTest           PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
   placement_test_id       String
@@ -617,7 +617,7 @@ model ScorePlacementTest {
 
 model ScoreMockTest {
   score_mock_test_id String   @id @default(uuid())
-  user               User     @relation(fields: [student_id], references: [user_id])
+  user               User     @relation(fields: [student_id], references: [user_id], onDelete: Cascade)
   student_id         String
   mockTest           MockTest @relation(fields: [mock_test_id], references: [mock_test_id])
   mock_test_id       String
@@ -628,7 +628,7 @@ model ScoreMockTest {
 
 model AccessPlacementTest {
   access_placement_test_id String        @id @default(uuid())
-  user                     User          @relation(fields: [user_id], references: [user_id])
+  user                     User          @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   user_id                  String
   placementTest            PlacementTest @relation(fields: [placement_test_id], references: [placement_test_id])
   placement_test_id        String
@@ -687,7 +687,7 @@ model Section {
   comment        String      @db.LongText
   student        User        @relation("StudentSection", fields: [student_id], references: [user_id], onDelete: Cascade)
   student_id     String
-  certificate    Certificate @relation(fields: [certificate_id], references: [certificate_id])
+  certificate    Certificate @relation(fields: [certificate_id], references: [certificate_id], onDelete: Cascade)
   certificate_id String
 }
 
@@ -711,7 +711,7 @@ model Testimoni {
 
 model AccessMockTest {
   access_mock_test_id String   @id @default(uuid())
-  user                User     @relation(fields: [user_id], references: [user_id])
+  user                User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   user_id             String
   mockTest            MockTest @relation(fields: [mock_test_id], references: [mock_test_id])
   mock_test_id        String
@@ -891,7 +891,7 @@ model WritingQuestion {
 
 model StudentAnswerMockTest {
   answer_id         String       @id @default(uuid())
-  student           User         @relation("StudentAnswersMockTest", fields: [student_id], references: [user_id])
+  student           User         @relation("StudentAnswersMockTest", fields: [student_id], references: [user_id], onDelete: Cascade)
   student_id        String
   mockTest          MockTest     @relation(fields: [mock_test_id], references: [mock_test_id])
   mock_test_id      String

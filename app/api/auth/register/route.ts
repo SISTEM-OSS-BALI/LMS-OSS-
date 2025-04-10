@@ -91,7 +91,6 @@ Halo Admin 👋, ada pendaftaran baru di platform:
 📧 *Email*: ${user.email}
 👤 *Nama*: ${user.username}
 📱 *No. Telp*: ${user.no_phone || "-"}
-📘 *Program*: ${user.program_id || "-"}
 🌍 *Region*: ${user.region || "-"}
 
 Silakan cek dan lakukan verifikasi jika diperlukan. ✅`;

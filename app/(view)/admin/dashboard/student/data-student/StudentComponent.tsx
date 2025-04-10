@@ -10,6 +10,8 @@ import {
   Alert,
   Flex,
   Input,
+  Button,
+  Modal,
 } from "antd";
 import { useStudentViewModel } from "./useStudentViewModel";
 import { useEffect } from "react";
@@ -20,6 +22,7 @@ import {
   CalendarOutlined,
   BookOutlined,
   TeamOutlined,
+  DeleteFilled,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -55,6 +58,7 @@ export default function StudentComponent() {
     teacherDataLoading,
     handleSearch,
     filteredStudent,
+    handleDelete,
   }: {
     mergedStudent: Student[];
     meetingDataLoading: boolean;
@@ -62,11 +66,23 @@ export default function StudentComponent() {
     teacherDataLoading: boolean;
     handleSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
     filteredStudent: Student[];
+    handleDelete: (student_id: string) => void;
   } = useStudentViewModel();
 
   const isLoading =
     meetingDataLoading || programDataLoading || teacherDataLoading;
   const isDataEmpty = !mergedStudent || mergedStudent.length === 0;
+
+  const showConfirmDelete = (student_id: string) => {
+    Modal.confirm({
+      title: "Konfirmasi",
+      content: "Apakah Anda yakin menghapus data siswa?",
+      okText: "Ya",
+      okType: "danger",
+      cancelText: "Tidak",
+      onOk: () => handleDelete(student_id),
+    });
+  };
 
   // **🔹 Kolom untuk tabel siswa**
   const columns = [
@@ -201,6 +217,19 @@ export default function StudentComponent() {
           </Col>
         ));
       },
+    },
+    {
+      title: "Aksi",
+      key: "action",
+      render: (_: any, student: Student) => (
+        <Space>
+          <Button
+            icon={<DeleteFilled />}
+            danger
+            onClick={() => showConfirmDelete(student.user_id)}
+          />
+        </Space>
+      ),
     },
   ];
 

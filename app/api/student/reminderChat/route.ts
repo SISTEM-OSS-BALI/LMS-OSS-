@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
       const dateTime = dayjs.utc(meeting.dateTime);
       const reminderTime = dateTime.subtract(2, "hour");
 
-      // ✅ Kirim pengingat hanya jika sekarang dalam range pengingat
       if (now.isAfter(reminderTime) && now.isBefore(dateTime)) {
         const teacher = await prisma.user.findUnique({
           where: { user_id: meeting.teacher_id },
@@ -32,7 +31,12 @@ export async function POST(request: NextRequest) {
 
         const student = await prisma.user.findUnique({
           where: { user_id: meeting.student_id },
-          select: { username: true, no_phone: true },
+          select: {
+            username: true,
+            no_phone: true,
+            program_id: true,
+            count_program: true,
+          },
         });
 
         const formattedTeacherPhone = teacher?.no_phone
@@ -43,47 +47,62 @@ export async function POST(request: NextRequest) {
           ? formatPhoneNumber(student.no_phone)
           : null;
 
-        // Kirim ke guru
-        if (formattedTeacherPhone) {
-          await sendWhatsAppMessage(
-            apiKey,
-            numberKey,
-            formattedTeacherPhone,
-            `⏰ *Pengingat Meeting!*\n\n👨‍🏫 *Guru:* Anda memiliki meeting dengan siswa *${
-              student?.username
-            }*.\n📅 *Tanggal:* ${dateTime.format(
-              "dddd, DD MMMM YYYY"
-            )}\n⏳ *Waktu:* ${dateTime.format(
-              "HH:mm"
-            )} (Dimulai dalam 2 jam)\n\nMohon bersiap untuk sesi ini. Terima kasih! 🙌`
+        const program = student?.program_id
+          ? await prisma.program.findUnique({
+              where: { program_id: student.program_id },
+              select: { name: true, count_program: true },
+            })
+          : null;
+
+        const programStillRunning =
+          program && student?.count_program !== program.count_program;
+
+        // ✅ Hanya kirim WA kalau program BELUM selesai
+        if (programStillRunning) {
+          if (formattedTeacherPhone) {
+            await sendWhatsAppMessage(
+              apiKey,
+              numberKey,
+              formattedTeacherPhone,
+              `⏰ *Pengingat Meeting!*\n\n👨‍🏫 *Guru:* Anda memiliki meeting dengan siswa *${
+                student?.username
+              }*.\n📅 *Tanggal:* ${dateTime.format(
+                "dddd, DD MMMM YYYY"
+              )}\n⏳ *Waktu:* ${dateTime.format(
+                "HH:mm"
+              )} (Dimulai dalam 2 jam)\n\nMohon bersiap untuk sesi ini. Terima kasih! 🙌`
+            );
+          }
+
+          if (formattedStudentPhone) {
+            await sendWhatsAppMessage(
+              apiKey,
+              numberKey,
+              formattedStudentPhone,
+              `⏰ *Pengingat Meeting!*\n\n📚 *Siswa:* Meeting Anda dengan guru *${
+                teacher?.username
+              }* akan segera dimulai.\n📅 *Tanggal:* ${dateTime.format(
+                "dddd, DD MMMM YYYY"
+              )}\n⏳ *Waktu:* ${dateTime.format(
+                "HH:mm"
+              )} (Dimulai dalam 2 jam)\n\nMohon bersiap untuk sesi ini. Terima kasih! 🙌`
+            );
+          }
+
+          console.log(
+            `✅ Reminder sent to ${student?.username} & ${teacher?.username}`
+          );
+        } else {
+          console.log(
+            `ℹ️ Program ${program?.name} telah selesai. Tidak dikirim reminder.`
           );
         }
 
-        // Kirim ke siswa
-        if (formattedStudentPhone) {
-          await sendWhatsAppMessage(
-            apiKey,
-            numberKey,
-            formattedStudentPhone,
-            `⏰ *Pengingat Meeting!*\n\n📚 *Siswa:* Meeting Anda dengan guru *${
-              teacher?.username
-            }* akan segera dimulai.\n📅 *Tanggal:* ${dateTime.format(
-              "dddd, DD MMMM YYYY"
-            )}\n⏳ *Waktu:* ${dateTime.format(
-              "HH:mm"
-            )} (Dimulai dalam 2 jam)\n\nMohon bersiap untuk sesi ini. Terima kasih! 🙌`
-          );
-        }
-
-        // ✅ Tandai bahwa reminder sudah dikirim
+        // Tetap tandai reminder agar tidak dikirim ulang
         await prisma.meeting.update({
           where: { meeting_id: meeting.meeting_id },
           data: { reminder_sent_at: new Date() },
         });
-
-        console.log(
-          `✅ Reminder sent to ${student?.username} & ${teacher?.username}`
-        );
       } else {
         console.log("⏳ Bukan waktu pengingat atau sudah lewat.");
       }
@@ -108,10 +127,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 🔍 Ambil meeting yang akan datang dan belum dikirim reminder
 async function getUpcomingMeetings() {
   const now = new Date();
-  const next = dayjs(now).add(2, "hour").add(5, "minutes").toDate(); // buffer waktu
+  const next = dayjs(now).add(2, "hour").add(5, "minute").toDate();
 
   return await prisma.meeting.findMany({
     where: {
