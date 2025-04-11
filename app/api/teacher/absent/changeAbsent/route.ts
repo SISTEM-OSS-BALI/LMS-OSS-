@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
       select: {
         startTime: true,
         endTime: true,
+        progress_student: true,
+        abilityScale: true,
+        studentPerformance: true,
       },
     });
 
@@ -63,11 +66,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    await prisma.meeting.update({
-      where: { meeting_id },
-      data: { absent },
-    });
-
     // ✅ Ambil data siswa & program
     const studentData = await prisma.user.findUnique({
       where: { user_id: student_id },
@@ -101,18 +99,37 @@ export async function POST(request: NextRequest) {
     let updatedCountProgramStudent = (studentData.count_program ?? 0) + 1;
     let updatedCountProgramTeacher = (teacherData?.count_program ?? 0) + 1;
 
-    await prisma.user.update({
-      where: { user_id: student_id },
-      data: { count_program: updatedCountProgramStudent },
-    });
-
-    await prisma.user.update({
-      where: { user_id: user.user_id },
-      data: { count_program: updatedCountProgramTeacher },
-    });
-
     // ✅ Kirim notifikasi absensi jika absent = true
     if (absent) {
+      if (
+        !meetingData.progress_student ||
+        !meetingData.abilityScale ||
+        !meetingData.studentPerformance
+      ) {
+        return NextResponse.json({
+          status: 422,
+          error: true,
+          message:
+            "Silakan isi progress student terlebih dahulu sebelum absen.",
+        });
+      }
+
+      await prisma.meeting.update({
+        where: { meeting_id },
+        data: { absent },
+      });
+
+      await Promise.all([
+        prisma.user.update({
+          where: { user_id: student_id },
+          data: { count_program: updatedCountProgramStudent },
+        }),
+        prisma.user.update({
+          where: { user_id: user.user_id },
+          data: { count_program: updatedCountProgramTeacher },
+        }),
+      ]);
+
       const formattedStudentPhone = formatPhoneNumber(
         studentData.no_phone ?? ""
       );
@@ -123,6 +140,22 @@ export async function POST(request: NextRequest) {
         `📢 *Absensi Diterima!* \n\n🎓 *Siswa:* ${studentData.username}\n📚 *Program:* ${programData.name}\n✅ *Status:* Hadir\n\nTerus semangat belajar! 💪\n\n📊 *Progres Anda:* Anda telah menyelesaikan *${updatedCountProgramStudent}* sesi dari program ini. Tetap semangat! 🚀`
       );
     } else {
+      await prisma.meeting.update({
+        where: { meeting_id },
+        data: { absent },
+      });
+
+      await Promise.all([
+        prisma.user.update({
+          where: { user_id: student_id },
+          data: { count_program: updatedCountProgramStudent },
+        }),
+        prisma.user.update({
+          where: { user_id: user.user_id },
+          data: { count_program: updatedCountProgramTeacher },
+        }),
+      ]);
+
       await prisma.meeting.update({
         where: {
           meeting_id: meeting_id,

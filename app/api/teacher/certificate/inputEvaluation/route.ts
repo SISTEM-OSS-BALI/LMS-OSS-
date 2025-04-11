@@ -83,7 +83,7 @@ async function generateCertificateNumber() {
     },
   });
 
-  let newNumber = 1; // Default jika tidak ada sertifikat sebelumnya
+  let newNumber = 237; // Default jika tidak ada sertifikat sebelumnya
 
   // 🔹 2️⃣ Jika ada sertifikat sebelumnya, ambil nomor terakhir & tambahkan 1
   if (lastCertificate) {

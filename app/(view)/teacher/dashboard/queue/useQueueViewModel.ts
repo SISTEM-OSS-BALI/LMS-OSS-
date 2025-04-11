@@ -99,6 +99,11 @@ export const useQueueViewModel = () => {
           message: "Absensi Gagal",
           description: response.message,
         });
+      } else if (response.status === 422) {
+        notification.error({
+          message: "Absensi Gagal",
+          description: response.message,
+        });
       }
       meetingMutate();
       mutateDataStudent();
