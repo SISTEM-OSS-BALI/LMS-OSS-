@@ -17,10 +17,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const meetings = await getUpcomingMeetings();
-    const now = dayjs().utc();
+    const now = dayjs().local(); // untuk memastikan perbandingan akurat
 
     for (const meeting of meetings) {
-      const dateTime = dayjs.utc(meeting.dateTime);
+      const dateTime = dayjs(meeting.dateTime).local();
+
       const reminderTime = dateTime.subtract(2, "hour");
 
       if (now.isAfter(reminderTime) && now.isBefore(dateTime)) {
