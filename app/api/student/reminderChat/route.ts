@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const meetings = await getUpcomingMeetings();
-    const now = dayjs().local(); // untuk memastikan perbandingan akurat
+    const now = dayjs().local(); 
 
     for (const meeting of meetings) {
       const dateTime = dayjs(meeting.dateTime).local();

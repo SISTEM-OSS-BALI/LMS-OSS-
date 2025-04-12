@@ -16,14 +16,19 @@ export async function POST(request: NextRequest) {
   const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
   try {
-    const students = await getStudents();
+    const students = await getActiveStudentsWithProgram();
 
     for (const student of students) {
       const formattedPhone = student.no_phone
         ? formatPhoneNumber(student.no_phone)
         : "";
 
-      if (formattedPhone) {
+      const studentCount = student.count_program ?? 0;
+      const programCount = student.program?.count_program ?? 0;
+
+      const programNotCompleted = studentCount !== programCount;
+
+      if (formattedPhone && programNotCompleted) {
         const message = `👋 Halo ${student.username}, ini pengingat untuk melakukan booking sesi meeting Anda. Jangan sampai terlewat ya! 📅✨
 
 Jika Anda sudah melakukan booking, silakan abaikan pesan ini. 🙏`;
@@ -51,14 +56,23 @@ Jika Anda sudah melakukan booking, silakan abaikan pesan ini. 🙏`;
   }
 }
 
-async function getStudents() {
+// ✅ Dapatkan siswa dengan relasi program
+async function getActiveStudentsWithProgram() {
   return await prisma.user.findMany({
     where: {
       role: "STUDENT",
+      is_active: true,
+      program_id: { not: null },
     },
     select: {
       username: true,
       no_phone: true,
+      count_program: true,
+      program: {
+        select: {
+          count_program: true,
+        },
+      },
     },
   });
 }
