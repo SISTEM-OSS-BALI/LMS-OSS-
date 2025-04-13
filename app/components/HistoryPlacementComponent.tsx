@@ -330,7 +330,15 @@ export const HistoryPlacementComponent: React.FC<
                 {/* Writing Section */}
                 {entry.writingQuestion && (
                   <div>
-                    <Title level={4}>{entry.writingQuestion.question}</Title>
+                    <Title level={4}>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            entry.writingQuestion?.question ||
+                            "Pertanyaan tidak tersedia",
+                        }}
+                      />
+                    </Title>
                     <div
                       style={{
                         background: "#f5f5f5",
