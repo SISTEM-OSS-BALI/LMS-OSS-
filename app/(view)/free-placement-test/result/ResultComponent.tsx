@@ -24,9 +24,20 @@ export default function ResultComponent() {
 
   const userLevel = useMemo(() => {
     if (!result) return "Unknown";
-    if (result.percentageScore >= 80) return "Advanced";
-    if (result.percentageScore >= 50) return "Intermediate";
-    return "Basic";
+
+    if (result.totalScore >= 46) {
+      return "Advanced";
+    } else if (result.totalScore >= 40) {
+      return "Upper Intermediate";
+    } else if (result.totalScore >= 33) {
+      return "Intermediate";
+    } else if (result.totalScore >= 25) {
+      return "Pre-Intermediate";
+    } else if (result.totalScore >= 16) {
+      return "Elementary";
+    }
+
+    return "Beginner";
   }, [result]);
 
   const handleBack = () => {
