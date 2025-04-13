@@ -8,7 +8,7 @@ import { useForm } from "antd/es/form/Form";
 import { crudService } from "@/app/lib/services/crudServices";
 import { notification } from "antd";
 
-interface StudentResponse {
+interface UserResponse {
   data: User[];
 }
 
@@ -22,7 +22,11 @@ interface ProgramResponse {
 
 export const useDetailStudentViewModel = () => {
   const { data: studentDataAll, isLoading: isLoadingStudent } =
-    useSWR<StudentResponse>("/api/teacher/student/showAll", fetcher);
+    useSWR<UserResponse>("/api/teacher/student/showAll", fetcher);
+  const { data: teacherDataAll } = useSWR<UserResponse>(
+    "/api/teacher/teacher/show",
+    fetcher
+  );
   const { data: meetingDataAll, isLoading: isLoadingMeeting } =
     useSWR<MeetingResponse>("/api/teacher/student/showMeeting", fetcher);
   const { data: programDataAll, isLoading: isLoadingProgram } =
@@ -37,9 +41,21 @@ export const useDetailStudentViewModel = () => {
   const filteredStudent = studentDataAll?.data.find(
     (student) => student.user_id === student_id
   );
-  const filteredMeetings = meetingDataAll?.data.filter(
-    (meeting) => meeting.student_id === student_id
-  );
+  
+  const filteredMeetings = meetingDataAll?.data
+    .filter((meeting) => meeting.student_id === student_id)
+    .map((meeting) => {
+      const teacher = teacherDataAll?.data.find(
+        (teacher) => teacher.user_id === meeting.teacher_id
+      );
+
+      return {
+        ...meeting,
+        teacherName: teacher ? teacher.username : "Unknown",
+      };
+    });
+
+
 
   const filteredPrograms = programDataAll?.data.filter(
     (program) => program.program_id === filteredStudent?.program_id

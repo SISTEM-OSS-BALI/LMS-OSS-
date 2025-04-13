@@ -245,6 +245,7 @@ export default function StudentDetailComponent() {
       render: (text: any) => dayjs.utc(text).format("YYYY-MM-DD HH:mm"),
     },
     { title: "Metode", dataIndex: "method", key: "method" },
+    { title: "Pengajar", dataIndex: "teacherName", key: "teacherName" },
     {
       title: "Skala Kemampuan",
       dataIndex: "abilityScale",
@@ -265,6 +266,7 @@ export default function StudentDetailComponent() {
   const data = filteredMeetings?.map((meeting) => ({
     key: meeting.meeting_id,
     method: meeting.method,
+    teacherName: meeting.teacherName,
     progress_student: meeting.progress_student,
     abilityScale: meeting.abilityScale,
     studentPerformance: meeting.studentPerformance,
