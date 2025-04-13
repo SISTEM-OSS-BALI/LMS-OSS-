@@ -24,7 +24,7 @@ export const useDetailStudentViewModel = () => {
   const { data: studentDataAll, isLoading: isLoadingStudent } =
     useSWR<UserResponse>("/api/teacher/student/showAll", fetcher);
   const { data: teacherDataAll } = useSWR<UserResponse>(
-    "/api/teacher/teacher/show",
+    "/api/admin/teacher/show",
     fetcher
   );
   const { data: meetingDataAll, isLoading: isLoadingMeeting } =
@@ -41,7 +41,7 @@ export const useDetailStudentViewModel = () => {
   const filteredStudent = studentDataAll?.data.find(
     (student) => student.user_id === student_id
   );
-  
+
   const filteredMeetings = meetingDataAll?.data
     .filter((meeting) => meeting.student_id === student_id)
     .map((meeting) => {
@@ -54,8 +54,6 @@ export const useDetailStudentViewModel = () => {
         teacherName: teacher ? teacher.username : "Unknown",
       };
     });
-
-
 
   const filteredPrograms = programDataAll?.data.filter(
     (program) => program.program_id === filteredStudent?.program_id
