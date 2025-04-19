@@ -37,7 +37,7 @@ export default function RescheduleApprovalComponent() {
     NATURAL_DISASTERS: "Bencana Alam",
     GRIEF: "Duka",
     SICK: "Sakit",
-    OTHER: "Lainnya",
+    OTHERS: "Lainnya",
   };
 
   const filteredData = showHistory
@@ -197,7 +197,7 @@ export default function RescheduleApprovalComponent() {
                         </Text>
                         <br />
                         <Text>
-                          <strong>Keterangan:</strong>{" "}   
+                          <strong>Keterangan:</strong>{" "}
                           {optionReasonMapping[item.option_reason] ||
                             "Tidak Diketahui"}
                         </Text>
