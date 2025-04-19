@@ -664,6 +664,7 @@ export default function MeetingComponent() {
                   <Select.Option value='NATURAL_DISASTERS'>Bencana Alam</Select.Option>
                   <Select.Option value='GRIEF'>Duka</Select.Option>
                   <Select.Option value='SICK'>Sakit</Select.Option>
+                  <Select.Option value='OTHERS'>Lainnya</Select.Option>
                 </Select>
               </Form.Item>
 
