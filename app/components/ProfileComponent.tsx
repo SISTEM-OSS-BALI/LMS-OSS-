@@ -268,6 +268,13 @@ export const ProfileComponents = ({
           >
             <Input placeholder="Email" />
           </Form.Item>
+          <Form.Item
+            name="no_phone"
+            label="No. Telepon"
+            rules={[{ required: true, message: "Masukkan no. telepon" }]}
+          >
+            <Input placeholder="No. Telepon" />
+          </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} block>
               Simpan
