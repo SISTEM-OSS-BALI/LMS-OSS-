@@ -433,7 +433,7 @@ export default function MeetingComponent() {
               }
               onChange={handleTeacherChange}
             >
-              {dataTeacher?.data.map((teacher: Teacher) => (
+              {dataTeacher?.data.map((teacher: any) => (
                 <Select.Option key={teacher.user_id} value={teacher.user_id}>
                   {teacher.username}
                 </Select.Option>
@@ -587,7 +587,7 @@ export default function MeetingComponent() {
                   }
                   onChange={handleTeacherChange}
                 >
-                  {dataTeacher?.data.map((teacher: Teacher) => (
+                  {dataTeacher?.data.map((teacher: any) => (
                     <Select.Option
                       key={teacher.user_id}
                       value={teacher.user_id}
