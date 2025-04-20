@@ -199,6 +199,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       .format("dddd, DD MMMM YYYY");
     setSelectedDate(selectedDay);
 
+    console.log(selectedDay);
+
     const selectedDateISO = dayjs(arg.date).format("YYYY-MM-DD");
     const dayName = dayjs(arg.date).locale("id").format("dddd");
     const translatedDayName = DAY_TRANSLATION[dayName];
@@ -208,6 +210,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     // );
 
     const teacherSchedule = showScheduleTeacher.data[0];
+
+    console.log(teacherSchedule);
 
     if (!teacherSchedule || !Array.isArray(teacherSchedule.days)) {
       setAvailableTimes([]);
@@ -232,7 +236,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const meetingsToday =
       showMeeting?.data?.filter(
         (meeting) =>
-          selectedTeacher && meeting.teacher_id === selectedTeacher.user_id &&
+          selectedTeacher &&
+          meeting.teacher_id === selectedTeacher.user_id &&
           dayjs.utc(meeting.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
@@ -270,16 +275,23 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     if (!date || !selectedTeacherId) return;
 
     const selectedDateISO = dayjs(date).format("YYYY-MM-DD");
-    const selectedDayReschedule = dayjs(date).format("dddd").toUpperCase();
+    const selectedDayReschedule = dayjs(date)
+      .locale("id")
+      .format("dddd, DD MMMM YYYY");
+    console.log("Selected Date Reschedule:", selectedDayReschedule);
 
     if (!showScheduleAllTeacher?.data) {
       console.warn("Jadwal guru tidak tersedia.");
       return;
     }
 
-    const teacherSchedule = showScheduleAllTeacher.data.find(
-      (schedule: any) => schedule.teacher_id === selectedTeacherId
-    );
+    // const teacherSchedule = showScheduleAllTeacher.data.find(
+    //   (schedule: any) => schedule.teacher_id === selectedTeacherId
+    // );
+
+    const teacherSchedule = showScheduleTeacher.data[0];
+
+    console.log(teacherSchedule);
 
     if (!teacherSchedule) {
       message.warning("Tidak ada jadwal guru pada tanggal ini.");
@@ -303,7 +315,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const meetingsToday =
       showMeeting?.data?.filter(
         (meeting) =>
-          selectedTeacher && meeting.teacher_id === selectedTeacher.user_id &&
+          selectedTeacher &&
+          meeting.teacher_id === selectedTeacher.user_id &&
           dayjs.utc(meeting.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
