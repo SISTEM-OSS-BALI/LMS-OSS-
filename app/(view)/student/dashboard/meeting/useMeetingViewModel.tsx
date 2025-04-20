@@ -277,7 +277,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const selectedDateISO = dayjs(date).format("YYYY-MM-DD");
     const selectedDayReschedule = dayjs(date)
       .locale("id")
-      .format("dddd, DD MMMM YYYY");
+      .format("dddd, DD MMMM YYYY").toUpperCase();
     console.log("Selected Date Reschedule:", selectedDayReschedule);
 
     if (!showScheduleAllTeacher?.data) {
