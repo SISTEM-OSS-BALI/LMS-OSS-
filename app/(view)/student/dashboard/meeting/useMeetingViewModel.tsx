@@ -285,11 +285,11 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       return;
     }
 
-    // const teacherSchedule = showScheduleAllTeacher.data.find(
-    //   (schedule: any) => schedule.teacher_id === selectedTeacherId
-    // );
+    const teacherSchedule = showScheduleAllTeacher.data.find(
+      (schedule: any) => schedule.teacher_id === selectedTeacherId
+    );
 
-    const teacherSchedule = showScheduleTeacher.data[0];
+    // const teacherSchedule = showScheduleTeacher.data[0];
 
     console.log(teacherSchedule);
 
