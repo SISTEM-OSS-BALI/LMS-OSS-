@@ -199,7 +199,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       .format("dddd, DD MMMM YYYY");
     setSelectedDate(selectedDay);
 
-    console.log(selectedDay);
+    // console.log(selectedDay);
 
     const selectedDateISO = dayjs(arg.date).format("YYYY-MM-DD");
     const dayName = dayjs(arg.date).locale("id").format("dddd");
@@ -211,7 +211,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
     const teacherSchedule = showScheduleTeacher.data[0];
 
-    console.log(teacherSchedule);
+    // console.log(teacherSchedule);
 
     if (!teacherSchedule || !Array.isArray(teacherSchedule.days)) {
       setAvailableTimes([]);
@@ -279,7 +279,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       .locale("id")
       .format("dddd, DD MMMM YYYY")
       .toUpperCase();
-    console.log("Selected Date Reschedule:", selectedDayReschedule);
 
     const dayName = dayjs(date).locale("id").format("dddd");
     const translatedDayName = DAY_TRANSLATION[dayName];
@@ -295,7 +294,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
     // const teacherSchedule = showScheduleTeacher.data[0];
 
-    console.log(teacherSchedule);
+    // console.log(teacherSchedule);
 
     if (!teacherSchedule) {
       message.warning("Tidak ada jadwal guru pada tanggal ini.");
