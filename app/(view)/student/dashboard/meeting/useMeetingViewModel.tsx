@@ -528,7 +528,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
     if (showScheduleAllTeacher && showScheduleAllTeacher.data) {
       const teacherSchedule = showScheduleAllTeacher.data.find(
-        (schedule: any) => schedule.teacher_id === selectedTeacherId
+        (schedule: any) => selectedTeacher && schedule.teacher_id === selectedTeacher.user_id
       );
 
       if (teacherSchedule) {
@@ -555,7 +555,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     }
 
     return Array.from(uniqueDates);
-  }, [showScheduleAllTeacher, selectedTeacherId]);
+  }, [showScheduleAllTeacher, selectedTeacher]);
 
   const handleSubmitReschedule = async (values: any) => {
     setLoading(true);
