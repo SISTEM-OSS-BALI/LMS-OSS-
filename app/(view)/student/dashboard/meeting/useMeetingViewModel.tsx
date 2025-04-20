@@ -74,7 +74,7 @@ interface UseMeetingViewModelReturn {
   setIsRescheduleModalVisible: (visible: boolean) => void;
   selectedMeeting: Meeting | undefined;
   showScheduleAll: any;
-  handleTeacherChange: (value: string) => void;
+  handleTeacherChange: (value: any) => void;
   selectedTeacherId: string | null;
   setMeetingId: any;
   selectedTeacher: any;
@@ -514,8 +514,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     form.resetFields();
   };
 
-  const handleTeacherChange = (teacher: any) => {
-    setSelectedTeacher(teacher);
+  const handleTeacherChange = (value: { value: string; label: string }) => {
+    const teacher = dataTeacher?.data.find(
+      (t: Teacher) => t.user_id === value.value
+    );
+    if (teacher) {
+      setSelectedTeacher(teacher);
+    }
   };
 
   const showDate = useMemo(() => {

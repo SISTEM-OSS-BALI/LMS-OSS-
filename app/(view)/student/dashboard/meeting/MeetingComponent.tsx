@@ -422,10 +422,18 @@ export default function MeetingComponent() {
           >
             <Select
               placeholder="Pilih Guru"
+              labelInValue
+              value={
+                selectedTeacher
+                  ? {
+                      value: selectedTeacher.user_id,
+                      label: selectedTeacher.username,
+                    }
+                  : undefined
+              }
               onChange={handleTeacherChange}
-              value={selectedTeacher}
             >
-              {dataTeacher?.data.map((teacher) => (
+              {dataTeacher?.data.map((teacher: Teacher) => (
                 <Select.Option key={teacher.user_id} value={teacher.user_id}>
                   {teacher.username}
                 </Select.Option>
@@ -568,10 +576,18 @@ export default function MeetingComponent() {
               >
                 <Select
                   placeholder="Pilih Guru"
+                  labelInValue
+                  value={
+                    selectedTeacher
+                      ? {
+                          value: selectedTeacher.user_id,
+                          label: selectedTeacher.username,
+                        }
+                      : undefined
+                  }
                   onChange={handleTeacherChange}
-                  value={selectedTeacher}
                 >
-                  {dataTeacher?.data.map((teacher) => (
+                  {dataTeacher?.data.map((teacher: Teacher) => (
                     <Select.Option
                       key={teacher.user_id}
                       value={teacher.user_id}
