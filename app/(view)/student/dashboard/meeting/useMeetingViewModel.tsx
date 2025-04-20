@@ -277,8 +277,12 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const selectedDateISO = dayjs(date).format("YYYY-MM-DD");
     const selectedDayReschedule = dayjs(date)
       .locale("id")
-      .format("dddd, DD MMMM YYYY").toUpperCase();
+      .format("dddd, DD MMMM YYYY")
+      .toUpperCase();
     console.log("Selected Date Reschedule:", selectedDayReschedule);
+
+    const dayName = dayjs(date).locale("id").format("dddd");
+    const translatedDayName = DAY_TRANSLATION[dayName];
 
     if (!showScheduleAllTeacher?.data) {
       console.warn("Jadwal guru tidak tersedia.");
@@ -298,16 +302,23 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       return;
     }
 
-    const availableDays = teacherSchedule.days.filter(
-      (day: any) => day.day === selectedDayReschedule && day.isAvailable
+    const daySchedule = teacherSchedule.days.find(
+      (d: any) => d.day === translatedDayName
     );
 
-    if (availableDays.length === 0) {
-      message.warning("Guru tidak tersedia pada hari ini.");
+    if (!daySchedule || !Array.isArray(daySchedule.times)) {
+      setAvailableTimes([]);
+      setCurrentStep(1);
+      message.warning("Tidak ada jadwal guru pada hari ini.");
       return;
     }
 
-    const teacherTimes = availableDays.flatMap((day: any) => day.times);
+    // if (availableDays.length === 0) {
+    //   message.warning("Guru tidak tersedia pada hari ini.");
+    //   return;
+    // }
+
+    // const teacherTimes = availableDays.flatMap((day: any) => day.times);
 
     const programDuration = filterProgram?.[0]?.duration ?? 60;
 
@@ -326,7 +337,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
     // ✅ Gunakan fungsi generateAvailableSlots
     const availableTimes = generateAvailableSlots(
-      teacherTimes,
+      daySchedule.times,
       meetingsToday,
       selectedDateISO,
       programDuration
