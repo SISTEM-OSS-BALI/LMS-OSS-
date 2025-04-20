@@ -349,6 +349,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     } else {
       message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
     }
+
+    setAvailableTimes(availableTimes);
   };
 
   const generateAvailableSlots = (
@@ -451,6 +453,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       await mutateShowMeetingById();
       await mutateShowMeetingByDate();
       setSelectedTeacher(null);
+      setAvailableTimes([]);
+      setSelectedDate("");
       handleCancel();
     } catch (error) {
       if (error instanceof Error) {
@@ -509,7 +513,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const handleCancelReschedule = () => {
     setIsRescheduleModalVisible(false);
     setSelectedDate("");
-    setSelectedTeacherId(null);
+    setSelectedTeacher(null);
+    setAvailableTimes([]);
     setSelectedMeeting(null);
     form.resetFields();
   };
@@ -528,7 +533,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
     if (showScheduleAllTeacher && showScheduleAllTeacher.data) {
       const teacherSchedule = showScheduleAllTeacher.data.find(
-        (schedule: any) => selectedTeacher && schedule.teacher_id === selectedTeacher.user_id
+        (schedule: any) =>
+          selectedTeacher && schedule.teacher_id === selectedTeacher.user_id
       );
 
       if (teacherSchedule) {
@@ -611,6 +617,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       await mutateShowMeetingById();
       await mutateShowMeetingByDate();
       setSelectedTeacher(null);
+      setAvailableTimes([]);
       handleCancelReschedule();
     } catch (error) {
       if (error instanceof Error) {
@@ -708,6 +715,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       await mutateShowMeeting();
       await mutateShowMeetingById();
       await mutateShowMeetingByDate();
+      setSelectedTeacher(null);
+      setAvailableTimes([]);
       setLoading(false);
       handleCancelEmergency();
     } catch (error) {
