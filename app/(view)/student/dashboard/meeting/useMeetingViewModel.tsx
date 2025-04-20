@@ -272,7 +272,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   };
 
   const handleChangeDateReschedule = (date: any) => {
-    if (!date || !selectedTeacherId) return;
+    if (!date || !selectedTeacher) return;
 
     const selectedDateISO = dayjs(date).format("YYYY-MM-DD");
     const selectedDayReschedule = dayjs(date)
@@ -514,8 +514,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     form.resetFields();
   };
 
-  const handleTeacherChange = (value: string) => {
-    setSelectedTeacherId(value);
+  const handleTeacherChange = (teacher: any) => {
+    setSelectedTeacher(teacher);
   };
 
   const showDate = useMemo(() => {
