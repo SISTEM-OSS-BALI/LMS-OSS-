@@ -594,7 +594,7 @@ export default function MeetingComponent() {
                     current && current < dayjs().startOf("day")
                   }
                   onChange={(date) => handleChangeDateReschedule(date)}
-                  disabled={!selectedTeacherId}
+                  disabled={!selectedTeacher}
                   cellRender={cellRender}
                 />
               </Form.Item>
