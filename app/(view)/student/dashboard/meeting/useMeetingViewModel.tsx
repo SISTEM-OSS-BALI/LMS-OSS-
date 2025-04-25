@@ -567,7 +567,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     setLoading(true);
     try {
       const payload = {
-        teacher_id: selectedTeacherId,
+        teacher_id: selectedTeacher?.user_id,
         date: selectedDate,
         method: values.method,
         time: values.time,
@@ -672,14 +672,14 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   };
 
   const handleSubmitRescheduleEmergency = async (values: any) => {
-    if (!selectedTeacherId) {
+    if (!selectedTeacher) {
       message.error("Silakan pilih guru terlebih dahulu!");
       return;
     }
 
     // Buat payload sesuai skema `RescheduleMeeting`
     const payload = {
-      teacher_id: selectedTeacherId,
+      teacher_id: selectedTeacher?.user_id,
       meeting_id: meetingId,
       date: selectedDate,
       method: values.method,

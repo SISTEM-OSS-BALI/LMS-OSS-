@@ -10,6 +10,7 @@ declare module "next-auth" {
       program_id: string | null;
       imageUrl: string | null;
     };
+    accessToken?: string;
   }
 
   interface User {
