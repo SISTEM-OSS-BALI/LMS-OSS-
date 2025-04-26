@@ -588,7 +588,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         notification.info({
           message: "Tidak Bisa Melakukan Reschedule",
           description:
-            data.error || "Maksimal H-2 Jam Sebelum Pertemuan Terakhir Kali",
+            data.error || "Maksimal H-12 Jam Sebelum Pertemuan Terakhir Kali",
           btn: (
             <Button danger onClick={() => handleOpenModalEmergency()}>
               Pengajuan Emergency

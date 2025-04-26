@@ -54,11 +54,9 @@ export async function POST(request: NextRequest) {
       `🚨 *Pemberitahuan Pembatalan Meeting* 🚨\n\n` +
       `Halo, *${getStudent.username}*! 👋\n\n` +
       `Kami ingin menginformasikan bahwa meeting Anda dengan *${getTeacher.username}* telah *dibatalkan* 🚫.\n\n` +
-      `📅 *Jadwal*: ${dayjs
-        .utc(getMeeting.startTime)
-        .format("dddd, DD MMMM YYYY HH:mm")} - ${dayjs
-        .utc(getMeeting.endTime)
-        .format("HH:mm")}\n` +
+      `📅 *Jadwal*: ${dayjs(getMeeting.startTime).format(
+        "dddd, DD MMMM YYYY HH:mm"
+      )} - ${dayjs(getMeeting.endTime).format("HH:mm")}\n` +
       `❌ *Alasan*: Guru berhalangan hadir.\n\n` +
       `Kami mohon maaf atas ketidaknyamanannya 🙏. Silakan hubungi admin untuk menjadwalkan ulang. 📞✨`;
 
