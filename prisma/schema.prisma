@@ -176,7 +176,7 @@ model ScheduleTime {
   day       ScheduleDay @relation("DayScheduleTimes", fields: [day_id], references: [day_id], onDelete: Cascade)
   day_id    String
   startTime DateTime // Waktu mulai
-  endTime   DateTime // Waktu selesai
+  endTime   DateTime? // Waktu selesai
 }
 
 model Meeting {
@@ -424,8 +424,8 @@ model TeacherAbsence {
   teacher_absence_id String  @id @default(uuid())
   teacher            User    @relation("TeacherAbsenceTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
   teacher_id         String
-  student            User    @relation("TeacherAbsenceStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
-  student_id         String
+  student            User?    @relation("TeacherAbsenceStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
+  student_id         String?
   meeting_id         String
   meeting            Meeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade, name: "TeacherAbsences")
 
