@@ -38,6 +38,7 @@ export interface User {
 export interface TeacherAbsence {
   teacher_absence_id: string;
   teacher_id: string;
+  student_id: string;
   meeting_id: string;
   reason: string;
   imageUrl: string;

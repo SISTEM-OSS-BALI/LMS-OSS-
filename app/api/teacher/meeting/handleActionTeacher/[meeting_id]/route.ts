@@ -48,10 +48,24 @@ export async function POST(
   const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
   try {
+    const getMeeting = await prisma.meeting.findUnique({
+      where: { meeting_id },
+    });
+
+    if (!getMeeting) {
+      return new NextResponse(JSON.stringify({ error: "Meeting not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     await createData("teacherAbsence", {
       meeting_id: meeting_id,
       teacher_id: user.user_id,
+      student_id: getMeeting.student_id,
       reason: reason,
+      startTime: getMeeting?.startTime ?? new Date(),
+      endTime: getMeeting?.endTime ?? new Date(),
       imageUrl: imageUrl,
       status: false,
     });

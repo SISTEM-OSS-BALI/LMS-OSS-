@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
   try {
     const getResheduleMeetingCount = await prisma.rescheduleMeeting.count({
       where: {
+        status: "PENDING",
         createdAt: {
           gt: lastCheckedDate,
         },

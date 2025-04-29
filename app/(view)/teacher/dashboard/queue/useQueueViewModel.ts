@@ -182,7 +182,11 @@ export const useQueueViewModel = () => {
       mutateCountProgram();
       setMeetingId("");
     } catch (error) {
-      console.error("Failed to delete meeting:", error);
+      notification.error({
+        message: "Gagal Menambahkan Action",
+        description:
+          "Pastikan Gambar Tercompres, jika tidak bisa silahkan hubung admin",
+      });
     } finally {
       setLoading(false);
     }

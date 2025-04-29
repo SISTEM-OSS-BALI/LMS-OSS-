@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import prisma from "@/lib/prisma";
-import { deleteData } from "@/app/lib/db/deleteData";
 import { getData } from "@/app/lib/db/getData";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -27,7 +26,10 @@ export async function POST(request: NextRequest) {
   try {
     const updateAbsent = await prisma.teacherAbsence.update({
       where: { teacher_absence_id },
-      data: { status },
+      data: {
+        status,
+        is_delete: true,
+      },
     });
 
     const getMeeting = await getData("meeting", {
@@ -49,48 +51,62 @@ export async function POST(request: NextRequest) {
     const formattedStudentPhone = formatPhoneNumber(getStudent.no_phone);
     const formattedTeacherPhone = formatPhoneNumber(getTeacher.no_phone);
 
-    // Pesan untuk Siswa 📩
-    const studentMessage =
-      `🚨 *Pemberitahuan Pembatalan Meeting* 🚨\n\n` +
-      `Halo, *${getStudent.username}*! 👋\n\n` +
-      `Kami ingin menginformasikan bahwa meeting Anda dengan *${getTeacher.username}* telah *dibatalkan* 🚫.\n\n` +
-      `📅 *Jadwal*: ${dayjs(getMeeting.startTime).format(
-        "dddd, DD MMMM YYYY HH:mm"
-      )} - ${dayjs(getMeeting.endTime).format("HH:mm")}\n` +
-      `❌ *Alasan*: Guru berhalangan hadir.\n\n` +
-      `Kami mohon maaf atas ketidaknyamanannya 🙏. Silakan hubungi admin untuk menjadwalkan ulang. 📞✨`;
+    if (status) {
+      // ✅ Jika status TRUE, hapus meeting
+      await prisma.meeting.delete({
+        where: { meeting_id },
+      });
 
-    await sendWhatsAppMessage(
-      apiKey,
-      numberKey,
-      formattedStudentPhone,
-      studentMessage
-    );
+      // 📩 Pesan untuk siswa bahwa meeting dibatalkan
+      const studentMessage =
+        `🚨 *Pemberitahuan Pembatalan Meeting* 🚨\n\n` +
+        `Halo, *${getStudent.username}*! 👋\n\n` +
+        `Meeting Anda dengan *${getTeacher.username}* telah *dibatalkan* karena ketidakhadiran guru. 🚫\n\n` +
+        `📅 *Jadwal*: ${dayjs(getMeeting.startTime).format(
+          "dddd, DD MMMM YYYY HH:mm"
+        )} - ${dayjs(getMeeting.endTime).format("HH:mm")}\n\n` +
+        `Silakan hubungi admin untuk reschedule. 🙏`;
 
-    // Pesan untuk Guru 📩
-    const teacherMessage =
-      `✅ *Pengajuan Absen Berhasil* ✅\n\n` +
-      `Halo, *${getTeacher.username}*! 👋\n\n` +
-      `Pengajuan ketidakhadiran Anda pada meeting berikut telah dikonfirmasi:\n\n` +
-      `📅 *Jadwal*: ${dayjs
-        .utc(getMeeting.startTime)
-        .format("dddd, DD MMMM YYYY HH:mm")} - ${dayjs
-        .utc(getMeeting.endTime)
-        .format("HH:mm")}\n` +
-      `📢 *Status*: Disetujui.\n\n` +
-      `Terima kasih telah memberi tahu kami sebelumnya! 🚀✨`;
+      await sendWhatsAppMessage(
+        apiKey,
+        numberKey,
+        formattedStudentPhone,
+        studentMessage
+      );
 
-    await sendWhatsAppMessage(
-      apiKey,
-      numberKey,
-      formattedTeacherPhone,
-      teacherMessage
-    );
+      // 📩 Pesan untuk guru bahwa absen disetujui
+      const teacherMessage =
+        `✅ *Pengajuan Absen Disetujui* ✅\n\n` +
+        `Halo, *${getTeacher.username}*! 👋\n\n` +
+        `Pengajuan ketidakhadiran Anda telah disetujui dan meeting telah dibatalkan. 📅🚫\n\n` +
+        `Terima kasih telah menginformasikan sebelumnya! 🚀`;
 
-    await prisma.teacherAbsence.update({
-      where: { teacher_absence_id },
-      data: { is_delete: true },
-    });
+      await sendWhatsAppMessage(
+        apiKey,
+        numberKey,
+        formattedTeacherPhone,
+        teacherMessage
+      );
+    } else {
+      await prisma.teacherAbsence.delete({
+        where: { teacher_absence_id },
+      });
+      const teacherMessage =
+        `❌ *Pengajuan Absen Ditolak* ❌\n\n` +
+        `Halo, *${getTeacher.username}*! 👋\n\n` +
+        `Pengajuan ketidakhadiran Anda untuk meeting:\n\n` +
+        `📅 *Jadwal*: ${dayjs(getMeeting.startTime).format(
+          "dddd, DD MMMM YYYY HH:mm"
+        )} - ${dayjs(getMeeting.endTime).format("HH:mm")}\n\n` +
+        `Tidak disetujui. Anda diharapkan tetap hadir. 🙏`;
+
+      await sendWhatsAppMessage(
+        apiKey,
+        numberKey,
+        formattedTeacherPhone,
+        teacherMessage
+      );
+    }
 
     return NextResponse.json({
       status: 200,
@@ -98,7 +114,6 @@ export async function POST(request: NextRequest) {
       data: updateAbsent,
     });
   } catch (error) {
-    console.error("Error updating absent status:", error);
     return new NextResponse(
       JSON.stringify({ error: "Internal Server Error" }),
       {

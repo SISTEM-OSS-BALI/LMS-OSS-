@@ -720,13 +720,10 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       setLoading(false);
       handleCancelEmergency();
     } catch (error) {
-      if (error instanceof Error) {
-        message.error(
-          error.message || "Terjadi kesalahan saat menambahkan jadwal"
-        );
-      } else {
-        message.error("Terjadi kesalahan saat menambahkan jadwal");
-      }
+      notification.error({
+        message: "Gagal Menambahkan Action",
+        description: "Pastikan Gambar Tercompres, jika tidak bisa silakan hubungi admin",
+      });
     } finally {
       setLoading(false);
     }

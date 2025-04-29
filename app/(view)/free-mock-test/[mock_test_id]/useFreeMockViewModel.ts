@@ -37,9 +37,7 @@ export const useFreeMockTestViewModel = () => {
 
   // Function untuk submit form
   const handleFormSubmit = async (values: any) => {
-    const payload = {
-      ...values,
-    };
+    const payload = { ...values };
     try {
       setLoading(true);
       const res = await fetch(
@@ -53,14 +51,19 @@ export const useFreeMockTestViewModel = () => {
         }
       );
       const data = await res.json();
+
       if (res.ok) {
         message.success("Pendaftaran berhasil");
         setIsModalStartVisible(true);
+        setEmail(values.email);
+        setIsModalVisible(false);
       } else {
-        message.error(data.message || "Terjadi kesalahan");
+        if (res.status === 409) {
+          message.error("Email sudah terdaftar untuk sesi hari ini.");
+        } else {
+          message.error(data.error || "Terjadi kesalahan");
+        }
       }
-      setEmail(values.email);
-      setIsModalVisible(false);
     } catch (error) {
       message.error("Terjadi kesalahan saat mengirim data");
     } finally {

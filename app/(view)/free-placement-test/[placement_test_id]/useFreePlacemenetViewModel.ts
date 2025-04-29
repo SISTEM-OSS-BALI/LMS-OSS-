@@ -56,11 +56,15 @@ export const useFreePlacemenetViewModel = () => {
       if (res.ok) {
         message.success("Pendaftaran berhasil");
         setIsModalStartVisible(true);
+        setEmail(values.email);
+        setIsModalVisible(false);
       } else {
-        message.error(data.message || "Terjadi kesalahan");
+        if (res.status === 409) {
+          message.error("Email sudah terdaftar untuk sesi hari ini.");
+        } else {
+          message.error(data.error || "Terjadi kesalahan");
+        }
       }
-      setEmail(values.email);
-      setIsModalVisible(false);
     } catch (error) {
       message.error("Terjadi kesalahan saat mengirim data");
     } finally {
@@ -69,7 +73,9 @@ export const useFreePlacemenetViewModel = () => {
   };
 
   const startQuiz = () => {
-    router.push(`/free-placement-test/${placement_test_id}/question?email=${email}`);
+    router.push(
+      `/free-placement-test/${placement_test_id}/question?email=${email}`
+    );
   };
 
   return {

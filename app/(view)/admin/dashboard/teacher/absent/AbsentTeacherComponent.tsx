@@ -8,17 +8,18 @@ import Title from "antd/es/typography/Title";
 import { useState } from "react";
 dayjs.extend(utc);
 
-const { useBreakpoint } = Grid; 
+const { useBreakpoint } = Grid;
 
 export default function AbsentTeacherComponent() {
-  const { mergedData, updateAbsentStatus, isLoadingAbsent, isLoadingTeacher } = useAbsentViewModel();
+  const {
+    mergedData,
+    updateAbsentStatus,
+    isLoadingAbsent,
+    isLoadingTeacher,
+    loadingId,
+  } = useAbsentViewModel();
   const [showHistory, setShowHistory] = useState(false);
-  const screens = useBreakpoint(); // Menentukan ukuran layar
-
-  // Filter data berdasarkan is_delete
-  const filteredData = showHistory
-    ? mergedData?.filter((item) => item.is_delete === true) || []
-    : mergedData?.filter((item) => item.is_delete === false) || [];
+  const screens = useBreakpoint();
 
   const columns: ColumnsType<TeacherAbsence> = [
     {
@@ -47,10 +48,15 @@ export default function AbsentTeacherComponent() {
       key: "name_program",
     },
     {
+      title: "Nama Siswa",
+      dataIndex: "student_name",
+      key: "student_name",
+    },
+    {
       title: "Alasan",
       dataIndex: "reason",
       key: "reason",
-      responsive: ["md"], 
+      responsive: ["md"],
     },
     {
       title: "Bukti",
@@ -71,10 +77,11 @@ export default function AbsentTeacherComponent() {
       dataIndex: "status",
       key: "status",
       render: (_, record) =>
-        !showHistory && (
+        !showHistory ? (
           <Space wrap>
             <Button
               disabled={record.status}
+              loading={loadingId === record.teacher_absence_id}
               size={screens.xs ? "small" : "middle"}
               style={{
                 backgroundColor: record.status ? "#52c41a" : "#d9d9d9",
@@ -92,7 +99,8 @@ export default function AbsentTeacherComponent() {
               Konfirmasi
             </Button>
             <Button
-              disabled={!record.status}
+              disabled={record.status}
+              loading={loadingId === record.teacher_absence_id}
               size={screens.xs ? "small" : "middle"}
               style={{
                 backgroundColor: !record.status ? "#ff4d4f" : "#d9d9d9",
@@ -110,6 +118,8 @@ export default function AbsentTeacherComponent() {
               Tolak
             </Button>
           </Space>
+        ) : (
+          <div>{record.status ? "Disetujui" : "Ditolak"}</div>
         ),
     },
   ];
@@ -119,30 +129,6 @@ export default function AbsentTeacherComponent() {
       <Title level={3} style={{ color: "#1890ff" }}>
         Absensi Guru
       </Title>
-
-      {/* Tombol Riwayat */}
-      <Space
-        style={{
-          marginBottom: "16px",
-          display: "flex",
-          justifyContent: "start",
-        }}
-      >
-        <Button
-          type={showHistory ? "default" : "primary"}
-          size={screens.xs ? "small" : "middle"}
-          onClick={() => setShowHistory(false)}
-        >
-          Data Aktif
-        </Button>
-        <Button
-          type={showHistory ? "primary" : "default"}
-          size={screens.xs ? "small" : "middle"}
-          onClick={() => setShowHistory(true)}
-        >
-          Riwayat
-        </Button>
-      </Space>
 
       <Card
         style={{
@@ -156,7 +142,7 @@ export default function AbsentTeacherComponent() {
         ) : (
           <Table
             columns={columns}
-            dataSource={filteredData}
+            dataSource={mergedData}
             rowKey="teacher_absence_id"
             pagination={{ pageSize: 5 }}
             scroll={screens.xs ? { x: "max-content" } : undefined} // Scroll untuk mobile

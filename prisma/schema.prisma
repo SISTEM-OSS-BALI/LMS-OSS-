@@ -95,7 +95,6 @@ model User {
   studentAswersPlacemenTest StudentAnswerPlacementTest[] @relation("StudentAnswersPlacementTest")
   meetingTeacher            Meeting[]                    @relation("MeetingTeacher")
   meetingStudent            Meeting[]                    @relation("MeetingStudent")
-  teacherAbsences           TeacherAbsence[]             @relation("TeacherAbsences")
   program                   Program?                     @relation(fields: [program_id], references: [program_id], onDelete: Cascade)
   AccessPlacementTest       AccessPlacementTest[]
   rescheduleMeetingsTeacher RescheduleMeeting[]          @relation("TeacherReschedules")
@@ -112,6 +111,8 @@ model User {
   PasswordResetToken        PasswordResetToken?
   PasswordChangeToken       PasswordChangeToken?
   ScoreMockTest             ScoreMockTest[]
+  teacherAbsencesAsTeacher  TeacherAbsence[]        @relation("TeacherAbsenceTeacher")
+  teacherAbsencesAsStudent  TeacherAbsence[]        @relation("TeacherAbsenceStudent")
 }
 
 model PasswordChangeToken {
@@ -420,17 +421,22 @@ model Program {
 }
 
 model TeacherAbsence {
-  teacher_absence_id String   @id @default(uuid())
-  teacher            User     @relation(fields: [teacher_id], references: [user_id], onDelete: Cascade, name: "TeacherAbsences")
+  teacher_absence_id String  @id @default(uuid())
+  teacher            User    @relation("TeacherAbsenceTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
   teacher_id         String
+  student            User    @relation("TeacherAbsenceStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
+  student_id         String
   meeting_id         String
-  meeting            Meeting  @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade, name: "TeacherAbsences")
-  reason             String   @db.LongText
-  imageUrl           String   @db.LongText
-  is_delete          Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  status             Boolean?
-  updatedAt          DateTime @updatedAt
+  meeting            Meeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade, name: "TeacherAbsences")
+
+  startTime DateTime
+  endTime   DateTime
+  reason    String   @db.LongText
+  imageUrl  String   @db.LongText
+  is_delete Boolean  @default(false)
+  createdAt DateTime @default(now())
+  status    Boolean?
+  updatedAt DateTime @updatedAt
 }
 
 model PlacementTest {

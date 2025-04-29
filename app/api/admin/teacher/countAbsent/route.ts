@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
   try {
     const getTeacherAbsanceCount = await prisma.teacherAbsence.count({
       where: {
+        status: null,
         createdAt: {
           gt: lastCheckedDate,
         },
