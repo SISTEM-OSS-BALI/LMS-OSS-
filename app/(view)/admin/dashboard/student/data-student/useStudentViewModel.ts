@@ -44,18 +44,16 @@ export const useStudentViewModel = () => {
 
   const mergedStudent =
     studentDataAll?.data?.map((student) => {
-      // Cari semua meeting yang memiliki student_id yang sesuai
       const meetings =
         meetingDataAll?.data?.filter(
           (meeting) =>
-            meeting.student_id === student.user_id && meeting.absent === true
+            meeting.student_id === student.user_id && meeting.absent !== null
         ) ?? [];
 
       const program = programDataAll?.data?.find(
         (program) => program.program_id === student.program_id
       );
 
-      // Tambahkan informasi nama guru ke setiap meeting
       const meetingsWithTeacher = meetings.map((meeting) => {
         const teacher = teacherDataAll?.data?.find(
           (teacher) => teacher.user_id === meeting.teacher_id
