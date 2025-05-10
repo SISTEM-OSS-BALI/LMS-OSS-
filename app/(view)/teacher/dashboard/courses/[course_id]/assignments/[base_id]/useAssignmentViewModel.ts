@@ -6,7 +6,8 @@ import { useState } from "react";
 import useSWR from "swr";
 
 export const useAssignmentViewModel = () => {
-  const [assignmentType, setAssignmentType] = useState<string>("");
+  const [assignmentType, setAssignmentType] =
+    useState<string>("MULTIPLE_CHOICE");
   const [content, setContent] = useState<string>("");
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [loadingDescription, setLoadingDescription] = useState(false);
@@ -429,6 +430,6 @@ export const useAssignmentViewModel = () => {
     setContent,
     setAssignmentType,
     setDescription,
-    setTimeLimit
+    setTimeLimit,
   };
 };
