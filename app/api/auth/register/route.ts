@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     );
     if (existingUser) {
       return NextResponse.json(
-        { error: "User already exists" },
+        { error: "Pengguna dengan email ini sudah terdaftar" },
         { status: 409 }
       );
     }

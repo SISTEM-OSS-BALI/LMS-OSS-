@@ -335,7 +335,7 @@ export default function AssignmentComponent() {
                   style={{ width: "100%" }}
                 />
               </Form.Item>
-              <Form.Item
+              {/* <Form.Item
                 name="type"
                 rules={[
                   {
@@ -352,7 +352,7 @@ export default function AssignmentComponent() {
                   <Option value="ESSAY">Esai</Option>
                   <Option value="SENTENCE_MATCHING">Pencocokan Kalimat</Option>
                 </Select>
-              </Form.Item>
+              </Form.Item> */}
 
               {assignmentType === "MULTIPLE_CHOICE" && (
                 <>

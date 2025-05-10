@@ -25,16 +25,23 @@ export const useRegisterViewModel = () => {
       notification.success({
         message: "Registrasi Berhasil",
         description:
-          "Anda telah berhasil mendaftar. silahkan tunggu verifikasi akun mu",
+          "Anda telah berhasil mendaftar. Silakan tunggu verifikasi akun Anda.",
       });
       router.push("/");
-    } catch (error) {
+    } catch (error: any) {
       setLoading(false);
-      notification.error({
-        message: "Error Registrasi",
-        description: "Terjadi kesalahan saat mendaftar.",
-      });
-      console.error("Error during registration:", error);
+      if (error.status === 409) {
+        notification.error({
+          message: "Email Sudah Terdaftar",
+          description:
+            "Pengguna dengan email ini sudah ada. Silakan gunakan email lain.",
+        });
+      } else {
+        notification.error({
+          message: "Error Registrasi",
+          description: "Terjadi kesalahan saat mendaftar.",
+        });
+      }
     }
   };
 

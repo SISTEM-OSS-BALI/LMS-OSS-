@@ -192,7 +192,7 @@ export const useAssignmentViewModel = () => {
           timeLimit: values.timeLimit || currentAssignmentTimeLimit,
           base_id: base_id,
           course_id: course_id,
-          type: assignmentType || currentAssignmentType,
+          type: "MULTIPLE_CHOICE",
         };
         endpoint = "/api/teacher/assignment/create";
       } else {

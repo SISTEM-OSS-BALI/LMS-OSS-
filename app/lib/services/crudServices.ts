@@ -31,13 +31,18 @@ async function crudRequest(
       ...(body && { body: JSON.stringify(body) }),
     };
     const response = await fetch(endpoint, options);
+
     if (!response.ok) {
-      throw new Error(`Error ${method} data: ${response.statusText}`);
+      const errorBody = await response.json().catch(() => ({}));
+      throw {
+        status: response.status,
+        message: errorBody?.error || response.statusText,
+      };
     }
+
     return await response.json();
   } catch (error: any) {
-    console.error(`CRUD ${method} error:`, error);
-    throw error as Error;
+    throw error;
   }
 }
 

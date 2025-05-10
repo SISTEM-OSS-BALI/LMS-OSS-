@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma"; // Pastikan Prisma client diimport
+import prisma from "@/lib/prisma";
 import { transcribeAudioFromBase64 } from "@/app/lib/utils/speechToTextHelper";
 import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
 import {
@@ -23,11 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const [user, baseMockTests] = await prisma.$transaction([
-      prisma.mockTestParticipant.findFirst({
-        where: {
-          email: email,
-        },
-      }),
+      prisma.mockTestParticipant.findFirst({ where: { email } }),
       prisma.baseMockTest.findMany({
         where: { mock_test_id: testId },
         include: {
@@ -36,214 +32,217 @@ export async function POST(request: NextRequest) {
           speaking: true,
           writing: { include: { questions: true } },
         },
-        orderBy: {
-          createdAt: "asc",
-        },
+        orderBy: { createdAt: "asc" },
       }),
     ]);
 
-    if (baseMockTests.length === 0) {
+    if (!user || baseMockTests.length === 0) {
       return NextResponse.json(
-        { status: 400, error: true, message: "Mock Test tidak memiliki soal." },
+        { status: 400, error: true, message: "Mock Test tidak valid." },
         { status: 400 }
       );
     }
 
     let totalQuestionsCount = 0;
+    const answerIds: string[] = [];
     const speakingFeedback: {
       speaking_id: string;
       score: number;
       feedback: string;
     }[] = [];
 
-    // ✅ **Simpan jawaban SPEAKING jika ada**
     if (speaking_id && audio) {
       const speakingTest = baseMockTests.find(
         (section) => section.speaking?.speaking_id === speaking_id
       );
+      if (!speakingTest) {
+        return NextResponse.json(
+          {
+            status: 400,
+            error: true,
+            message: "Speaking test tidak ditemukan.",
+          },
+          { status: 400 }
+        );
+      }
 
-      const transcriptionText = await transcribeAudioFromBase64(audio);
+      try {
+        const transcriptionText = await transcribeAudioFromBase64(audio);
+        const evaluation = speakingTest.speaking?.prompt
+          ? await evaluateWritingAnswer(
+              speakingTest.speaking.prompt,
+              transcriptionText
+            )
+          : null;
 
-      const evaluationResult = speakingTest?.speaking?.prompt
-        ? await evaluateWritingAnswer(
-            speakingTest.speaking.prompt,
-            transcriptionText
-          )
-        : null;
-      const { aiScore, aiFeedback } = evaluationResult || {};
+        const aiScore = evaluation?.aiScore ?? 0;
+        const aiFeedback = evaluation?.aiFeedback ?? "Evaluation failed.";
+        const answer_id = crypto.randomUUID();
+        answerIds.push(answer_id);
 
-      if (speakingTest) {
         await prisma.studentAnswerFreeMockTest.create({
           data: {
-            participant_id: user?.participant_id ?? "",
+            answer_id,
+            participant_id: user.participant_id,
             mock_test_id: testId,
             base_mock_test_id: speakingTest.base_mock_test_id,
             speaking_test_id: speaking_id,
-            studentAnswer: null, // Tidak ada jawaban teks untuk speaking
-            recording_url: audio, // Simpan audio di sini
-            isCorrect: null,
+            studentAnswer: null,
+            recording_url: audio,
             feedback: aiFeedback,
+            isCorrect: null,
             score: aiScore,
             submittedAt: new Date(),
           },
         });
+
         speakingFeedback.push({
-          speaking_id: speaking_id,
-          score: aiScore ?? 0,
-          feedback: aiFeedback ?? "",
+          speaking_id,
+          score: aiScore,
+          feedback: aiFeedback,
+        });
+      } catch (error) {
+        const answer_id = crypto.randomUUID();
+        answerIds.push(answer_id);
+
+        await prisma.studentAnswerFreeMockTest.create({
+          data: {
+            answer_id,
+            participant_id: user.participant_id,
+            mock_test_id: testId,
+            base_mock_test_id: speakingTest.base_mock_test_id,
+            speaking_test_id: speaking_id,
+            studentAnswer: null,
+            recording_url: audio,
+            feedback: "Evaluation failed.",
+            isCorrect: null,
+            score: 0,
+            submittedAt: new Date(),
+          },
+        });
+
+        speakingFeedback.push({
+          speaking_id,
+          score: 0,
+          feedback: "Evaluation failed.",
         });
       }
     }
 
-    // ✅ **Simpan jawaban untuk Reading, Listening, dan Writing**
-    await Promise.all(
-      Object.entries(answers).map(async ([baseMockTestId, questions]) => {
-        await Promise.all(
-          Object.entries(questions as { [key: string]: any }).map(
-            async ([question_id, selectedAnswer]) => {
-              let isCorrect = null;
-              let score = 0;
-              let reading_question_id = null;
-              let listening_question_id = null;
-              let writing_question_id = null;
+    for (const [baseMockTestId, questions] of Object.entries(answers)) {
+      for (const [question_id, selectedAnswer] of Object.entries(
+        questions as { [key: string]: any }
+      )) {
+        let isCorrect = null;
+        let score = 0;
+        let reading_question_id = null;
+        let listening_question_id = null;
+        let writing_question_id = null;
 
-              const readingQuestion = baseMockTests
-                .flatMap((section) => section.reading?.questions ?? [])
-                .find((q) => q.question_id === question_id);
+        const readingQuestion = baseMockTests
+          .flatMap((s) => s.reading?.questions ?? [])
+          .find((q) => q.question_id === question_id);
+        const listeningQuestion = baseMockTests
+          .flatMap((s) => s.listening?.questions ?? [])
+          .find((q) => q.question_id === question_id);
+        const writingQuestion = baseMockTests
+          .flatMap((s) => s.writing?.questions ?? [])
+          .find((q) => q.question_id === question_id);
 
-              const listeningQuestion = baseMockTests
-                .flatMap((section) => section.listening?.questions ?? [])
-                .find((q) => q.question_id === question_id);
+        if (readingQuestion) {
+          isCorrect = readingQuestion.answer === selectedAnswer;
+          score = isCorrect ? 1 : 0;
+          reading_question_id = readingQuestion.question_id;
+        } else if (listeningQuestion) {
+          isCorrect = listeningQuestion.answer === selectedAnswer;
+          score = isCorrect ? 1 : 0;
+          listening_question_id = listeningQuestion.question_id;
+        } else if (writingQuestion) {
+          isCorrect = writingQuestion.answer === selectedAnswer;
+          score = isCorrect ? 1 : 0;
+          writing_question_id = writingQuestion.question_id;
+        }
 
-              const writingQuestion = baseMockTests
-                .flatMap((section) => section.writing?.questions ?? [])
-                .find((q) => q.question_id === question_id);
+        if (
+          reading_question_id ||
+          listening_question_id ||
+          writing_question_id
+        ) {
+          totalQuestionsCount++;
+          const answer_id = crypto.randomUUID();
+          answerIds.push(answer_id);
 
-              if (readingQuestion) {
-                isCorrect = readingQuestion.answer === selectedAnswer;
-                score = isCorrect ? 1 : 0;
-                reading_question_id = readingQuestion.question_id;
-              } else if (listeningQuestion) {
-                isCorrect = listeningQuestion.answer === selectedAnswer;
-                score = isCorrect ? 1 : 0;
-                listening_question_id = listeningQuestion.question_id;
-              } else if (writingQuestion) {
-                isCorrect = writingQuestion.answer === selectedAnswer;
-                score = isCorrect ? 1 : 0;
-                writing_question_id = writingQuestion.question_id;
-              }
+          await prisma.studentAnswerFreeMockTest.create({
+            data: {
+              answer_id,
+              participant_id: user.participant_id,
+              mock_test_id: testId,
+              base_mock_test_id: baseMockTestId,
+              reading_question_id,
+              listening_question_id,
+              writing_question_id,
+              speaking_test_id: null,
+              studentAnswer: selectedAnswer,
+              recording_url: null,
+              isCorrect,
+              score,
+              submittedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
 
-              if (
-                reading_question_id ||
-                listening_question_id ||
-                writing_question_id
-              ) {
-                totalQuestionsCount++;
-
-                await prisma.studentAnswerFreeMockTest.create({
-                  data: {
-                    participant_id: user?.participant_id ?? "",
-                    mock_test_id: testId,
-                    base_mock_test_id: baseMockTestId,
-                    reading_question_id,
-                    listening_question_id,
-                    writing_question_id,
-                    speaking_test_id: null, // Tidak ada speaking test di sini
-                    studentAnswer: selectedAnswer,
-                    recording_url: null,
-                    isCorrect,
-                    score,
-                    submittedAt: new Date(),
-                  },
-                });
-              }
-            }
-          )
-        );
-      })
-    );
-
-    // 🔹 Hitung skor akhir siswa
     const updatedScores = await prisma.studentAnswerFreeMockTest.findMany({
-      where: { participant_id: user?.participant_id, mock_test_id: testId },
+      where: { answer_id: { in: answerIds } },
       select: { score: true },
     });
 
     const totalScore = updatedScores.reduce(
-      (sum, answer) => sum + (answer.score ?? 0),
+      (sum, ans) => sum + (ans.score ?? 0),
       0
     );
     const percentageScore =
       Math.min((totalScore / totalQuestionsCount) * 100, 100) || 0;
 
     let newLevel = "Beginner";
-    // 🔹 Tentukan level baru siswa berdasarkan skor
-    if (totalScore >= 46) {
-      newLevel = "Advanced";
-    } else if (totalScore >= 40) {
-      newLevel = "Upper Intermediate";
-    } else if (totalScore >= 33) {
-      newLevel = "Intermediate";
-    } else if (totalScore >= 25) {
-      newLevel = "Pre-Intermediate";
-    } else if (totalScore >= 16) {
-      newLevel = "Elementary";
-    }
+    if (totalScore >= 46) newLevel = "Advanced";
+    else if (totalScore >= 40) newLevel = "Upper Intermediate";
+    else if (totalScore >= 33) newLevel = "Intermediate";
+    else if (totalScore >= 25) newLevel = "Pre-Intermediate";
+    else if (totalScore >= 16) newLevel = "Elementary";
 
     await prisma.scoreFreeMockTest.create({
       data: {
-        participant_id: user?.participant_id ?? "",
+        participant_id: user.participant_id,
         mock_test_id: testId,
-        totalScore: totalScore,
+        totalScore,
         percentageScore: parseFloat(percentageScore.toFixed(2)),
         level: newLevel,
       },
     });
 
-    const no_tlp = formatPhoneNumber(user?.phone ?? "");
-
-    // 🔹 Kirim notifikasi
-
-    (async () => {
-      const message = `
-🌟 *Halo, ${user?.name}!*
-
-Terima kasih telah mengikuti *Mock Test* bersama *One Step Solution (OSS)*. Berikut adalah hasil tes Anda:
-
-📊 *Skor Total:* ${totalScore}  
-📈 *Persentase Skor:* ${percentageScore.toFixed(2)}%  
-🎯 *Level:* ${newLevel}  
-
-🗣 *Speaking Feedback:*  
-${speakingFeedback
-  .map((feedback) => `- ${feedback.feedback} (⭐ Skor: ${feedback.score})`)
-  .join("\n")}
-
-📢 *Tingkatkan Kemampuan Bahasa Inggris Anda!*
-Hasil tes menunjukkan bahwa masih ada ruang untuk perbaikan dalam kemampuan bahasa Inggris Anda. Kami sangat menyarankan Anda untuk bergabung dengan *Program Sahabat OSS English Course*! 🚀✨  
-
-✅ *Keuntungan Bergabung:*  
-🌏 Peluang *Kerja di Luar Negeri* dengan gaji dalam *Dollar 💵*  
-🎓 Bisa *Kuliah sambil Berkarier* di luar negeri 🏫✈️  
-
-🔥 Jangan lewatkan kesempatan ini untuk masa depan yang lebih cerah!  
-
-📞 Hubungi kami untuk informasi lebih lanjut. Kami siap membantu Anda! 😊  
-
-Terima kasih,  
-*One Step Solution (OSS)* 🌍✨
+    const no_tlp = formatPhoneNumber(user.phone ?? "");
+    const message = `
+🌟 *Halo, ${
+      user.name
+    }!*\n\nTerima kasih telah mengikuti *Mock Test* bersama *One Step Solution (OSS)*. Berikut adalah hasil tes Anda:\n\n📊 *Skor Total:* ${totalScore}  \n📈 *Persentase Skor:* ${percentageScore.toFixed(
+      2
+    )}%  \n🎯 *Level:* ${newLevel}  \n\n🗣 *Speaking Feedback:*  \n${speakingFeedback
+      .map((f) => `- ${f.feedback} (⭐ Skor: ${f.score})`)
+      .join(
+        "\n"
+      )}\n\n📢 *Tingkatkan Kemampuan Bahasa Inggris Anda!*\nHasil tes menunjukkan bahwa masih ada ruang untuk perbaikan dalam kemampuan bahasa Inggris Anda. Kami sangat menyarankan Anda untuk bergabung dengan *Program Sahabat OSS English Course*! 🚀✨  \n\n✅ *Keuntungan Bergabung:*  \n🌏 Peluang *Kerja di Luar Negeri* dengan gaji dalam *Dollar 💵*  \n🎓 Bisa *Kuliah sambil Berkarier* di luar negeri 🏫✈️  \n\n🔥 Jangan lewatkan kesempatan ini untuk masa depan yang lebih cerah!  \n\n📞 Hubungi kami untuk informasi lebih lanjut. Kami siap membantu Anda! 😊  \n\nTerima kasih,  \n*One Step Solution (OSS)* 🌍✨
 `;
-      await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
-    })();
 
-    const formattedPercentageScore = percentageScore.toFixed(2);
+    await sendWhatsAppMessage(apiKey, numberKey, no_tlp, message);
 
     return NextResponse.json({
       status: 200,
       error: false,
       data: {
         totalScore,
-        percentageScore: formattedPercentageScore,
+        percentageScore: percentageScore.toFixed(2),
         level: newLevel,
         speakingFeedback,
       },
@@ -254,9 +253,7 @@ Terima kasih,
       JSON.stringify({ error: "Internal Server Error" }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }

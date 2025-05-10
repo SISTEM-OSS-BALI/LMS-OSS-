@@ -253,78 +253,49 @@ export const HistoryPlacementComponent: React.FC<
                 )}
 
                 {/* Reading (True/False) */}
-                {entry.trueFalseGroup && (
-                  <>
-                    <div
-                      style={{
-                        background: "#f5f5f5",
-                        padding: "15px",
-                        borderRadius: "8px",
-                        marginBottom: "15px",
-                      }}
+                {entry.trueFalseQuestion && (
+                  <div>
+                    <Title level={4}>{entry.trueFalseQuestion.question}</Title>
+                    <Radio.Group
+                      value={entry.studentAnswer}
+                      style={{ display: "block", marginBottom: 10 }}
                     >
-                      <Text>{entry.trueFalseGroup.passage}</Text>
-                    </div>
-
-                    {entry.trueFalseGroup.trueFalseQuestions.map(
-                      (questionEntry, index) => {
-                        const studentAnswerEntry = data.find(
-                          (ans) =>
-                            ans.trueFalseQuestion?.tf_id ===
-                              questionEntry.tf_id ||
-                            ans.trueFalseGroup?.trueFalseQuestions.some(
-                              (q) => q.tf_id === questionEntry.tf_id
-                            )
-                        );
-
-                        return (
-                          <div key={index} style={{ marginBottom: "15px" }}>
-                            <Title level={5}>{questionEntry.question}</Title>
-                            <Radio.Group
-                              value={studentAnswerEntry?.studentAnswer}
-                              style={{ display: "block", marginBottom: 10 }}
-                            >
-                              <Radio
-                                value="true"
-                                style={{
-                                  display: "block",
-                                  background:
-                                    studentAnswerEntry?.studentAnswer === "true"
-                                      ? questionEntry.correctAnswer
-                                        ? "#d4edda"
-                                        : "#f8d7da"
-                                      : "inherit",
-                                  padding: "8px 15px",
-                                  borderRadius: 5,
-                                }}
-                              >
-                                True
-                              </Radio>
-                              <Radio
-                                value="false"
-                                style={{
-                                  display: "block",
-                                  background:
-                                    studentAnswerEntry?.studentAnswer ===
-                                    "false"
-                                      ? questionEntry.correctAnswer
-                                        ? "#d4edda"
-                                        : "#f8d7da"
-                                      : "inherit",
-                                  padding: "8px 15px",
-                                  borderRadius: 5,
-                                }}
-                              >
-                                False
-                              </Radio>
-                            </Radio.Group>
-                            <Text strong>Jawaban yang benar:</Text>{" "}
-                            {questionEntry.correctAnswer.toString()}
-                          </div>
-                        );
-                      }
-                    )}
-                  </>
+                      <Radio
+                        value="true"
+                        style={{
+                          display: "block",
+                          background:
+                            entry.studentAnswer === "true"
+                              ? entry.trueFalseQuestion.correctAnswer
+                                ? "#d4edda"
+                                : "#f8d7da"
+                              : "inherit",
+                          padding: "8px 15px",
+                          borderRadius: 5,
+                        }}
+                      >
+                        True
+                      </Radio>
+                      <Radio
+                        value="false"
+                        style={{
+                          display: "block",
+                          background:
+                            entry.studentAnswer === "false"
+                              ? !entry.trueFalseQuestion.correctAnswer
+                                ? "#d4edda"
+                                : "#f8d7da"
+                              : "inherit",
+                          padding: "8px 15px",
+                          borderRadius: 5,
+                        }}
+                      >
+                        False
+                      </Radio>
+                    </Radio.Group>
+                    <Text strong>Jawaban yang benar:</Text>{" "}
+                    {entry.trueFalseQuestion.correctAnswer.toString()}
+                  </div>
                 )}
 
                 {/* Writing Section */}

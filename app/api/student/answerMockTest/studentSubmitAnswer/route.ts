@@ -6,9 +6,7 @@ import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
 
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
-  if (user instanceof NextResponse) {
-    return user;
-  }
+  if (user instanceof NextResponse) return user;
 
   try {
     const body = await request.json();
@@ -21,7 +19,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔹 Ambil semua BaseMockTest terkait
     const baseMockTests = await prisma.baseMockTest.findMany({
       where: { mock_test_id: testId },
       include: {
@@ -40,32 +37,56 @@ export async function POST(request: NextRequest) {
     }
 
     let totalQuestionsCount = 0;
-
+    const answerIds: string[] = [];
     const speakingFeedback: {
       speaking_id: string;
       score: number;
       feedback: string;
     }[] = [];
 
-    // ✅ **Simpan jawaban SPEAKING jika ada**
     if (speaking_id && audio) {
       const speakingTest = baseMockTests.find(
         (section) => section.speaking?.speaking_id === speaking_id
       );
 
-      const transcriptionText = await transcribeAudioFromBase64(audio);
+      if (!speakingTest) {
+        console.error(
+          "Error: Speaking test tidak ditemukan untuk speaking_id:",
+          speaking_id
+        );
+        return NextResponse.json(
+          {
+            status: 400,
+            error: true,
+            message: "Speaking test tidak ditemukan.",
+          },
+          { status: 400 }
+        );
+      }
 
-      const evaluationResult = speakingTest?.speaking?.prompt
-        ? await evaluateWritingAnswer(
-            speakingTest.speaking.prompt,
-            transcriptionText
-          )
-        : null;
-      const { aiScore, aiFeedback } = evaluationResult || {};
+      try {
+        const transcriptionText = await transcribeAudioFromBase64(audio);
+        let aiScore = 0;
+        let aiFeedback = "Evaluation failed.";
 
-      if (speakingTest) {
+        const evaluationResult = speakingTest.speaking?.prompt
+          ? await evaluateWritingAnswer(
+              speakingTest.speaking.prompt,
+              transcriptionText
+            )
+          : null;
+
+        if (evaluationResult) {
+          aiScore = evaluationResult.aiScore ?? 0;
+          aiFeedback = evaluationResult.aiFeedback ?? "Evaluation failed.";
+        }
+
+        const answer_id = crypto.randomUUID();
+        answerIds.push(answer_id);
+
         await prisma.studentAnswerMockTest.create({
           data: {
+            answer_id,
             student_id: user.user_id,
             mock_test_id: testId,
             base_mock_test_id: speakingTest.base_mock_test_id,
@@ -78,91 +99,113 @@ export async function POST(request: NextRequest) {
             submittedAt: new Date(),
           },
         });
+
         speakingFeedback.push({
-          speaking_id: speaking_id,
-          score: aiScore ?? 0,
-          feedback: aiFeedback ?? "",
+          speaking_id,
+          score: aiScore,
+          feedback: aiFeedback,
+        });
+      } catch (error) {
+        console.error(
+          `Failed to process speaking answer for speaking_id ${speaking_id}:`,
+          error
+        );
+        const answer_id = crypto.randomUUID();
+        answerIds.push(answer_id);
+        await prisma.studentAnswerMockTest.create({
+          data: {
+            answer_id,
+            student_id: user.user_id,
+            mock_test_id: testId,
+            base_mock_test_id: speakingTest.base_mock_test_id,
+            speaking_test_id: speaking_id,
+            studentAnswer: null,
+            recording_url: audio,
+            feedback: "Evaluation failed.",
+            isCorrect: null,
+            score: 0,
+            submittedAt: new Date(),
+          },
+        });
+        speakingFeedback.push({
+          speaking_id,
+          score: 0,
+          feedback: "Evaluation failed.",
         });
       }
     }
 
-    // ✅ **Simpan jawaban untuk Reading, Listening, dan Writing**
-    await Promise.all(
-      Object.entries(answers).map(async ([baseMockTestId, questions]) => {
-        await Promise.all(
-          Object.entries(questions as { [key: string]: any }).map(
-            async ([question_id, selectedAnswer]) => {
-              let isCorrect = null;
-              let score = 0;
-              let reading_question_id = null;
-              let listening_question_id = null;
-              let writing_question_id = null;
+    for (const [baseMockTestId, questions] of Object.entries(answers)) {
+      for (const [question_id, selectedAnswer] of Object.entries(
+        questions as { [key: string]: any }
+      )) {
+        let isCorrect = null;
+        let score = 0;
+        let reading_question_id = null;
+        let listening_question_id = null;
+        let writing_question_id = null;
 
-              const readingQuestion = baseMockTests
-                .flatMap((section) => section.reading?.questions ?? [])
-                .find((q) => q.question_id === question_id);
+        const readingQuestion = baseMockTests
+          .flatMap((s) => s.reading?.questions ?? [])
+          .find((q) => q.question_id === question_id);
+        const listeningQuestion = baseMockTests
+          .flatMap((s) => s.listening?.questions ?? [])
+          .find((q) => q.question_id === question_id);
+        const writingQuestion = baseMockTests
+          .flatMap((s) => s.writing?.questions ?? [])
+          .find((q) => q.question_id === question_id);
 
-              const listeningQuestion = baseMockTests
-                .flatMap((section) => section.listening?.questions ?? [])
-                .find((q) => q.question_id === question_id);
+        if (readingQuestion) {
+          isCorrect = readingQuestion.answer === selectedAnswer;
+          score = isCorrect ? 1 : 0;
+          reading_question_id = readingQuestion.question_id;
+        } else if (listeningQuestion) {
+          isCorrect = listeningQuestion.answer === selectedAnswer;
+          score = isCorrect ? 1 : 0;
+          listening_question_id = listeningQuestion.question_id;
+        } else if (writingQuestion) {
+          isCorrect = writingQuestion.answer === selectedAnswer;
+          score = isCorrect ? 1 : 0;
+          writing_question_id = writingQuestion.question_id;
+        }
 
-              const writingQuestion = baseMockTests
-                .flatMap((section) => section.writing?.questions ?? [])
-                .find((q) => q.question_id === question_id);
+        if (
+          reading_question_id ||
+          listening_question_id ||
+          writing_question_id
+        ) {
+          totalQuestionsCount++;
+          const answer_id = crypto.randomUUID();
+          answerIds.push(answer_id);
 
-              if (readingQuestion) {
-                isCorrect = readingQuestion.answer === selectedAnswer;
-                score = isCorrect ? 1 : 0;
-                reading_question_id = readingQuestion.question_id;
-              } else if (listeningQuestion) {
-                isCorrect = listeningQuestion.answer === selectedAnswer;
-                score = isCorrect ? 1 : 0;
-                listening_question_id = listeningQuestion.question_id;
-              } else if (writingQuestion) {
-                isCorrect = writingQuestion.answer === selectedAnswer;
-                score = isCorrect ? 1 : 0;
-                writing_question_id = writingQuestion.question_id;
-              }
+          await prisma.studentAnswerMockTest.create({
+            data: {
+              answer_id,
+              student_id: user.user_id,
+              mock_test_id: testId,
+              base_mock_test_id: baseMockTestId,
+              reading_question_id,
+              listening_question_id,
+              writing_question_id,
+              speaking_test_id: null,
+              studentAnswer: selectedAnswer,
+              recording_url: null,
+              isCorrect,
+              score,
+              submittedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
 
-              if (
-                reading_question_id ||
-                listening_question_id ||
-                writing_question_id
-              ) {
-                totalQuestionsCount++;
-
-                await prisma.studentAnswerMockTest.create({
-                  data: {
-                    student_id: user.user_id,
-                    mock_test_id: testId,
-                    base_mock_test_id: baseMockTestId,
-                    reading_question_id,
-                    listening_question_id,
-                    writing_question_id,
-                    speaking_test_id: null, // Tidak ada speaking test di sini
-                    studentAnswer: selectedAnswer,
-                    recording_url: null,
-                    isCorrect,
-                    score,
-                    submittedAt: new Date(),
-                  },
-                });
-              }
-            }
-          )
-        );
-      })
-    );
-
-    // 🔹 Tandai bahwa siswa telah menyelesaikan test
     await prisma.accessMockTest.update({
       where: { access_mock_test_id: accessId },
       data: { is_completed: true },
     });
 
-    // 🔹 Hitung skor akhir siswa
     const updatedScores = await prisma.studentAnswerMockTest.findMany({
-      where: { student_id: user.user_id, mock_test_id: testId },
+      where: { answer_id: { in: answerIds } },
       select: { score: true },
     });
 
@@ -173,44 +216,33 @@ export async function POST(request: NextRequest) {
     const percentageScore =
       Math.min((totalScore / totalQuestionsCount) * 100, 100) || 0;
 
-    // 🔹 Tentukan level baru siswa berdasarkan skor
     let newLevel = "Beginner";
-    // 🔹 Tentukan level baru siswa berdasarkan skor
-    if (totalScore >= 46) {
-      newLevel = "Advanced";
-    } else if (totalScore >= 40) {
-      newLevel = "Upper Intermediate";
-    } else if (totalScore >= 33) {
-      newLevel = "Intermediate";
-    } else if (totalScore >= 25) {
-      newLevel = "Pre-Intermediate";
-    } else if (totalScore >= 16) {
-      newLevel = "Elementary";
-    }
+    if (totalScore >= 46) newLevel = "Advanced";
+    else if (totalScore >= 40) newLevel = "Upper Intermediate";
+    else if (totalScore >= 33) newLevel = "Intermediate";
+    else if (totalScore >= 25) newLevel = "Pre-Intermediate";
+    else if (totalScore >= 16) newLevel = "Elementary";
 
     await prisma.user.update({
       where: { user_id: user.user_id },
       data: { level: newLevel },
     });
-
     await prisma.scoreMockTest.create({
       data: {
         student_id: user.user_id,
         mock_test_id: testId,
-        totalScore: totalScore,
+        totalScore,
         percentageScore: parseFloat(percentageScore.toFixed(2)),
         level: newLevel,
       },
     });
-
-    const formattedPercentageScore = percentageScore.toFixed(2);
 
     return NextResponse.json({
       status: 200,
       error: false,
       data: {
         totalScore,
-        percentageScore: formattedPercentageScore,
+        percentageScore: percentageScore.toFixed(2),
         level: newLevel,
         speakingFeedback,
       },
@@ -221,9 +253,7 @@ export async function POST(request: NextRequest) {
       JSON.stringify({ error: "Internal Server Error" }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } finally {
