@@ -335,185 +335,90 @@ export default function AssignmentComponent() {
                   style={{ width: "100%" }}
                 />
               </Form.Item>
-              {/* <Form.Item
-                name="type"
+              <Form.Item
+                label="Jumlah Soal"
                 rules={[
                   {
                     required: true,
-                    message: "Silakan pilih jenis assignment",
+                    message: "Silakan masukkan jumlah soal",
                   },
                 ]}
               >
-                <Select
-                  placeholder="Pilih jenis assignment"
-                  onChange={(value) => setAssignmentType(value)}
-                >
-                  <Option value="MULTIPLE_CHOICE">Pilihan Ganda</Option>
-                  <Option value="ESSAY">Esai</Option>
-                  <Option value="SENTENCE_MATCHING">Pencocokan Kalimat</Option>
-                </Select>
-              </Form.Item> */}
+                <Input
+                  type="number"
+                  placeholder="Masukkan jumlah soal"
+                  min={1}
+                  value={questionCount}
+                  onChange={(e) =>
+                    handleQuestionCountChange(Number(e.target.value))
+                  }
+                />
+              </Form.Item>
 
-              {assignmentType === "MULTIPLE_CHOICE" && (
-                <>
+              {questions.map((question, qIndex) => (
+                <div key={qIndex} style={{ marginBottom: "20px" }}>
                   <Form.Item
-                    label="Jumlah Soal"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Silakan masukkan jumlah soal",
-                      },
-                    ]}
+                    label={`Pertanyaan ${qIndex + 1}`}
+                    required
+                    validateStatus={question.question ? "success" : "error"}
+                    help={!question.question && "Pertanyaan tidak boleh kosong"}
                   >
-                    <Input
-                      type="number"
-                      placeholder="Masukkan jumlah soal"
-                      min={1}
-                      value={questionCount}
-                      onChange={(e) =>
-                        handleQuestionCountChange(Number(e.target.value))
+                    <ReactQuill
+                      theme="snow"
+                      value={question.question}
+                      onChange={(value) =>
+                        handleQuestionChange(qIndex, "question", value)
                       }
+                      placeholder={`Masukkan pertanyaan ${qIndex + 1}`}
                     />
                   </Form.Item>
 
-                  {questions.map((question, qIndex) => (
-                    <div key={qIndex} style={{ marginBottom: "20px" }}>
-                      <Form.Item
-                        label={`Pertanyaan ${qIndex + 1}`}
-                        required
-                        validateStatus={question.question ? "success" : "error"}
-                        help={
-                          !question.question && "Pertanyaan tidak boleh kosong"
+                  {question.options.map((option, oIndex) => (
+                    <Form.Item
+                      key={oIndex}
+                      label={`Opsi ${oIndex + 1}`}
+                      required
+                      validateStatus={option ? "success" : "error"}
+                      help={!option && "Opsi tidak boleh kosong"}
+                    >
+                      <Input
+                        placeholder={`Masukkan opsi ${oIndex + 1}`}
+                        value={option}
+                        onChange={(e) =>
+                          handleOptionChange(qIndex, oIndex, e.target.value)
                         }
-                      >
-                        <ReactQuill
-                          theme="snow"
-                          value={question.question}
-                          onChange={(value) =>
-                            handleQuestionChange(qIndex, "question", value)
-                          }
-                          placeholder={`Masukkan pertanyaan ${qIndex + 1}`}
-                        />
-                      </Form.Item>
-
-                      {question.options.map((option, oIndex) => (
-                        <Form.Item
-                          key={oIndex}
-                          label={`Opsi ${oIndex + 1}`}
-                          required
-                          validateStatus={option ? "success" : "error"}
-                          help={!option && "Opsi tidak boleh kosong"}
-                        >
-                          <Input
-                            placeholder={`Masukkan opsi ${oIndex + 1}`}
-                            value={option}
-                            onChange={(e) =>
-                              handleOptionChange(qIndex, oIndex, e.target.value)
-                            }
-                          />
-                        </Form.Item>
-                      ))}
-
-                      <Button
-                        type="dashed"
-                        onClick={() => addOption(qIndex)}
-                        style={{ marginBottom: "16px" }}
-                      >
-                        Tambahkan Opsi
-                      </Button>
-
-                      <Form.Item label={`Jawaban yang Benar ${qIndex + 1}`}>
-                        <Radio.Group
-                          onChange={(e) =>
-                            handleCorrectAnswerChange(qIndex, e.target.value)
-                          }
-                          value={questions[qIndex].correctAnswer}
-                        >
-                          {question.options.map((option, oIndex) => (
-                            <Radio
-                              key={oIndex}
-                              value={option}
-                              style={{ display: "block" }}
-                            >
-                              {option}
-                            </Radio>
-                          ))}
-                        </Radio.Group>
-                      </Form.Item>
-                    </div>
+                      />
+                    </Form.Item>
                   ))}
-                </>
-              )}
 
-              {assignmentType === "ESSAY" && (
-                <Form.Item
-                  label="Pertanyaan Esai"
-                  required
-                  validateStatus={content ? "success" : "error"}
-                  help={!content && "Pertanyaan esai tidak boleh kosong"}
-                >
-                  <ReactQuill
-                    value={content}
-                    onChange={setContent}
-                    theme="snow"
-                    placeholder="Tulis pertanyaan esai di sini..."
-                  />
-                </Form.Item>
-              )}
-
-              {assignmentType === "SENTENCE_MATCHING" && (
-                <>
-                  {pairs.map((pair, index) => (
-                    <div key={index} style={{ marginBottom: "20px" }}>
-                      <Form.Item
-                        label={`Pertanyaan ${index + 1}`}
-                        required
-                        validateStatus={pair.question ? "success" : "error"}
-                        help={!pair.question && "Pertanyaan tidak boleh kosong"}
-                      >
-                        <Input
-                          placeholder={`Masukkan pertanyaan ${index + 1}`}
-                          value={pair.question}
-                          onChange={(e) =>
-                            handlePairChange(index, "question", e.target.value)
-                          }
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        label={`Jawaban yang Benar ${index + 1}`}
-                        required
-                        validateStatus={
-                          pair.correctAnswer ? "success" : "error"
-                        }
-                        help={
-                          !pair.correctAnswer && "Jawaban tidak boleh kosong"
-                        }
-                      >
-                        <Input
-                          placeholder={`Masukkan jawaban yang benar ${
-                            index + 1
-                          }`}
-                          value={pair.correctAnswer}
-                          onChange={(e) =>
-                            handlePairChange(
-                              index,
-                              "correctAnswer",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </Form.Item>
-                    </div>
-                  ))}
                   <Button
                     type="dashed"
-                    onClick={addPair}
+                    onClick={() => addOption(qIndex)}
                     style={{ marginBottom: "16px" }}
                   >
-                    Tambahkan Pasangan Pertanyaan
+                    Tambahkan Opsi
                   </Button>
-                </>
-              )}
+
+                  <Form.Item label={`Jawaban yang Benar ${qIndex + 1}`}>
+                    <Radio.Group
+                      onChange={(e) =>
+                        handleCorrectAnswerChange(qIndex, e.target.value)
+                      }
+                      value={questions[qIndex].correctAnswer}
+                    >
+                      {question.options.map((option, oIndex) => (
+                        <Radio
+                          key={oIndex}
+                          value={option}
+                          style={{ display: "block" }}
+                        >
+                          {option}
+                        </Radio>
+                      ))}
+                    </Radio.Group>
+                  </Form.Item>
+                </div>
+              ))}
             </>
           )}
 
