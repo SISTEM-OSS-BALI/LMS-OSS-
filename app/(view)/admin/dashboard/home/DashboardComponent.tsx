@@ -437,48 +437,39 @@ export default function DashboardComponent() {
           {isLoadingStudentCanceled ? (
             <Skeleton active paragraph={{ rows: 6 }} />
           ) : chartTypeCanceled === "bar" ? (
-            weeklyChartDataCanceled &&
-            weeklyChartDataCanceled.some(
-              (item) => item.total_cancelled_meetings > 0
-            ) ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={weeklyChartDataCanceled}
-                  margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="name"
-                    height={50}
-                    interval={0}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    domain={[0, "auto"]}
-                    label={{
-                      value: "Jumlah Cancel",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <Tooltip
-                    formatter={(value) => [`${value} Siswa`, "Siswa Cancel"]}
-                  />
-                  <Legend verticalAlign="top" align="right" />
-                  <Bar
-                    dataKey="total_cancelled_meetings"
-                    fill="#FF4D4F"
-                    barSize={30}
-                    name="Siswa Cancel"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ padding: 40, textAlign: "center", color: "#999" }}>
-                Tidak ada data siswa cancel pada bulan ini.
-              </div>
-            )
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={weeklyChartDataCanceled}
+                margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  height={50}
+                  interval={0}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  domain={[0, "auto"]}
+                  label={{
+                    value: "Jumlah Cancel",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
+                />
+                <Tooltip
+                  formatter={(value) => [`${value} Siswa`, "Siswa Cancel"]}
+                />
+                <Legend verticalAlign="top" align="right" />
+                <Bar
+                  dataKey="total_cancelled_meetings"
+                  fill="#FF4D4F"
+                  barSize={30}
+                  name="Siswa Cancel"
+                />
+              </BarChart>
+            </ResponsiveContainer>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart
