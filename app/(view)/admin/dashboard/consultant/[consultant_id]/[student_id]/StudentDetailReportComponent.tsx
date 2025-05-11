@@ -14,7 +14,7 @@ import {
   Skeleton,
   Table,
   Typography,
-  Tag
+  Tag,
 } from "antd";
 import {
   UserOutlined,
@@ -41,12 +41,34 @@ export default function StudentDetailReportComponent() {
   const student_id = query.student_id;
 
   const columns: any = [
-    { title: "No", dataIndex: "no", key: "no", render: (_: any, __: any, index: number) => index + 1 },
-    { title: "Tanggal", dataIndex: "dateTime", key: "dateTime", render: (text: any) => dayjs.utc(text).format("YYYY-MM-DD HH:mm") },
+    {
+      title: "No",
+      dataIndex: "no",
+      key: "no",
+      render: (_: any, __: any, index: number) => index + 1,
+    },
+    {
+      title: "Tanggal",
+      dataIndex: "dateTime",
+      key: "dateTime",
+      render: (text: any) => dayjs.utc(text).format("YYYY-MM-DD HH:mm"),
+    },
     { title: "Metode", dataIndex: "method", key: "method" },
-    { title: "Skala Kemampuan", dataIndex: "abilityScale", key: "abilityScale" },
-    { title: "Kinerja Siswa", dataIndex: "studentPerformance", key: "studentPerformance" },
-    { title: "Hasil Inputan Guru", dataIndex: "progress_student", key: "progress_student" },
+    {
+      title: "Skala Kemampuan",
+      dataIndex: "abilityScale",
+      key: "abilityScale",
+    },
+    {
+      title: "Kinerja Siswa",
+      dataIndex: "studentPerformance",
+      key: "studentPerformance",
+    },
+    {
+      title: "Hasil Inputan Guru",
+      dataIndex: "progress_student",
+      key: "progress_student",
+    },
   ];
 
   const data = filteredMeetings?.map((meeting, index) => ({
@@ -59,7 +81,6 @@ export default function StudentDetailReportComponent() {
     dateTime: meeting.dateTime,
   }));
 
-  
   const columnsInfo = [
     {
       title: "Informasi",
@@ -138,9 +159,9 @@ export default function StudentDetailReportComponent() {
 
     // 1️⃣ Siapkan Data untuk Excel
     const excelData = filteredMeetings.map((meeting, index) => ({
-      "No": index + 1,
-      "Tanggal": dayjs.utc(meeting.dateTime).format("YYYY-MM-DD HH:mm"),
-      "Metode": meeting.method,
+      No: index + 1,
+      Tanggal: dayjs.utc(meeting.dateTime).format("YYYY-MM-DD HH:mm"),
+      Metode: meeting.method,
       "Skala Kemampuan": meeting.abilityScale,
       "Kinerja Siswa": meeting.studentPerformance,
       "Hasil Inputan Guru": meeting.progress_student,
@@ -152,10 +173,18 @@ export default function StudentDetailReportComponent() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Pertemuan");
 
     // 3️⃣ Konversi ke Blob & Simpan sebagai File `.xlsx`
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const dataBlob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const dataBlob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
 
-    saveAs(dataBlob, `Riwayat_Pertemuan_${filteredStudent?.username || "Siswa"}.xlsx`);
+    saveAs(
+      dataBlob,
+      `Riwayat_Pertemuan_${filteredStudent?.username || "Siswa"}.xlsx`
+    );
   };
 
   return (
@@ -164,7 +193,9 @@ export default function StudentDetailReportComponent() {
         {/* Student Details */}
         <Col md={16}>
           <Card style={{ borderRadius: "12px", padding: "20px" }}>
-            <Title level={3} style={{ marginBottom: "24px" }}>Detail Siswa</Title>
+            <Title level={3} style={{ marginBottom: "24px" }}>
+              Detail Siswa
+            </Title>
             <Row
               gutter={[16, 16]}
               style={{
@@ -185,10 +216,19 @@ export default function StudentDetailReportComponent() {
               >
                 {isLoadingStudent ? (
                   <Skeleton.Avatar active size={150} />
-                ) : (
+                ) : filteredStudent?.imageUrl ? (
                   <Avatar
                     size={150}
                     src={filteredStudent?.imageUrl}
+                    style={{
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      border: "2px solid #eaeaea",
+                    }}
+                  />
+                ) : (
+                  <Avatar
+                    size={150}
+                    icon={<UserOutlined />}
                     style={{
                       boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                       border: "2px solid #eaeaea",
@@ -233,7 +273,9 @@ export default function StudentDetailReportComponent() {
               flexDirection: "column",
             }}
           >
-            <Title level={3} style={{ marginBottom: "16px" }}>Total Pertemuan</Title>
+            <Title level={3} style={{ marginBottom: "16px" }}>
+              Total Pertemuan
+            </Title>
             {isLoadingStudent ? (
               <Skeleton.Input active size="large" style={{ width: "80px" }} />
             ) : (
@@ -246,16 +288,24 @@ export default function StudentDetailReportComponent() {
       </Row>
 
       {/* Meeting History */}
-      <Card style={{ marginTop: "24px", borderRadius: "12px", padding: "24px" }}>
+      <Card
+        style={{ marginTop: "24px", borderRadius: "12px", padding: "24px" }}
+      >
         <Flex justify="space-between" style={{ marginBlock: "10px" }}>
           <Title level={3}>Riwayat Pertemuan</Title>
-          <Button type="primary" onClick={handleDownloadExcel}>Cetak Pertemuan</Button>
+          <Button type="primary" onClick={handleDownloadExcel}>
+            Cetak Pertemuan
+          </Button>
         </Flex>
 
         {isLoadingMeeting ? (
           <Skeleton active paragraph={{ rows: 5 }} />
         ) : (
-          <Table columns={columns} dataSource={data} pagination={{ pageSize: 5 }} />
+          <Table
+            columns={columns}
+            dataSource={data}
+            pagination={{ pageSize: 5 }}
+          />
         )}
       </Card>
     </div>

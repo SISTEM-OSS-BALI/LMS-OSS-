@@ -69,19 +69,18 @@ export default function DashboardComponent() {
 
   // Filter data berdasarkan bulan yang dipilih
   const filteredWeeklyData = dataStudentNewPerWeek?.data.filter(
-    (item) => item.month === selectedMonthProgram
+    (item) => item.month === monthNameMap[selectedMonthProgram]
   );
 
   const filteredCanceledData = dataStudentCanceled?.data.filter(
-    (item) => item.month === selectedMonthCanceled
+    (item) => item.month === monthNameMap[selectedMonthCanceled]
   );
 
   const weeklyChartDataCanceled = filteredCanceledData?.map((item) => ({
     name: `Minggu ${item.week}`,
     total_meetings: item.total_meetings,
-    total_cancelled_meetings: item.cancelled_meetings,
+    total_cancelled_meetings: Number(item.cancelled_meetings),
   }));
-
 
   // Format Data untuk Chart
   const weeklyChartData = filteredWeeklyData?.map((item) => ({
@@ -437,42 +436,12 @@ export default function DashboardComponent() {
           {/* Chart */}
           {isLoadingStudentCanceled ? (
             <Skeleton active paragraph={{ rows: 6 }} />
-          ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              {chartTypeCanceled === "line" ? (
-                <LineChart
-                  data={weeklyChartDataCanceled}
-                  margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="name"
-                    height={50}
-                    interval={0}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    label={{
-                      value: "Jumlah Cancel",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <Tooltip
-                    formatter={(value) => [`${value} Siswa`, "Siswa Cancel"]}
-                  />
-                  <Legend verticalAlign="top" align="right" />
-                  <Line
-                    type="monotone"
-                    dataKey="total_cancelled_meetings"
-                    stroke="#FF4D4F"
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    name="Siswa Cancel"
-                  />
-                </LineChart>
-              ) : (
+          ) : chartTypeCanceled === "bar" ? (
+            weeklyChartDataCanceled &&
+            weeklyChartDataCanceled.some(
+              (item) => item.total_cancelled_meetings > 0
+            ) ? (
+              <ResponsiveContainer width="100%" height={300}>
                 <BarChart
                   data={weeklyChartDataCanceled}
                   margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
@@ -486,6 +455,7 @@ export default function DashboardComponent() {
                   />
                   <YAxis
                     allowDecimals={false}
+                    domain={[0, "auto"]}
                     label={{
                       value: "Jumlah Cancel",
                       angle: -90,
@@ -503,7 +473,46 @@ export default function DashboardComponent() {
                     name="Siswa Cancel"
                   />
                 </BarChart>
-              )}
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ padding: 40, textAlign: "center", color: "#999" }}>
+                Tidak ada data siswa cancel pada bulan ini.
+              </div>
+            )
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart
+                data={weeklyChartDataCanceled}
+                margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  height={50}
+                  interval={0}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  label={{
+                    value: "Jumlah Cancel",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
+                />
+                <Tooltip
+                  formatter={(value) => [`${value} Siswa`, "Siswa Cancel"]}
+                />
+                <Legend verticalAlign="top" align="right" />
+                <Line
+                  type="monotone"
+                  dataKey="total_cancelled_meetings"
+                  stroke="#FF4D4F"
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  name="Siswa Cancel"
+                />
+              </LineChart>
             </ResponsiveContainer>
           )}
         </Flex>

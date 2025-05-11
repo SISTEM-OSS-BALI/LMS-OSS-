@@ -9,11 +9,12 @@ import {
   Spin,
   Skeleton,
   Button,
+  Avatar,
 } from "antd";
 import { useDetailConsultantViewModel } from "./useDetailConsultantViewModel";
 import { ColumnsType } from "antd/es/table";
 import { User } from "@prisma/client";
-import Icon from "@ant-design/icons";
+import Icon, { UserOutlined } from "@ant-design/icons";
 import { EyeIcon } from "@/app/components/Icon";
 
 interface StudentWithProgram extends User {
@@ -45,13 +46,19 @@ export default function ConsultantDetailComponent() {
       render: (text) =>
         isLoading ? (
           <Skeleton.Avatar active size={50} shape="circle" />
-        ) : (
+        ) : text ? (
           <Image
-            src={text || "/default-avatar.png"}
+            src={text}
             alt="gambar"
             width={50}
             height={50}
             style={{ borderRadius: "50%", objectFit: "cover" }}
+          />
+        ) : (
+          <Avatar
+            size={50}
+            icon={<UserOutlined />}
+            style={{ backgroundColor: "#d9d9d9" }}
           />
         ),
     },

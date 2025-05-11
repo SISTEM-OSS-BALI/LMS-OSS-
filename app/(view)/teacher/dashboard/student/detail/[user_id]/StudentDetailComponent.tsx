@@ -400,10 +400,19 @@ export default function StudentDetailComponent() {
               >
                 {isLoadingStudent ? (
                   <Skeleton.Avatar active size={150} />
-                ) : (
+                ) : filteredStudent?.imageUrl ? (
                   <Avatar
                     size={150}
                     src={filteredStudent?.imageUrl}
+                    style={{
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      border: "2px solid #eaeaea",
+                    }}
+                  />
+                ) : (
+                  <Avatar
+                    size={150}
+                    icon={<UserOutlined />}
                     style={{
                       boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                       border: "2px solid #eaeaea",
