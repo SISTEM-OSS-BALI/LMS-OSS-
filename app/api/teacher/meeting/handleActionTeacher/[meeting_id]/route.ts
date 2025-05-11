@@ -68,8 +68,6 @@ export async function POST(
       teacher_id: user.user_id,
       student_id: getMeeting.student_id,
       reason: reason,
-      startTime: getMeeting?.startTime ?? new Date(),
-      endTime: getMeeting?.endTime ?? new Date(),
       imageUrl: publicImageUrl,
       status: false,
     });

@@ -429,8 +429,6 @@ model TeacherAbsence {
   meeting_id         String
   meeting            Meeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade, name: "TeacherAbsences")
 
-  startTime DateTime
-  endTime   DateTime
   reason    String   @db.LongText
   imageUrl  String   @db.LongText
   is_delete Boolean  @default(false)
