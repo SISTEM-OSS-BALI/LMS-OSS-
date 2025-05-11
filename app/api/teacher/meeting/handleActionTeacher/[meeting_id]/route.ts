@@ -33,9 +33,9 @@ async function sendWhatsAppMessage(
 
 export async function POST(
   request: NextRequest,
-  params: { params: { meeting_id: string } }
+  { params }: { params: { meeting_id: string } }
 ) {
-  const meeting_id = params.params.meeting_id;
+  const meeting_id = params.meeting_id;
   const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {

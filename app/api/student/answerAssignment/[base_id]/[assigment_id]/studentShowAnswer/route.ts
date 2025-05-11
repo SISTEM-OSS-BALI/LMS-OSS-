@@ -4,9 +4,9 @@ import { getData } from "@/app/lib/db/getData";
 import prisma from "@/lib/prisma";
 export async function GET(
   request: NextRequest,
-  params: { params: { assignment_id: string } }
+  { params }: { params: { assignment_id: string } }
 ) {
-  const assignment_id = params.params.assignment_id;
+  const assignment_id = params.assignment_id;
   const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
@@ -14,7 +14,6 @@ export async function GET(
   }
 
   try {
-    
     const stundentAnswer = await getData(
       "studentAnswerAssigment",
       {
@@ -25,7 +24,6 @@ export async function GET(
       },
       "findMany"
     );
-
 
     return NextResponse.json({
       status: 200,

@@ -4,7 +4,7 @@ import { deleteData } from "@/app/lib/db/deleteData";
 import prisma from "@/lib/prisma";
 export async function DELETE(
   request: NextRequest,
-  params: { params: { base_placement_test_id: string } }
+  { params }: { params: { base_placement_test_id: string } }
 ) {
   try {
     const user = await authenticateRequest(request);
@@ -14,7 +14,7 @@ export async function DELETE(
     }
 
     await deleteData("basePlacementTest", {
-      base_id: params.params.base_placement_test_id,
+      base_id: params.base_placement_test_id,
     });
 
     return NextResponse.json({

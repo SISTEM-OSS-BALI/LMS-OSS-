@@ -5,10 +5,10 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  params: { params: { assignment_id: string, base_id : string } }
+  { params }: { params: { assignment_id: string, base_id : string  } }
 ) {
-  const assignment_id = params.params.assignment_id;
-  const base_id = params.params.base_id
+  const assignment_id = params.assignment_id;
+  const base_id = params.base_id
   const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {

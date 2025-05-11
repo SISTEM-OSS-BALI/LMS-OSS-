@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  params: { params: { placement_test_id: string } }
+  { params }: { params: { placement_test_id: string } }
 ) {
   try {
     const body = await request.json();
@@ -19,7 +19,7 @@ export async function POST(
 
     await createData("basePlacementTest", {
       name,
-      placementTestId: params.params.placement_test_id,
+      placementTestId: params.placement_test_id,
     });
 
     return NextResponse.json({

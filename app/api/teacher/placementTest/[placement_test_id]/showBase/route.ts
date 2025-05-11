@@ -9,7 +9,7 @@ dayjs.extend(utc);
 
 export async function GET(
   request: NextRequest,
-  params: { params: { placement_test_id: string } }
+  { params }: { params: { placement_test_id: string } }
 ) {
   const user = await authenticateRequest(request);
 
@@ -22,7 +22,7 @@ export async function GET(
       "basePlacementTest",
       {
         where: {
-          placementTestId: params.params.placement_test_id,
+          placementTestId: params.placement_test_id,
         },
       },
       "findMany"

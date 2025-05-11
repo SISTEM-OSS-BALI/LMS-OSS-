@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 export async function GET(
   request: NextRequest,
-  params: { params: { placement_test_id: string } }
+  { params }: { params: { placement_test_id: string } }
 ) {
   try {
     const getPlacementTest = await prisma.placementTest.findUnique({
       where: {
-        placement_test_id: params.params.placement_test_id,
+        placement_test_id: params.placement_test_id,
       },
     });
 

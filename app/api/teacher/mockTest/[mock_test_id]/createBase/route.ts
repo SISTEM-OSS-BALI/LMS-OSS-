@@ -4,7 +4,7 @@ import { createData } from "@/app/lib/db/createData";
 import prisma from "@/lib/prisma";
 export async function POST(
   request: NextRequest,
-  params: { params: { mock_test_id: string } }
+  { params }: { params: { mock_test_id: string } }
 ) {
   try {
     const body = await request.json();
@@ -18,7 +18,7 @@ export async function POST(
 
     await createData("baseMockTest", {
       type,
-      mock_test_id: params.params.mock_test_id,
+      mock_test_id: params.mock_test_id,
     });
 
     return NextResponse.json({

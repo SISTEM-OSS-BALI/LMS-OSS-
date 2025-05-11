@@ -33,7 +33,7 @@ type FormattedSection =
 
 export async function GET(
   request: NextRequest,
-  params: { params: { placement_test_id: string } }
+  { params }: { params: { placement_test_id: string } }
 ) {
   const user = await authenticateRequest(request);
   if (user instanceof NextResponse) return user;
@@ -43,7 +43,7 @@ export async function GET(
       "basePlacementTest",
       {
         where: {
-          placementTestId: params.params.placement_test_id,
+          placementTestId: params.placement_test_id,
         },
         include: {
           multipleChoices: true, // Soal pilihan ganda

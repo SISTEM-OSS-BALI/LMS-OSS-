@@ -4,7 +4,7 @@ import { deleteData } from "@/app/lib/db/deleteData";
 import prisma from "@/lib/prisma";
 export async function DELETE(
   request: NextRequest,
-  params: { params: { mock_test_id: string } }
+  { params }: { params: { mock_test_id: string } }
 ) {
   try {
     const user = await authenticateRequest(request);
@@ -14,7 +14,7 @@ export async function DELETE(
     }
 
     await deleteData("mockTest", {
-      mock_test_id: params.params.mock_test_id,
+      mock_test_id: params.mock_test_id,
     });
 
     return NextResponse.json({

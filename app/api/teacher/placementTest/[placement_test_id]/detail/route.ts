@@ -9,14 +9,14 @@ dayjs.extend(utc);
 
 export async function GET(
   request: NextRequest,
-  params: { params: { placement_test_id: string } }
+  { params }: { params: { placement_test_id: string } }
 ) {
   const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
     return user;
   }
-  const placement_test_id = params.params.placement_test_id;
+  const placement_test_id = params.placement_test_id;
 
   try {
     const getPlacementTest = await getData(

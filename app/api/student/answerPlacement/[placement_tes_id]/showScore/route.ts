@@ -4,9 +4,9 @@ import { getData } from "@/app/lib/db/getData";
 import prisma from "@/lib/prisma";
 export async function GET(
   request: NextRequest,
-  params: { params: { placement_tes_id: string } }
+  { params }: { params: { placement_tes_id: string } }
 ) {
-  const placement_tes_id = params.params.placement_tes_id;
+  const placement_tes_id = params.placement_tes_id;
   const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {

@@ -4,7 +4,7 @@ import { updateData } from "@/app/lib/db/updateData";
 import prisma from "@/lib/prisma";
 export async function PUT(
   request: NextRequest,
-  params: { params: { base_placement_test_id: string } }
+  { params }: { params: { base_placement_test_id: string } }
 ) {
   try {
     const body = await request.json();
@@ -18,7 +18,7 @@ export async function PUT(
 
     await updateData(
       "basePlacementTest",
-      { base_id: params.params.base_placement_test_id },
+      { base_id: params.base_placement_test_id },
       {
         name,
       }

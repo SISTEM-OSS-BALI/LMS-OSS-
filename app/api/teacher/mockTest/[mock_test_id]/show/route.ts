@@ -9,7 +9,7 @@ dayjs.extend(utc);
 
 export async function GET(
   request: NextRequest,
-  params: { params: { mock_test_id: string } }
+  { params }: { params: { mock_test_id: string } }
 ) {
   const user = await authenticateRequest(request);
 
@@ -22,7 +22,7 @@ export async function GET(
       "baseMockTest",
       {
         where: {
-          mock_test_id: params.params.mock_test_id,
+          mock_test_id: params.mock_test_id,
         },
         orderBy: {
           createdAt: "asc",

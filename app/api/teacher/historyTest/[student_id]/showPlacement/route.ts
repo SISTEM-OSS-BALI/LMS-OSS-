@@ -9,7 +9,7 @@ dayjs.extend(utc);
 
 export async function GET(
   request: NextRequest,
-  params: { params: { student_id: string } }
+  { params }: { params: { student_id: string } }
 ) {
   const user = await authenticateRequest(request);
 
@@ -22,7 +22,7 @@ export async function GET(
       "accessPlacementTest",
       {
         where: {
-          user_id: params.params.student_id,
+          user_id: params.student_id,
         },
         include: {
           placementTest: true,

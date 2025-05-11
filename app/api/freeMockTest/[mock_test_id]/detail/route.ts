@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 export async function GET(
   request: NextRequest,
-  params: { params: { mock_test_id: string } }
+  { params }: { params: { mock_test_id: string } }
 ) {
   try {
     const getMockTest = await prisma.mockTest.findUnique({
       where: {
-        mock_test_id: params.params.mock_test_id,
+        mock_test_id: params.mock_test_id,
       },
     });
 

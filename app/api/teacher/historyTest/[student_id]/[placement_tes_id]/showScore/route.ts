@@ -4,16 +4,11 @@ import { getData } from "@/app/lib/db/getData";
 import prisma from "@/lib/prisma";
 export async function GET(
   request: NextRequest,
-  params: {
-    params: {
-      student_id: string;
-      placement_tes_id: string;
-    };
-  }
+  { params }: { params: { placement_tes_id: string; student_id: string } }
 ) {
-  const placement_tes_id = params.params.placement_tes_id;
+  const placement_tes_id = params.placement_tes_id;
   const user = await authenticateRequest(request);
-  const student_id = params.params.student_id;
+  const student_id = params.student_id;
   if (user instanceof NextResponse) {
     return user;
   }

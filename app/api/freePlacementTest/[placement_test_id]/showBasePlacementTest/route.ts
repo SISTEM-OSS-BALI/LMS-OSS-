@@ -9,14 +9,14 @@ dayjs.extend(utc);
 
 export async function GET(
   request: NextRequest,
-  params: { params: { placement_test_id: string } }
+  { params }: { params: { placement_test_id: string } }
 ) {
   try {
     const getBasePlacementTest = await getData(
       "basePlacementTest",
       {
         where: {
-          placementTestId: params.params.placement_test_id,
+          placementTestId: params.placement_test_id,
         },
         include: {
           multipleChoices: true, // Soal pilihan ganda
