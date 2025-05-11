@@ -5,6 +5,7 @@ import { createData } from "@/app/lib/db/createData";
 import { formatPhoneNumber } from "@/app/lib/utils/notificationHelper";
 import prisma from "@/lib/prisma";
 import dayjs from "dayjs";
+import { uploadBase64Image } from "@/app/lib/utils/uploadHelper";
 
 async function sendWhatsAppMessage(
   apiKey: string,
@@ -59,6 +60,9 @@ export async function POST(
       });
     }
 
+    const fileName = `absence-${Date.now()}.jpg`;
+    const publicImageUrl = await uploadBase64Image(imageUrl, fileName);
+
     await createData("teacherAbsence", {
       meeting_id: meeting_id,
       teacher_id: user.user_id,
@@ -66,7 +70,7 @@ export async function POST(
       reason: reason,
       startTime: getMeeting?.startTime ?? new Date(),
       endTime: getMeeting?.endTime ?? new Date(),
-      imageUrl: imageUrl,
+      imageUrl: publicImageUrl,
       status: false,
     });
 

@@ -7,6 +7,7 @@ import {
   sendWhatsAppMessage,
 } from "@/app/lib/utils/notificationHelper";
 import prisma from "@/lib/prisma";
+import { uploadBase64Image } from "@/app/lib/utils/uploadHelper";
 dayjs.extend(utc);
 
 export async function POST(request: NextRequest) {
@@ -93,6 +94,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const fileName = `reschedule-${Date.now()}.jpg`;
+    const publicImageUrl = await uploadBase64Image(imageUrl, fileName);
+
     const createReschedule = await prisma.rescheduleMeeting.create({
       data: {
         teacher_id,
@@ -108,7 +112,7 @@ export async function POST(request: NextRequest) {
         new_method: method,
         reason,
         option_reason,
-        imageUrl,
+        imageUrl: publicImageUrl,
       },
     });
 
