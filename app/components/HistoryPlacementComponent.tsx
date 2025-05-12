@@ -255,7 +255,15 @@ export const HistoryPlacementComponent: React.FC<
                 {/* Reading (True/False) */}
                 {entry.trueFalseQuestion && (
                   <div>
-                    <Title level={4}>{entry.trueFalseQuestion.question}</Title>
+                    <Title level={4}>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            entry.trueFalseQuestion.question ||
+                            "Pertanyaan tidak tersedia",
+                        }}
+                      />
+                    </Title>
                     <Radio.Group
                       value={entry.studentAnswer}
                       style={{ display: "block", marginBottom: 10 }}
