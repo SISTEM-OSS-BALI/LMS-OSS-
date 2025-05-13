@@ -187,20 +187,33 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    await Promise.all(
-      messages.map((msg) =>
-        sendWhatsAppMessage(apiKey, numberKey, msg.phone, msg.text)
-      )
-    );
+    let waError = false;
 
-    return NextResponse.json({ status: 200, error: false, message: "Success" });
+    try {
+      await Promise.all(
+        messages.map((msg) =>
+          sendWhatsAppMessage(apiKey, numberKey, msg.phone, msg.text)
+        )
+      );
+    } catch (err) {
+      waError = true;
+    }
+
+    return NextResponse.json({
+      status: 200,
+      error: false,
+      message: waError
+        ? "Jadwal berhasil dibuat, tetapi notifikasi WhatsApp gagal dikirim."
+        : "Jadwal berhasil dibuat dan notifikasi WhatsApp berhasil dikirim.",
+    });
   } catch (error) {
-    console.error("Error:", error);
-    return new NextResponse(
-      JSON.stringify({ error: "Internal Server Error" }),
+    return NextResponse.json(
+      {
+        status: 500,
+        error: true,
+        message: "Terjadi kesalahan saat membuat jadwal.",
+      },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -442,11 +442,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         return;
       }
 
-      if (!response.ok) {
-        throw new Error("Terjadi kesalahan saat menambahkan jadwal");
-      }
-
-      notification.success({ message: "Jadwal Berhasil Ditambahkan" });
+      const responseData = await response.json();
+      notification.success({ message: responseData.message });
       setCurrentStep(4);
 
       await mutateShowMeeting();
@@ -459,10 +456,9 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     } catch (error) {
       if (error instanceof Error) {
         message.error(
-          error.message || "Terjadi kesalahan saat menambahkan jadwal"
+          error.message ||
+            "Terjadi kesalahan saat menambahkan jadwal, silahkan hubungi admin"
         );
-      } else {
-        message.error("Terjadi kesalahan saat menambahkan jadwal");
       }
     } finally {
       setLoading(false);
@@ -607,11 +603,9 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         return;
       }
 
-      if (!response.ok) {
-        throw new Error("Terjadi kesalahan saat menambahkan jadwal");
-      }
+      const responseData = await response.json();
 
-      notification.success({ message: "Jadwal Berhasil Direschedule" });
+      notification.success({ message: responseData.message });
 
       await mutateShowMeeting();
       await mutateShowMeetingById();
@@ -622,10 +616,9 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     } catch (error) {
       if (error instanceof Error) {
         message.error(
-          error.message || "Terjadi kesalahan saat menambahkan jadwal"
+          error.message ||
+            "Terjadi kesalahan saat menambahkan jadwal, silahkan hubungi admin"
         );
-      } else {
-        message.error("Terjadi kesalahan saat menambahkan jadwal");
       }
     } finally {
       setLoading(false);
@@ -722,7 +715,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     } catch (error) {
       notification.error({
         message: "Gagal Menambahkan Action",
-        description: "Pastikan Gambar Tercompres, jika tidak bisa silakan hubungi admin",
+        description:
+          "Pastikan Gambar Tercompres, jika tidak bisa silakan hubungi admin",
       });
     } finally {
       setLoading(false);

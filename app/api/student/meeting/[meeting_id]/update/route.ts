@@ -199,28 +199,33 @@ export async function PUT(
         }\n🔗 *Link:* ${meetLink || "-"}\n\nHarap periksa jadwal terbaru.`,
       },
     ];
+let waError = false;
 
-    await Promise.all(
-      messages.map((msg) =>
-        sendWhatsAppMessage(apiKey, numberKey, msg.phone, msg.text)
-      )
-    );
+    try {
+      await Promise.all(
+        messages.map((msg) =>
+          sendWhatsAppMessage(apiKey, numberKey, msg.phone, msg.text)
+        )
+      );
+    } catch (err) {
+      waError = true;
+    }
 
     return NextResponse.json({
       status: 200,
       error: false,
-      data: "Success",
+      message: waError
+        ? "Jadwal berhasil dibuat, tetapi notifikasi WhatsApp gagal dikirim."
+        : "Jadwal berhasil dibuat dan notifikasi WhatsApp berhasil dikirim.",
     });
   } catch (error) {
-    console.error("Error updating meeting:", error);
-    return new NextResponse(
-      JSON.stringify({ error: "Internal Server Error" }),
+    return NextResponse.json(
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+        error: true,
+        message: "Terjadi kesalahan saat membuat jadwal.",
+      },
+      { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
