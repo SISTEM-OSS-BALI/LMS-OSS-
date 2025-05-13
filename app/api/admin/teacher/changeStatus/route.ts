@@ -58,12 +58,12 @@ export async function POST(request: NextRequest) {
 
     const student = await getData(
       "user",
-      { where: { user_id: meeting.student_id } },
+      { where: { user_id: teacherAbsence.student_id } },
       "findFirst"
     );
     const teacher = await getData(
       "user",
-      { where: { user_id: meeting.teacher_id } },
+      { where: { user_id: teacherAbsence.teacher_id } },
       "findFirst"
     );
 
