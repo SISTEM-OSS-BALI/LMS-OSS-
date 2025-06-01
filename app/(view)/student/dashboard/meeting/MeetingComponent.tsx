@@ -376,7 +376,7 @@ export default function MeetingComponent() {
             </Select>
           </Form.Item>
 
-          <Form.Item
+          {/* <Form.Item
             shouldUpdate={(prevValues, currentValues) =>
               prevValues.method !== currentValues.method
             }
@@ -397,7 +397,7 @@ export default function MeetingComponent() {
                 </Form.Item>
               ) : null;
             }}
-          </Form.Item>
+          </Form.Item> */}
 
           <Form.Item>
             <Button type="primary" htmlType="submit" block loading={loading}>
@@ -490,7 +490,7 @@ export default function MeetingComponent() {
           </Form.Item>
 
           {/* Input platform */}
-          <Form.Item
+          {/* <Form.Item
             shouldUpdate={(prevValues, currentValues) =>
               prevValues.method !== currentValues.method
             }
@@ -511,7 +511,7 @@ export default function MeetingComponent() {
                 </Form.Item>
               ) : null;
             }}
-          </Form.Item>
+          </Form.Item> */}
 
           {/* Tombol submit */}
           <Form.Item>
@@ -640,7 +640,7 @@ export default function MeetingComponent() {
                 </Select>
               </Form.Item>
 
-              <Form.Item
+              {/* <Form.Item
                 shouldUpdate={(prevValues, currentValues) =>
                   prevValues.method !== currentValues.method
                 }
@@ -663,7 +663,7 @@ export default function MeetingComponent() {
                     </Form.Item>
                   ) : null
                 }
-              </Form.Item>
+              </Form.Item> */}
             </Col>
 
             {/* Bagian Kanan - Keterangan & Bukti */}

@@ -211,7 +211,9 @@ export async function POST(request: NextRequest) {
       {
         status: 500,
         error: true,
-        message: "Terjadi kesalahan saat membuat jadwal.",
+        message: `Terjadi kesalahan saat membuat jadwal. Error: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
       },
       { status: 500 }
     );

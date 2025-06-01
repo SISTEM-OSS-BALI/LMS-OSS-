@@ -421,7 +421,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         date: selectedDate,
         method: values.method,
         time: values.time,
-        platform: values.platform,
+        platform: "ZOOM",
       };
 
       const response = await fetch(`/api/student/meeting/create`, {
@@ -567,7 +567,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         date: selectedDate,
         method: values.method,
         time: values.time,
-        platform: values.platform,
+        platform: "ZOOM",
       };
 
       const response = await fetch(`/api/student/meeting/${meetingId}/update`, {
@@ -677,7 +677,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       date: selectedDate,
       method: values.method,
       time: values.time,
-      platform: values.platform,
+      platform: "ZOOM",
       reason: values.reason,
       option_reason: values.option_reason,
       imageUrl: imageUrl,
