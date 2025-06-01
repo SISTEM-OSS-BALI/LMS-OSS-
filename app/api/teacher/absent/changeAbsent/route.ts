@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
   try {
     const { meeting_id, absent, student_id } = await request.json();
 
-    // ✅ Ambil data meeting berdasarkan ID
     const meetingData = await prisma.meeting.findUnique({
       where: { meeting_id },
       select: {
@@ -66,7 +65,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // ✅ Ambil data siswa & program
     const studentData = await prisma.user.findUnique({
       where: { user_id: student_id },
       select: {
@@ -99,7 +97,6 @@ export async function POST(request: NextRequest) {
     let updatedCountProgramStudent = (studentData.count_program ?? 0) + 1;
     let updatedCountProgramTeacher = (teacherData?.count_program ?? 0) + 1;
 
-    // ✅ Kirim notifikasi absensi jika absent = true
     if (absent) {
       if (
         !meetingData.progress_student ||

@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
 
   if (user instanceof NextResponse) {
-    return user; // Jika pengguna tidak terautentikasi
+    return user;
   }
 
   const body = await request.json();
@@ -64,38 +64,34 @@ export async function POST(request: NextRequest) {
   }
 }
 
-
 async function generateCertificateNumber() {
-  const currentYear = new Date().getFullYear(); // Tahun saat ini (2024, 2025, dll.)
+  const currentYear = new Date().getFullYear();
 
-  // 🔹 1️⃣ Dapatkan nomor sertifikat terakhir dari database
   const lastCertificate = await prisma.certificate.findFirst({
     where: {
       no_certificate: {
-        startsWith: `OSS.SERTIF/`, // Hanya cari yang memiliki format ini
+        startsWith: `OSS.SERTIF/`,
       },
     },
     orderBy: {
-      no_certificate: "desc", // Urutkan dari yang terbesar
+      no_certificate: "desc", 
     },
     select: {
       no_certificate: true,
     },
   });
 
-  let newNumber = 237; // Default jika tidak ada sertifikat sebelumnya
+  let newNumber = 237;
 
-  // 🔹 2️⃣ Jika ada sertifikat sebelumnya, ambil nomor terakhir & tambahkan 1
   if (lastCertificate) {
     const match = lastCertificate.no_certificate.match(
       /OSS\.SERTIF\/(\d+)\/EAP\/\d+/
     );
 
     if (match && match[1]) {
-      newNumber = parseInt(match[1], 10) + 1; // Ambil angka & increment
+      newNumber = parseInt(match[1], 10) + 1;
     }
   }
 
-  // 🔹 3️⃣ Format nomor sertifikat sesuai aturan
   return `OSS.SERTIF/${newNumber}/EAP/${currentYear}`;
 }

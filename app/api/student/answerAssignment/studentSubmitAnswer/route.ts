@@ -12,19 +12,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Get the total number of questions for the current assignment
     const totalQuestions = await prisma.multipleChoice.count({
       where: {
         assignment_id,
       },
     });
 
-    // Looping for each answer submitted by the student
     await Promise.all(
       selectedData.map(async (answer: any) => {
         const { mcq_id, selectedAnswer } = answer;
 
-        // Fetching the multiple-choice question
         const multipleChoice = await getData(
           "multipleChoice",
           {
@@ -39,13 +36,10 @@ export async function POST(request: NextRequest) {
           throw new Error("Multiple Choice not found");
         }
 
-        // Check if the answer is correct
         const isCorrect = multipleChoice.correctAnswer === selectedAnswer;
 
-        // Calculate score
         const score = isCorrect ? 1 : 0;
 
-        // Update or create the student's answer
         const existingAnswer = await prisma.studentAnswerAssigment.findFirst({
           where: {
             student_id: user.user_id,
@@ -55,7 +49,6 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingAnswer) {
-          // Update the existing answer if found
           await prisma.studentAnswerAssigment.update({
             where: {
               answer_id: existingAnswer.answer_id,
@@ -68,7 +61,6 @@ export async function POST(request: NextRequest) {
             },
           });
         } else {
-          // Create a new answer if not found
           await prisma.studentAnswerAssigment.create({
             data: {
               student_id: user.user_id,
@@ -84,7 +76,6 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    // Recalculate the total score for the current assignment
     const updatedScores = await prisma.studentAnswerAssigment.findMany({
       where: {
         student_id: user.user_id,
@@ -100,13 +91,10 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    // Calculate the percentage score
     const percentageScore = (totalScore / totalQuestions) * 100 || 0;
 
-    // Determine if the assignment is completed
     const completed = percentageScore >= 50;
 
-    // Check if an assignment progress entry already exists
     const existingProgress = await prisma.assignmentProgress.findUnique({
       where: {
         user_id_base_id: {
@@ -117,7 +105,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingProgress) {
-      // Update the existing progress entry
       await prisma.assignmentProgress.update({
         where: { progress_id: existingProgress.progress_id },
         data: {
@@ -126,7 +113,6 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      // Create a new progress entry if not found
       await prisma.assignmentProgress.create({
         data: {
           user_id: user.user_id,
@@ -166,7 +152,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Count completed assignments
     const completedAssignments = await prisma.assignmentProgress.count({
       where: {
         user_id: user.user_id,
@@ -182,7 +167,6 @@ export async function POST(request: NextRequest) {
     const progressPercentage =
       totalItems > 0 ? ((completedItems / totalItems) * 100).toFixed(2) : 0;
 
-    // If the assignment is completed, update the CourseProgress
     if (completed) {
       const existingCourseProgress = await prisma.courseProgress.findUnique({
         where: {
@@ -194,7 +178,6 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingCourseProgress) {
-        // Update the course progress entry
         await prisma.courseProgress.update({
           where: {
             progress_course_id: existingCourseProgress.progress_course_id,
@@ -203,12 +186,10 @@ export async function POST(request: NextRequest) {
             progress: Number(progressPercentage),
             totalMaterialAssigement: totalAssignments,
             completed: completedItems === totalItems,
-            currentMaterialAssigmentBaseId: base_id, // or true if course is fully completed
-            // Optionally, you can update other progress-related fields here
+            currentMaterialAssigmentBaseId: base_id, 
           },
         });
       } else {
-        // Create a new course progress entry if not found
         await prisma.courseProgress.create({
           data: {
             user_id: user.user_id,

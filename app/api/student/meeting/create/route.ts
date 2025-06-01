@@ -3,7 +3,7 @@ import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import prisma from "@/lib/prisma";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import schedule from "node-schedule";
+
 import {
   createGoogleMeetEvent,
   getOAuthClient,

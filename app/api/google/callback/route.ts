@@ -11,5 +11,5 @@ export async function GET(req: NextRequest) {
 
   console.log("Refresh Token:", tokens.refresh_token);
 
-  return NextResponse.redirect("/dashboard");
+  return NextResponse.redirect(new URL("/dashboard", req.url));
 }
