@@ -416,12 +416,18 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const handleSubmit = async (values: any) => {
     setLoading(true);
     try {
+      let platform;
+      if (values.method === "OFFLINE") {
+        platform = null;
+      } else {
+        platform = "ZOOM";
+      }
       const payload = {
         teacher_id: selectedTeacher?.user_id,
         date: selectedDate,
         method: values.method,
         time: values.time,
-        platform: "ZOOM",
+        platform: platform,
       };
 
       const response = await fetch(`/api/student/meeting/create`, {
@@ -562,12 +568,19 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const handleSubmitReschedule = async (values: any) => {
     setLoading(true);
     try {
+      let platform;
+      if (values.method === "OFFLINE") {
+        platform = null;
+      } else {
+        platform = "ZOOM";
+      }
+
       const payload = {
         teacher_id: selectedTeacher?.user_id,
         date: selectedDate,
         method: values.method,
         time: values.time,
-        platform: "ZOOM",
+        platform: platform,
       };
 
       const response = await fetch(`/api/student/meeting/${meetingId}/update`, {
@@ -670,6 +683,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       return;
     }
 
+    let platform;
+    if (values.method === "OFFLINE") {
+      platform = null;
+    } else {
+      platform = "ZOOM";
+    }
+
     // Buat payload sesuai skema `RescheduleMeeting`
     const payload = {
       teacher_id: selectedTeacher?.user_id,
@@ -677,7 +697,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       date: selectedDate,
       method: values.method,
       time: values.time,
-      platform: "ZOOM",
+      platform: platform,
       reason: values.reason,
       option_reason: values.option_reason,
       imageUrl: imageUrl,
