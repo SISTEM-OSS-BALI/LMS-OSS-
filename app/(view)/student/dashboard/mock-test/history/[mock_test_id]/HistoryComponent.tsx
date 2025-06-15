@@ -11,7 +11,13 @@ export default function HistoryComponent() {
     showScoreData,
   } = useHistoryViewModel();
 
-  const { level = "", score = 0, percentage = 0 } = showScoreData?.data || {};
+
+
+  const {
+    level = "",
+    totalScore = 0,
+    percentageScore = 0,
+  } = showScoreData?.data || {};
 
   if (showScoreDataLoading || studentAnswerLoading) {
     return (
@@ -42,8 +48,8 @@ export default function HistoryComponent() {
       <HistoryMockTestComponent
         data={studentAnswerData?.data || []}
         level={level}
-        totalScore={score}
-        percentageScore={percentage}
+        totalScore={totalScore}
+        percentageScore={percentageScore}
       />
     </div>
   );

@@ -36,8 +36,6 @@ export default function CoursesTeacherComponent() {
     handleOk,
     handleDelete,
     handleUpdate,
-    courseData,
-    courseError,
     selectedId,
     filteredCourses,
     form,

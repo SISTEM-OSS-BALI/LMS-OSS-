@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (courseProgress.completed === true) {
+    if (courseProgress.completed) {
       await prisma.courseEnrollment.updateMany({
         where: {
           user_id: user.user_id,

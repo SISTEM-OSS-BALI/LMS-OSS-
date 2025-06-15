@@ -189,6 +189,7 @@ export default function ShowMaterialComponent() {
                               controls
                               width={screens.xs ? "100%" : 700}
                               height={screens.xs ? 200 : 500}
+                              style={{ maxWidth: "100%", margin: "0 auto" }}
                             />
                           ) : (
                             <a href={item.value} target="_blank">
@@ -226,6 +227,14 @@ export default function ShowMaterialComponent() {
                 overflow: "auto",
               }}
             >
+              <h1>Progress</h1>
+              <Progress
+                style={{ marginBottom: "20px" }}
+                percent={progressCourse?.progress ?? 0}
+                status="active"
+                showInfo={true}
+                strokeColor="#4CAF50"
+              />
               <Title level={4}>Daftar Materi</Title>
               <Menu
                 mode="inline"
@@ -266,6 +275,14 @@ export default function ShowMaterialComponent() {
               onClose={() => setDrawerVisible(false)}
               open={drawerVisible}
             >
+              <h1>Progress</h1>
+              <Progress
+                style={{ marginBottom: "20px" }}
+                percent={progressCourse?.progress ?? 0}
+                status="active"
+                showInfo={true}
+                strokeColor="#4CAF50"
+              />
               <Menu
                 mode="inline"
                 selectedKeys={[base_id]}

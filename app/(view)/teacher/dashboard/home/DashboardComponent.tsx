@@ -27,17 +27,12 @@ import interactionPlugin from "@fullcalendar/interaction";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import locale from "dayjs/locale/id";
+import { Meeting } from "@prisma/client";
+import Link from "next/link";
 dayjs.extend(utc);
 dayjs.locale(locale);
 
 const { useBreakpoint } = Grid;
-
-interface Meeting {
-  meeting_id: string;
-  method: string;
-  startTime: string;
-  endTime: string;
-}
 
 const { Title, Text } = Typography;
 
@@ -167,10 +162,34 @@ export default function DashboardComponent() {
             <Descriptions.Item label="Metode Meeting">
               {selectedEvent.method === "ONLINE" ? (
                 <>
-                  <VideoCameraOutlined
-                    style={{ color: "#1890ff", marginRight: 8 }}
-                  />
-                  Online Meeting
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <VideoCameraOutlined
+                      style={{
+                        color: "#1890ff",
+                        marginRight: "8px",
+                        fontSize: "16px",
+                      }}
+                    />
+                    <span style={{ fontWeight: "bold", fontSize: "14px" }}>
+                      Online Meeting
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#555" }}>
+                    Link:{" "}
+                    <Link
+                      href={selectedEvent.meetLink || ""}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {selectedEvent.meetLink}
+                    </Link>
+                  </p>
                 </>
               ) : (
                 <>

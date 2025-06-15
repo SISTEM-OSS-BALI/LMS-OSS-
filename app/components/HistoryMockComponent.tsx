@@ -244,14 +244,26 @@ export const HistoryMockTestComponent: React.FC<HistoryMockTestProps> = ({
                     <Title level={4}>{entry.readingQuestion.question}</Title>
                     <Radio.Group value={entry.studentAnswer}>
                       {entry.readingQuestion.options?.map((option, i) => (
-                        <Radio key={i} value={option}>
+                        <Radio
+                          key={i}
+                          value={option}
+                          style={{
+                            display: "block",
+                            background:
+                              option === entry.studentAnswer
+                                ? option === entry.readingQuestion?.answer
+                                  ? "#d4edda"
+                                  : "#f8d7da"
+                                : "inherit",
+                            padding: "8px 15px",
+                            borderRadius: 5,
+                            fontWeight: "bold",
+                          }}
+                        >
                           {option}
                         </Radio>
                       ))}
                     </Radio.Group>
-                    <Text strong>
-                      Jawaban Benar: {entry.readingQuestion.answer}
-                    </Text>
                   </>
                 )}
 
@@ -280,14 +292,26 @@ export const HistoryMockTestComponent: React.FC<HistoryMockTestProps> = ({
                     <Title level={4}>{entry.listeningQuestion.question}</Title>
                     <Radio.Group value={entry.studentAnswer}>
                       {entry.listeningQuestion.options?.map((option, i) => (
-                        <Radio key={i} value={option}>
+                        <Radio
+                          key={i}
+                          value={option}
+                          style={{
+                            display: "block",
+                            background:
+                              option === entry.studentAnswer
+                                ? option === entry.listeningQuestion?.answer
+                                  ? "#d4edda"
+                                  : "#f8d7da"
+                                : "inherit",
+                            padding: "8px 15px",
+                            borderRadius: 5,
+                            fontWeight: "bold",
+                          }}
+                        >
                           {option}
                         </Radio>
                       ))}
                     </Radio.Group>
-                    <Text strong>
-                      Jawaban Benar: {entry.listeningQuestion.answer}
-                    </Text>
                   </>
                 )}
 
@@ -303,14 +327,26 @@ export const HistoryMockTestComponent: React.FC<HistoryMockTestProps> = ({
                     <Title level={4}>{entry.writingQuestion.question}</Title>
                     <Radio.Group value={entry.studentAnswer}>
                       {entry.writingQuestion.options?.map((option, i) => (
-                        <Radio key={i} value={option}>
+                        <Radio
+                          key={i}
+                          value={option}
+                          style={{
+                            display: "block",
+                            background:
+                              option === entry.studentAnswer
+                                ? option === entry.writingQuestion?.answer
+                                  ? "#d4edda"
+                                  : "#f8d7da"
+                                : "inherit",
+                            padding: "8px 15px",
+                            borderRadius: 5,
+                            fontWeight: "bold",
+                          }}
+                        >
                           {option}
                         </Radio>
                       ))}
                     </Radio.Group>
-                    <Text strong>
-                      Jawaban Benar: {entry.writingQuestion.answer}
-                    </Text>
                   </>
                 )}
 

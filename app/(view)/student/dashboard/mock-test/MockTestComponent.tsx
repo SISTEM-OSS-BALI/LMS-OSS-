@@ -160,24 +160,39 @@ export default function MockTestComponent() {
                 Navigasi Section
               </Title>
               <Space direction="vertical" style={{ width: "100%" }}>
-                {sectionData.map((section, index) => {
-                  return (
-                    <Button
-                      key={index}
-                      type={
-                        selectedSectionIndex === index ? "primary" : "default"
-                      }
-                      onClick={() => {
-                        setSelectedSectionIndex(index);
-                        setSelectedQuestion(0);
-                      }}
-                      block
-                    >
-                      {section.type}
-                    </Button>
-                  );
-                })}
+                {sectionData.map((section, index) => (
+                  <Button
+                    key={index}
+                    type={
+                      selectedSectionIndex === index ? "primary" : "default"
+                    }
+                    onClick={() => {
+                      setSelectedSectionIndex(index);
+                      setSelectedQuestion(0);
+                    }}
+                    block
+                  >
+                    {section.type}
+                  </Button>
+                ))}
               </Space>
+
+              {/* ✅ Tombol Kirim Jawaban di bawah navigasi */}
+              {isAllSectionsCompleted && (
+                <Button
+                  type="primary"
+                  onClick={showConfirmSubmit}
+                  loading={loading}
+                  block
+                  style={{
+                    marginTop: "24px",
+                    fontWeight: "bold",
+                    padding: "12px 24px",
+                  }}
+                >
+                  Kirim Jawaban
+                </Button>
+              )}
             </Card>
           </Col>
         ) : (
@@ -195,7 +210,6 @@ export default function MockTestComponent() {
           />
         )}
       </Row>
-
 
       {/* Drawer Navigasi Section untuk Mobile */}
       <Drawer
@@ -224,22 +238,6 @@ export default function MockTestComponent() {
       </Drawer>
 
       {/* Tombol Kirim Jawaban */}
-      {isAllSectionsCompleted && (
-        <Button
-          type="primary"
-          onClick={showConfirmSubmit}
-          style={{
-            marginTop: "20px",
-            width: screens.xs ? "100%" : "auto",
-            display: "block",
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-          loading={loading}
-        >
-          Kirim Jawaban
-        </Button>
-      )}
     </div>
   );
 }

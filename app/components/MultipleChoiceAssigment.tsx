@@ -216,106 +216,164 @@ const MultipleChoiceAssignment: React.FC<MultipleChoiceAssignmentProps> = ({
         />
       ) : (
         <div style={{ padding: screens.xs ? "20px" : "0px" }}>
-          {/* Timer dengan desain lebih menarik */}
-          <Title level={4} style={{ textAlign: "center", fontWeight: "bold" }}>
-            Sisa Waktu:{" "}
-            <span style={{ color: "#d48806" }}>
-              {formatTime(timeRemaining)}
-            </span>
-          </Title>
-
-          {/* Navigasi soal */}
-          <Flex justify="center" gap={8} style={{ marginBottom: "16px" }}>
-            {shuffledData.map((_, index) => (
-              <Button
-                key={index}
-                shape="round"
-                size="large"
-                style={{
-                  backgroundColor: selectedOptions[shuffledData[index].mcq_id]
-                    ? "#d48806"
-                    : "#f5f5f5",
-                  color: selectedOptions[shuffledData[index].mcq_id]
-                    ? "#fff"
-                    : "#333",
-                  border: "1px solid #d9d9d9",
-                  fontWeight: "bold",
-                }}
-                onClick={() => setCurrentQuestionIndex(index)}
-              >
-                {index + 1}
-              </Button>
-            ))}
+          <Flex justify="space-between">
+            <Title level={4} style={{ fontWeight: "bold", marginBottom: "20px" }}>
+              Assignment
+            </Title>
+            <Title level={4}>
+              Sisa Waktu:{" "}
+              <span style={{ color: "#d48806" }}>
+                {formatTime(timeRemaining)}
+              </span>
+            </Title>
           </Flex>
 
-          {/* Soal & opsi jawaban */}
-          <Card
-            style={{
-              marginTop: "16px",
-              borderRadius: "12px",
-              padding: "20px",
-              boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title
-              level={5}
-              style={{ marginBottom: "10px", fontWeight: "bold" }}
-            >
-              <span
-                dangerouslySetInnerHTML={{
-                  __html: shuffledData[currentQuestionIndex]?.question,
+          <Row gutter={24} style={{ marginTop: "20px" }}>
+            <Col span={18}>
+              <Card
+                style={{
+                  borderRadius: "12px",
+                  padding: "24px",
+                  boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.05)",
+                  backgroundColor: "#ffffff",
+                  border: "1px solid #f0f0f0",
                 }}
-              />
-            </Title>
-
-            <Radio.Group
-              onChange={(e) =>
-                handleOptionChange(shuffledData[currentQuestionIndex].mcq_id, e)
-              }
-              style={{ width: "100%" }}
-            >
-              <Space
-                direction="vertical"
-                size="large"
-                style={{ width: "100%" }}
               >
-                {shuffledData[currentQuestionIndex]?.options.map(
-                  (option, index) => (
-                    <Radio.Button
-                      key={index}
-                      value={option}
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        fontSize: "16px",
-                        border: "1px solid #d9d9d9",
-                        background:
-                          selectedOptions[
-                            shuffledData[currentQuestionIndex].mcq_id
-                          ] === option
-                            ? "#d48806"
-                            : "#fff",
-                        color:
-                          selectedOptions[
-                            shuffledData[currentQuestionIndex].mcq_id
-                          ] === option
-                            ? "#fff"
-                            : "#333",
-                      }}
-                    >
-                      {option}
-                    </Radio.Button>
-                  )
-                )}
-              </Space>
-            </Radio.Group>
-          </Card>
+                <Title
+                  level={5}
+                  style={{
+                    marginBottom: "16px",
+                    fontWeight: "600",
+                    color: "#333",
+                  }}
+                >
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: shuffledData[currentQuestionIndex]?.question,
+                    }}
+                  />
+                </Title>
+
+                <Radio.Group
+                  onChange={(e) =>
+                    handleOptionChange(
+                      shuffledData[currentQuestionIndex].mcq_id,
+                      e
+                    )
+                  }
+                  value={
+                    selectedOptions[shuffledData[currentQuestionIndex].mcq_id]
+                  }
+                  style={{ width: "100%" }}
+                >
+                  <Space
+                    direction="vertical"
+                    style={{ width: "100%" }}
+                    size={12}
+                  >
+                    {shuffledData[currentQuestionIndex]?.options.map(
+                      (option, index) => (
+                        <Radio
+                          key={index}
+                          value={option}
+                          style={{
+                            padding: "14px 20px",
+                            border: "1px solid #d9d9d9",
+                            borderRadius: "8px",
+                            fontSize: "16px",
+                            width: "100%",
+                            backgroundColor:
+                              selectedOptions[
+                                shuffledData[currentQuestionIndex].mcq_id
+                              ] === option
+                                ? "#d48806"
+                                : "#fff",
+                            color:
+                              selectedOptions[
+                                shuffledData[currentQuestionIndex].mcq_id
+                              ] === option
+                                ? "#fff"
+                                : "#333",
+                            fontWeight:
+                              selectedOptions[
+                                shuffledData[currentQuestionIndex].mcq_id
+                              ] === option
+                                ? 600
+                                : 400,
+                            boxShadow:
+                              selectedOptions[
+                                shuffledData[currentQuestionIndex].mcq_id
+                              ] === option
+                                ? "0 2px 6px rgba(0, 0, 0, 0.1)"
+                                : "none",
+                            cursor: "pointer",
+                            transition: "all 0.3s",
+                          }}
+                        >
+                          {option}
+                        </Radio>
+                      )
+                    )}
+                  </Space>
+                </Radio.Group>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Flex>
+                <Card
+                  style={{
+                    padding: "12px",
+                    borderRadius: "16px",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                    border: "1px solid #f0f0f0",
+                  }}
+                >
+                  <Space size="small">
+                    {shuffledData.map((_, index) => {
+                      const isAnswered =
+                        !!selectedOptions[shuffledData[index].mcq_id];
+                      const isCurrent = index === currentQuestionIndex;
+
+                      return (
+                        <Button
+                          key={index}
+                          shape="circle"
+                          size="large"
+                          onClick={() => setCurrentQuestionIndex(index)}
+                          style={{
+                            width: 42,
+                            height: 42,
+                            backgroundColor: isCurrent
+                              ? "#d48806"
+                              : isAnswered
+                              ? "#ffd666"
+                              : "#f5f5f5",
+                            color: isCurrent || isAnswered ? "#fff" : "#333",
+                            fontWeight: "bold",
+                            border: "none",
+                            boxShadow:
+                              isCurrent || isAnswered
+                                ? "0 2px 8px rgba(0,0,0,0.1)"
+                                : "none",
+                            transition: "all 0.3s ease",
+                          }}
+                        >
+                          {index + 1}
+                        </Button>
+                      );
+                    })}
+                  </Space>
+                </Card>
+              </Flex>
+            </Col>
+          </Row>
+
+          {/* Navigasi soal */}
+
+          {/* Soal & opsi jawaban */}
 
           {/* Tombol Submit */}
-          <Flex justify="center" style={{ marginTop: "20px" }}>
+          <Flex justify="end" style={{ marginTop: "20px" }}>
             <Popconfirm
               title="Apakah Anda yakin ingin submit jawaban Anda?"
               onConfirm={handleSubmit}

@@ -44,8 +44,8 @@ interface StudentAnswerMockTestResponse {
 // ✅ Interface untuk respons skor
 interface ShowScoreResponse {
   data: {
-    score: number;
-    percentage: number;
+    totalScore: number;
+    percentageScore: number;
     level: string;
   };
 }
