@@ -44,51 +44,73 @@ export async function createGoogleMeetEvent(
 }
 
 export async function getZoomAccessToken() {
-  const tokenUrl = "https://zoom.us/oauth/token";
+  const tokenUrl = `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${process.env.ZOOM_ACCOUNT_ID}`;
+
   const response = await axios.post(
     tokenUrl,
-    new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: process.env.ZOOM_REFRESH_TOKEN!,
-    }),
+    {},
     {
       headers: {
         Authorization: `Basic ${Buffer.from(
           `${process.env.ZOOM_CLIENT_ID}:${process.env.ZOOM_CLIENT_SECRET}`
         ).toString("base64")}`,
-        "Content-Type": "application/x-www-form-urlencoded",
       },
     }
   );
+
+  console.log(response.data.access_token);
 
   return response.data.access_token;
 }
 
 export async function createZoomMeeting(topic: string, startTime: Date) {
-  const accessToken = await getZoomAccessToken();
+  try {
+    console.log("[Zoom] Generating access token...");
+    const accessToken = await getZoomAccessToken();
+    console.log("[Zoom] Access token berhasil didapatkan.");
 
-  const meetingData = {
-    topic,
-    type: 2,
-    start_time: startTime.toISOString(),
-    duration: 60,
-    timezone: "Asia/Jakarta",
-    settings: {
-      host_video: true,
-      participant_video: true,
-      join_before_host: true,
-      mute_upon_entry: true,
-      audio: "voip",
-    },
-  };
+    const meetingData = {
+      topic,
+      type: 2, // Scheduled meeting
+      start_time: startTime.toISOString(),
+      duration: 60,
+      timezone: "Asia/Jakarta",
+      settings: {
+        host_video: true,
+        participant_video: true,
+        join_before_host: true,
+        mute_upon_entry: true,
+        audio: "voip",
+      },
+    };
 
-  const response = await axios.post(
-    "https://api.zoom.us/v2/users/me/meetings",
-    meetingData,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    console.log(
+      "[Zoom] Mengirim data meeting:",
+      JSON.stringify(meetingData, null, 2)
+    );
+
+    const response = await axios.post(
+      "https://api.zoom.us/v2/users/me/meetings",
+      meetingData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("[Zoom] Meeting berhasil dibuat:", response.data);
+    return response.data.join_url;
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      console.error("[Zoom] Gagal membuat meeting - Axios error:");
+      console.error("Status:", error.response?.status);
+      console.error("Data:", error.response?.data);
+    } else {
+      console.error("[Zoom] Gagal membuat meeting - General error:");
+      console.error(error);
     }
-  );
-
-  return response.data.join_url;
+    throw new Error("Gagal membuat Zoom meeting.");
+  }
 }
