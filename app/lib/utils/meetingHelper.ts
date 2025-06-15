@@ -58,20 +58,16 @@ export async function getZoomAccessToken() {
     }
   );
 
-  console.log(response.data.access_token);
-
   return response.data.access_token;
 }
 
 export async function createZoomMeeting(topic: string, startTime: Date) {
   try {
-    console.log("[Zoom] Generating access token...");
     const accessToken = await getZoomAccessToken();
-    console.log("[Zoom] Access token berhasil didapatkan.");
 
     const meetingData = {
       topic,
-      type: 2, // Scheduled meeting
+      type: 2,
       start_time: startTime.toISOString(),
       duration: 60,
       timezone: "Asia/Jakarta",
@@ -84,11 +80,6 @@ export async function createZoomMeeting(topic: string, startTime: Date) {
       },
     };
 
-    console.log(
-      "[Zoom] Mengirim data meeting:",
-      JSON.stringify(meetingData, null, 2)
-    );
-
     const response = await axios.post(
       "https://api.zoom.us/v2/users/me/meetings",
       meetingData,
@@ -100,17 +91,8 @@ export async function createZoomMeeting(topic: string, startTime: Date) {
       }
     );
 
-    console.log("[Zoom] Meeting berhasil dibuat:", response.data);
     return response.data.join_url;
   } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      console.error("[Zoom] Gagal membuat meeting - Axios error:");
-      console.error("Status:", error.response?.status);
-      console.error("Data:", error.response?.data);
-    } else {
-      console.error("[Zoom] Gagal membuat meeting - General error:");
-      console.error(error);
-    }
     throw new Error("Gagal membuat Zoom meeting.");
   }
 }
