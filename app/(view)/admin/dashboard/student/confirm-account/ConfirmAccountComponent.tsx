@@ -23,7 +23,8 @@ export default function ConfirmAccountComponent() {
   const {
     confirmAccount,
     isLoadingConfirmAccount,
-    loadingId,
+    loadingApproveId,
+    loadingDeleteId,
     handleApprove,
     isModalDataVisible,
     handleCloseModal,
@@ -131,7 +132,7 @@ export default function ConfirmAccountComponent() {
           <Button
             type="primary"
             onClick={() => handleApprove(record.user_id, true)}
-            loading={loadingId === record.user_id}
+            loading={loadingApproveId === record.user_id}
             disabled={record.is_approved}
             block={screens.xs}
           >
@@ -147,7 +148,7 @@ export default function ConfirmAccountComponent() {
           <Button
             danger
             icon={<DeleteOutlined />}
-            loading={loadingId === record.user_id}
+            loading={loadingDeleteId === record.user_id}
             onClick={() => showDeleteConfirm(record.user_id)}
           />
         </Space>

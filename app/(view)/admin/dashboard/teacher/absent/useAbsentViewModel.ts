@@ -42,7 +42,10 @@ export const useAbsentViewModel = () => {
     mutate: queueMutate,
   } = useSWR<MeetingResponse>("/api/admin/queue/show", fetcher);
 
-  const [loadingId, setLoadingId] = useState<string | null>(null);
+  // const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const [loadingConfirmId, setLoadingConfirmId] = useState<string | null>(null);
+  const [loadingRejectId, setLoadingRejectId] = useState<string | null>(null);
 
   const mergedData = dataAbsent?.data.map((absent) => {
     const teacher = dataTeacher?.data.find(
@@ -67,20 +70,25 @@ export const useAbsentViewModel = () => {
     };
   });
 
-
   const updateAbsentStatus = async (
     teacher_absence_id: string,
     status: boolean,
-    meeting_id: string
+    meeting_id: string,
+    actionType: "confirm" | "reject"
   ) => {
     const payload = {
       teacher_absence_id: teacher_absence_id,
       status: status,
       meeting_id,
     };
-    try {
-      setLoadingId(teacher_absence_id); // ⏳ set loading ID
 
+    if (actionType === "confirm") {
+      setLoadingConfirmId(teacher_absence_id);
+    } else {
+      setLoadingRejectId(teacher_absence_id);
+    }
+
+    try {
       const response = await crudService.post(
         "/api/admin/teacher/changeStatus",
         payload
@@ -92,10 +100,10 @@ export const useAbsentViewModel = () => {
         absentMutate();
       }
     } catch (error) {
-      console.error("Failed to update arrival status:", error);
-      message.error("Failed to update arrival status.");
+      message.error("Gagal memperbarui status.");
     } finally {
-      setLoadingId(null); // ✅ setelah selesai reset loading
+       setLoadingConfirmId(null);
+       setLoadingRejectId(null);
     }
   };
 
@@ -104,6 +112,7 @@ export const useAbsentViewModel = () => {
     updateAbsentStatus,
     isLoadingAbsent,
     isLoadingTeacher,
-    loadingId,
+    loadingConfirmId,
+    loadingRejectId,
   };
 };

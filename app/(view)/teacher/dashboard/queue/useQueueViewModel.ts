@@ -173,7 +173,9 @@ export const useQueueViewModel = () => {
         payload
       );
       notification.success({
-        message: "Berhasil Menambahkan Action",
+        message: "Berhasil Menambahkan Aksi",
+        description:
+          "Permintaan anda telah dikirim ke admin, tunggu konfirmasi melalui Whatsapp.",
       });
       setLoading(false);
       handleCancelAddAction();

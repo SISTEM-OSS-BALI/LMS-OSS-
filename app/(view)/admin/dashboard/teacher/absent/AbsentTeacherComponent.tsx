@@ -16,7 +16,8 @@ export default function AbsentTeacherComponent() {
     updateAbsentStatus,
     isLoadingAbsent,
     isLoadingTeacher,
-    loadingId,
+    loadingConfirmId,
+    loadingRejectId,
   } = useAbsentViewModel();
   const [showHistory, setShowHistory] = useState(false);
   const screens = useBreakpoint();
@@ -81,7 +82,7 @@ export default function AbsentTeacherComponent() {
           <Space wrap>
             <Button
               disabled={record.status}
-              loading={loadingId === record.teacher_absence_id}
+              loading={loadingConfirmId === record.teacher_absence_id}
               size={screens.xs ? "small" : "middle"}
               style={{
                 backgroundColor: record.status ? "#52c41a" : "#d9d9d9",
@@ -92,7 +93,8 @@ export default function AbsentTeacherComponent() {
                 updateAbsentStatus(
                   record.teacher_absence_id,
                   true,
-                  record.meeting_id
+                  record.meeting_id,
+                  "confirm"
                 )
               }
             >
@@ -100,7 +102,7 @@ export default function AbsentTeacherComponent() {
             </Button>
             <Button
               disabled={record.status}
-              loading={loadingId === record.teacher_absence_id}
+              loading={loadingRejectId === record.teacher_absence_id}
               size={screens.xs ? "small" : "middle"}
               style={{
                 backgroundColor: !record.status ? "#ff4d4f" : "#d9d9d9",
@@ -111,7 +113,8 @@ export default function AbsentTeacherComponent() {
                 updateAbsentStatus(
                   record.teacher_absence_id,
                   false,
-                  record.meeting_id
+                  record.meeting_id,
+                  "reject"
                 )
               }
             >

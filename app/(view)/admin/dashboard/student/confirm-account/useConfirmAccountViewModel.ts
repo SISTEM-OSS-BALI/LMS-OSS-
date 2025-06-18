@@ -35,7 +35,9 @@ export const useConfirmAccountViewModel = () => {
     mutate: studentMutate,
   } = useSWR<StudentResponse>("/api/admin/student/show", fetcher);
 
-  const [loadingId, setLoadingId] = useState<string | null>(null);
+  // const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [loadingApproveId, setLoadingApproveId] = useState<string | null>(null);
+  const [loadingDeleteId, setLoadingDeleteId] = useState<string | null>(null);
   const [isModalDataVisible, setIsModalDataVisible] = useState(false);
   const [form] = Form.useForm();
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
@@ -44,12 +46,15 @@ export const useConfirmAccountViewModel = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  const handleApprove = async (userId: string, isApproved: boolean) => {
+  const handleApprove = async (
+    userId: string,
+    isApproved: boolean,
+  ) => {
     const payload = {
       user_id: userId,
       is_approved: isApproved,
     };
-    setLoadingId(userId);
+    setLoadingApproveId(userId);
     try {
       await crudService.patch(
         "/api/admin/confirmAccount/handleApproved",
@@ -60,7 +65,7 @@ export const useConfirmAccountViewModel = () => {
     } catch (error) {
       notification.error({ message: "Terjadi kesalahan saat menyetujui akun" });
     } finally {
-      setLoadingId(null);
+      setLoadingApproveId(null);
     }
   };
 
@@ -103,8 +108,10 @@ export const useConfirmAccountViewModel = () => {
     }
   };
 
-  const handleDelete = async (userId: string) => {
-    setLoadingId(userId);
+  const handleDelete = async (
+    userId: string,
+  ) => {
+    setLoadingDeleteId(userId);
     try {
       await crudService.delete(
         `/api/admin/confirmAccount/${userId}/delete`,
@@ -115,7 +122,7 @@ export const useConfirmAccountViewModel = () => {
     } catch (error) {
       notification.error({ message: "Terjadi kesalahan saat menghapus data" });
     } finally {
-      setLoadingId(null);
+      setLoadingDeleteId(null);
     }
   };
 
@@ -130,7 +137,8 @@ export const useConfirmAccountViewModel = () => {
   return {
     confirmAccount,
     isLoadingConfirmAccount,
-    loadingId,
+    loadingApproveId,
+    loadingDeleteId,
     handleApprove,
     isModalDataVisible,
     handleCloseModal,
