@@ -221,7 +221,15 @@ export const HistoryPlacementComponent: React.FC<
                 {/* Multiple Choice */}
                 {entry.multipleChoice && (
                   <>
-                    <Title level={4}>{entry.multipleChoice.question}</Title>
+                    <Title level={4}>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            entry.multipleChoice.question ||
+                            "Pertanyaan tidak tersedia",
+                        }}
+                      />
+                    </Title>
                     <Radio.Group
                       value={entry.studentAnswer}
                       style={{ display: "block", marginBottom: 10 }}
