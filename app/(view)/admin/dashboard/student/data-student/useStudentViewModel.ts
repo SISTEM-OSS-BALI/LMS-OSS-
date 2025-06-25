@@ -30,11 +30,17 @@ export const useStudentViewModel = () => {
     setSearchTerm(e.target.value.toLowerCase());
   };
 
-  const { data: meetingDataAll, isLoading: meetingDataLoading, mutate: mutateMeeting } =
-    useSWR<MeetingResponse>("/api/admin/meeting/show", fetcher);
+  const {
+    data: meetingDataAll,
+    isLoading: meetingDataLoading,
+    mutate: mutateMeeting,
+  } = useSWR<MeetingResponse>("/api/admin/meeting/show", fetcher);
 
-  const { data: programDataAll, isLoading: programDataLoading, mutate: mutateProgram } =
-    useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
+  const {
+    data: programDataAll,
+    isLoading: programDataLoading,
+    mutate: mutateProgram,
+  } = useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
 
   const {
     data: teacherDataAll,
@@ -69,6 +75,7 @@ export const useStudentViewModel = () => {
         ...student,
         meetings: meetingsWithTeacher,
         program_name: program?.name,
+        program_count: program?.count_program,
       };
     }) ?? [];
 

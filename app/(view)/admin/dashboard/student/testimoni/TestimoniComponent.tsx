@@ -1,6 +1,16 @@
 import Title from "antd/es/typography/Title";
 import { useTestimoniViewModel } from "./useTestimoniViewModel";
-import { Grid, Table, Tag, Skeleton, Card, Button, Divider, Modal } from "antd";
+import {
+  Grid,
+  Table,
+  Tag,
+  Skeleton,
+  Card,
+  Button,
+  Divider,
+  Modal,
+  Flex,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import * as XLSX from "xlsx";
 import { DeleteOutlined } from "@ant-design/icons";
@@ -60,6 +70,8 @@ export default function TestimoniComponent() {
 
   const { dataTestimoni, isLoadingDataTestimoni, handleDelete } =
     useTestimoniViewModel();
+
+    console.log("Data Testimoni:", dataTestimoni);
 
   const showDeleteConfirm = (testimonial_id: string) => {
     Modal.confirm({
@@ -174,13 +186,21 @@ export default function TestimoniComponent() {
       <Title level={screens.xs ? 4 : 3}>Data Testimoni Siswa</Title>
       <Divider />
       <div style={{ marginBottom: 16 }}>
-        <Button
-          type="primary"
-          onClick={handleExportToExcel}
-          disabled={!dataTestimoni?.data}
-        >
-          Download Excel
-        </Button>
+        <Flex justify="space-between" align="center">
+          <Button
+            type="primary"
+            onClick={handleExportToExcel}
+            disabled={!dataTestimoni?.data}
+          >
+            Download Excel
+          </Button>
+          <Button
+            href="/admin/dashboard/student/testimoni/statistic"
+            type="primary"
+          >
+            Statistik Testimoni
+          </Button>
+        </Flex>
       </div>
 
       {isLoadingDataTestimoni ? (

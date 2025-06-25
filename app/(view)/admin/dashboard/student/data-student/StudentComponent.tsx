@@ -23,6 +23,8 @@ import {
   BookOutlined,
   TeamOutlined,
   DeleteFilled,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -68,6 +70,8 @@ export default function StudentComponent() {
     filteredStudent: Student[];
     handleDelete: (student_id: string) => void;
   } = useStudentViewModel();
+
+  console.log(mergedStudent);
 
   const isLoading =
     meetingDataLoading || programDataLoading || teacherDataLoading;
@@ -216,6 +220,35 @@ export default function StudentComponent() {
             </Tag>
           </Col>
         ));
+      },
+    },
+
+    {
+      title: "Status",
+      key: "status",
+      render: (_: any, student: any) => {
+        const completedCount = student.count_program ?? 0;
+        const totalCount = student.program_count ?? 0;
+
+        const isDone = completedCount >= totalCount;
+
+        return isDone ? (
+          <Tag
+            icon={<CheckCircleOutlined />}
+            color="success"
+            style={{ fontWeight: 600 }}
+          >
+            DONE
+          </Tag>
+        ) : (
+          <Tag
+            icon={<CloseCircleOutlined />}
+            color="error"
+            style={{ fontWeight: 600 }}
+          >
+            NOT DONE
+          </Tag>
+        );
       },
     },
     {

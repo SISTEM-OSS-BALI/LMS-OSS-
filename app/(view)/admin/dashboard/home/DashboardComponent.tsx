@@ -12,7 +12,7 @@ import {
   Bar,
 } from "recharts";
 import dayjs from "dayjs";
-import { Card, Flex, Select, Skeleton } from "antd";
+import { Card, Flex, Select, Skeleton, Button } from "antd";
 import { useState } from "react";
 import { useDashboard } from "./useDashboardViewModel";
 
@@ -90,15 +90,8 @@ export default function DashboardComponent() {
 
   return (
     <div style={{ width: "100%", padding: "24px" }}>
-      <Flex
-        justify="space-between"
-        align="center"
-        wrap="wrap" // Allows for responsive layout
-      >
-        <Title
-          level={3}
-          style={{ marginBottom: "24px", flex: "1 1 100%" }} // Ensure title takes full width on mobile
-        >
+      <Flex justify="space-between" align="center" wrap="wrap">
+        <Title level={3} style={{ marginBottom: "24px", flex: "1 1 100%" }}>
           Dashboard Admin
         </Title>
         <Select
