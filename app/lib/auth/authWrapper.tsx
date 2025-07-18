@@ -20,6 +20,7 @@ export default function AuthWrapper({
     "/free-placement-test/result",
     "/free-mock-test",
     "/free-mock-test/result",
+    "/register-group-class"
   ];
   const shouldProtect = !authRoutes.some((route) => {
     const regex = new RegExp(`^${route}(/.*)?$`);

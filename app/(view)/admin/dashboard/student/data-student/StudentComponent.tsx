@@ -12,10 +12,13 @@ import {
   Input,
   Button,
   Modal,
+  Form,
+  Select,
+  Descriptions,
 } from "antd";
 import { useStudentViewModel } from "./useStudentViewModel";
 import { useEffect } from "react";
-import {
+import Icon, {
   UserOutlined,
   PhoneOutlined,
   AimOutlined,
@@ -25,9 +28,12 @@ import {
   DeleteFilled,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  PoweroffOutlined,
+  InfoCircleFilled,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { Program, User, UserProgramRenewal } from "@prisma/client";
 dayjs.extend(utc);
 
 const { Title, Text } = Typography;
@@ -43,13 +49,20 @@ interface Meeting {
 
 interface Student {
   user_id: string;
-  username: string;
+  username: string | null;
   no_phone: string | null;
   region: string | null;
   program_name?: string;
   count_program: number | null;
   target?: string | null;
   meetings: Meeting[];
+  name_group?: string | null;
+  is_active: boolean | null;
+  renew_program: boolean | null;
+}
+
+interface ProgramResponse {
+  data: Program[];
 }
 
 export default function StudentComponent() {
@@ -61,6 +74,21 @@ export default function StudentComponent() {
     handleSearch,
     filteredStudent,
     handleDelete,
+    loading,
+    handleFrezeAccount,
+    openModal,
+    isModalVisible,
+    closeModal,
+    programDataAll,
+    form,
+    programId,
+    setProgramId,
+    handleUpdateProgram,
+    loadingUpdate,
+    handleOpenModalDetail,
+    isModalDetailVisible,
+    closeModalDetail,
+    filteredProgramRenewal,
   }: {
     mergedStudent: Student[];
     meetingDataLoading: boolean;
@@ -69,13 +97,30 @@ export default function StudentComponent() {
     handleSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
     filteredStudent: Student[];
     handleDelete: (student_id: string) => void;
+    loading: boolean;
+    openModal: (student_id: string) => void;
+    handleFrezeAccount: (student_id: string, is_active: boolean) => void;
+    isModalVisible: boolean;
+    closeModal: () => void;
+    programDataAll: ProgramResponse | undefined;
+    form: any;
+    programId: string;
+    setProgramId: (program_id: string) => void;
+    handleUpdateProgram: () => void;
+    loadingUpdate: boolean;
+    handleOpenModalDetail: (student_id: string) => void;
+    isModalDetailVisible: boolean;
+    closeModalDetail: () => void;
+    filteredProgramRenewal: any;
   } = useStudentViewModel();
 
-  console.log(mergedStudent);
+  console.log(filteredProgramRenewal);  
 
   const isLoading =
     meetingDataLoading || programDataLoading || teacherDataLoading;
   const isDataEmpty = !mergedStudent || mergedStudent.length === 0;
+
+  const programList = programDataAll?.data || [];
 
   const showConfirmDelete = (student_id: string) => {
     Modal.confirm({
@@ -88,15 +133,28 @@ export default function StudentComponent() {
     });
   };
 
+  const showConfirmFrezeAccount = (student_id: string, is_active: boolean) => {
+    Modal.confirm({
+      title: "Konfirmasi",
+      content: is_active
+        ? "Apakah Anda yakin menonaktifkan akun siswa ini?"
+        : "Apakah Anda yakin mengaktifkan akun siswa ini?",
+      okText: "Ya",
+      okType: "danger",
+      cancelText: "Tidak",
+      onOk: () => handleFrezeAccount(student_id, is_active),
+    });
+  };
+
   // **🔹 Kolom untuk tabel siswa**
   const columns = [
     {
       title: "Nama Siswa",
-      dataIndex: "username",
       key: "username",
-      render: (text: string) => (
+      render: (_: any, record: Student) => (
         <Space>
-          <UserOutlined /> {text}
+          <UserOutlined />
+          {record.username ? record.username : record.name_group ?? "-"}
         </Space>
       ),
     },
@@ -162,14 +220,6 @@ export default function StudentComponent() {
               {/** Tabel untuk daftar pertemuan */}
               <Table
                 columns={[
-                  //   {
-                  //     title: "Metode",
-                  //     dataIndex: "method",
-                  //     key: "method",
-                  //     render: (text: string | null) => (
-                  //       <Tag color="cyan">{text ?? "Tidak Diketahui"}</Tag>
-                  //     ),
-                  //   },
                   {
                     title: "Pengajar",
                     dataIndex: "teacherName",
@@ -238,7 +288,7 @@ export default function StudentComponent() {
             color="success"
             style={{ fontWeight: 600 }}
           >
-            DONE
+            Selesai
           </Tag>
         ) : (
           <Tag
@@ -246,7 +296,7 @@ export default function StudentComponent() {
             color="error"
             style={{ fontWeight: 600 }}
           >
-            NOT DONE
+            Belum Selesai
           </Tag>
         );
       },
@@ -261,8 +311,39 @@ export default function StudentComponent() {
             danger
             onClick={() => showConfirmDelete(student.user_id)}
           />
+          {student.is_active === true ? (
+            <Button
+              icon={<PoweroffOutlined />}
+              onClick={() => showConfirmFrezeAccount(student.user_id, false)}
+            >
+              Tutup Akun
+            </Button>
+          ) : (
+            <Button
+              icon={<PoweroffOutlined />}
+              onClick={() => showConfirmFrezeAccount(student.user_id, true)}
+            >
+              Buka Akun
+            </Button>
+          )}
+          {student.program_name !== "Group Class" && (
+            <Button onClick={() => openModal(student.user_id)}>
+              Perbaharui Program
+            </Button>
+          )}
         </Space>
       ),
+    },
+    {
+      title: "Detail",
+      key: "detail",
+      render: (_: any, student: Student) =>
+        student.renew_program === true ? (
+          <Button
+            onClick={() => handleOpenModalDetail(student.user_id)}
+            icon={<InfoCircleFilled />}
+          />
+        ) : null,
     },
   ];
 
@@ -301,6 +382,89 @@ export default function StudentComponent() {
           />
         )}
       </Card>
+      <div>
+        <Modal
+          open={isModalVisible}
+          onCancel={closeModal}
+          footer={null}
+          title="Perbaharui Program"
+        >
+          <Form form={form} layout="vertical" onFinish={handleUpdateProgram}>
+            <Form.Item name="program_id">
+              <Select
+                placeholder="Pilih Program"
+                onChange={(value) => setProgramId(value)}
+              >
+                {programList.map((program) => (
+                  <Select.Option
+                    key={program.program_id}
+                    value={program.program_id}
+                  >
+                    {program.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item>
+              <Button
+                htmlType="submit"
+                type="primary"
+                style={{ width: "100%" }}
+                loading={loadingUpdate}
+              >
+                Submit
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </div>
+      <div>
+        <Modal
+          open={isModalDetailVisible}
+          onCancel={closeModalDetail}
+          footer={null}
+          title="Detail Perbaharuan Program"
+          width={480}
+          centered
+          bodyStyle={{
+            padding: 24,
+            background: "#fafbfc",
+          }}
+        >
+          <Descriptions
+            bordered
+            column={1}
+            size="middle"
+            labelStyle={{
+              fontWeight: "bold",
+              background: "#f5f5f5",
+              width: 200,
+              fontSize: 15,
+              color: "#234",
+              letterSpacing: 0.2,
+            }}
+            contentStyle={{
+              fontSize: 15,
+              color: "#222",
+              background: "#fff",
+            }}
+          >
+            <Descriptions.Item label="Program Lama">
+              {filteredProgramRenewal?.[0]?.old_program_name}
+            </Descriptions.Item>
+            <Descriptions.Item label="Program Baru">
+              {filteredProgramRenewal?.[0]?.new_program_name}
+            </Descriptions.Item>
+            <Descriptions.Item label="Tanggal Perbaharuan">
+              {filteredProgramRenewal?.[0]?.renew_date
+                ? dayjs(filteredProgramRenewal[0].renew_date).format(
+                    "YYYY-MM-DD"
+                  )
+                : "-"}
+            </Descriptions.Item>
+          </Descriptions>
+        </Modal>
+      </div>
     </div>
   );
 }

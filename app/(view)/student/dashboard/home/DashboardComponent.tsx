@@ -34,7 +34,7 @@ import { useEffect, useState } from "react";
 const { Title, Text } = Typography;
 
 export default function HomeStudent() {
-  const { username } = useAuth();
+  const { username, name_group } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -108,7 +108,9 @@ export default function HomeStudent() {
           <Skeleton active paragraph={{ rows: 1 }} />
         ) : (
           <>
-            <Title level={3}>Selamat Datang, {username || "Student"}!</Title>
+            <Title level={3}>
+              Selamat Datang, {username || name_group || "Student"}!
+            </Title>
             <Title level={5}>
               <Tag color={checkMeetingToday() ? "green" : "red"}>
                 {checkMeetingToday()

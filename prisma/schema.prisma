@@ -59,28 +59,37 @@ enum MockTestType {
   WRITING
 }
 
+enum TypeStudent {
+  INDIVIDUAL
+  GROUP
+}
+
 model User {
-  user_id       String    @id @default(uuid())
-  username      String
+  user_id       String      @id @default(uuid())
+  username      String?
   email         String
   password      String
   no_phone      String?
   program_id    String?
-  imageUrl      String?   @db.LongText
-  count_program Int?      @default(0)
-  joined_at     DateTime  @default(now())
+  name_group    String?
+  imageUrl      String?     @db.LongText
+  count_program Int?        @default(0)
+  joined_at     DateTime    @default(now())
   region        String?
   color         String?
   level         String?
-  is_active     Boolean?  @default(true)
+  is_active     Boolean?    @default(true)
   start_date    DateTime?
   end_date      DateTime?
-  is_completed  Boolean   @default(false)
+  renew_program Boolean?
+  renew_date    DateTime?
+  is_completed  Boolean     @default(false)
+  type_student  TypeStudent @default(INDIVIDUAL)
   is_evaluation Boolean?
-  is_verified   Boolean?  @default(false)
-  target        String?   @db.LongText
-  role          Role      @default(STUDENT)
-  createdAt     DateTime  @default(now())
+  is_verified   Boolean?    @default(false)
+  target        String?     @db.LongText
+  role          Role        @default(STUDENT)
+  createdAt     DateTime    @default(now())
 
   consultant_id String?
   consultant    Consultant? @relation(name: "ConsultantUsers", fields: [consultant_id], references: [consultant_id], onDelete: SetNull)
@@ -113,6 +122,31 @@ model User {
   ScoreMockTest             ScoreMockTest[]
   teacherAbsencesAsTeacher  TeacherAbsence[]        @relation("TeacherAbsenceTeacher")
   teacherAbsencesAsStudent  TeacherAbsence[]        @relation("TeacherAbsenceStudent")
+  UserGroupMembers          UserGroup[]             @relation("UserGroupMembers")
+  TeacherLeave              TeacherLeave[]
+  UserProgramRenewal        UserProgramRenewal[]
+}
+
+model UserProgramRenewal {
+  renewal_id String @id @default(uuid())
+  user_id    String
+  user       User   @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  old_program_id String?
+  new_program_id String?
+
+  renew_date DateTime @default(now())
+}
+
+model UserGroup {
+  user_group_id String @id @default(uuid())
+  username      String
+  no_phone      String
+
+  User        User?         @relation("UserGroupMembers", fields: [userUser_id], references: [user_id])
+  userUser_id String?
+  Certificate Certificate[]
+  Section     Section[]
 }
 
 model PasswordChangeToken {
@@ -179,6 +213,18 @@ model ScheduleTime {
   endTime   DateTime? // Waktu selesai
 }
 
+model TeacherLeave {
+  leave_id   String    @id @default(uuid())
+  teacher    User      @relation(fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  teacher_id String
+  leave_date DateTime // Tanggal libur (jika libur satu hari)
+  start_time DateTime? // Optional: jika ingin mencatat jam mulai libur
+  end_time   DateTime? // Optional: jika ingin mencatat jam selesai libur
+  reason     String? // Alasan libur (opsional)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
 model Meeting {
   meeting_id         String              @id @default(uuid())
   teacher            User                @relation("MeetingTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
@@ -189,10 +235,6 @@ model Meeting {
   teacher_id         String
   student_id         String
   absent             Boolean?
-  module             Bytes?
-  progress_student   String?             @db.LongText
-  abilityScale       String?             @db.LongText
-  studentPerformance String?             @db.LongText
   dateTime           DateTime
   startTime          DateTime?
   endTime            DateTime?
@@ -202,6 +244,18 @@ model Meeting {
   createdAt          DateTime            @default(now())
   TeacherAbsence     TeacherAbsence[]    @relation("TeacherAbsences")
   RescheduleMeetings RescheduleMeeting[] @relation("MeetingReschedules")
+  ProgressMeeting    ProgressMeeting[]   @relation("MeetingProgress")
+}
+
+model ProgressMeeting {
+  progress_id        String  @id @default(uuid())
+  meeting            Meeting @relation("MeetingProgress", fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+  meeting_id         String
+  user_group_id      String?
+  user_id            String?
+  progress_student   String? @db.LongText
+  abilityScale       String? @db.LongText
+  studentPerformance String? @db.LongText
 }
 
 model Course {
@@ -424,7 +478,7 @@ model TeacherAbsence {
   teacher_absence_id String  @id @default(uuid())
   teacher            User    @relation("TeacherAbsenceTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
   teacher_id         String
-  student            User?    @relation("TeacherAbsenceStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
+  student            User?   @relation("TeacherAbsenceStudent", fields: [student_id], references: [user_id], onDelete: Cascade)
   student_id         String?
   meeting_id         String
   meeting            Meeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade, name: "TeacherAbsences")
@@ -674,25 +728,35 @@ model RescheduleMeeting {
 }
 
 model Certificate {
-  certificate_id         String    @id @default(uuid())
-  no_certificate         String    @unique
-  student                User      @relation("StudentCertificate", fields: [student_id], references: [user_id], onDelete: Cascade)
-  student_id             String
-  is_complated_meeting   Boolean?  @default(false)
-  is_complated_testimoni Boolean?  @default(false)
-  is_download            Boolean?  @default(false)
-  section                Section[]
+  certificate_id String  @id @default(uuid())
+  no_certificate String  @unique
+  student_id     String? // optional untuk INDIVIDUAL
+  user_group_id  String? // optional untuk GROUP
+
+  student User?      @relation("StudentCertificate", fields: [student_id], references: [user_id], onDelete: Cascade)
+  group   UserGroup? @relation(fields: [user_group_id], references: [user_group_id], onDelete: Cascade)
+
+  is_complated_meeting   Boolean?    @default(false)
+  is_complated_testimoni Boolean?    @default(false)
+  is_download            Boolean?    @default(false)
+  type_student           TypeStudent
+
+  section Section[]
 }
 
 model Section {
-  section_id     String      @id @default(uuid())
-  section_type   SectionType
-  level          String
-  comment        String      @db.LongText
-  student        User        @relation("StudentSection", fields: [student_id], references: [user_id], onDelete: Cascade)
-  student_id     String
+  section_id   String      @id @default(uuid())
+  section_type SectionType
+  level        String
+  comment      String      @db.LongText
+  student      User?       @relation("StudentSection", fields: [student_id], references: [user_id], onDelete: Cascade)
+  group        UserGroup?  @relation(fields: [user_group_id], references: [user_group_id], onDelete: Cascade)
+
+  student_id     String?
+  user_group_id  String?
   certificate    Certificate @relation(fields: [certificate_id], references: [certificate_id], onDelete: Cascade)
   certificate_id String
+  type_student   TypeStudent
 }
 
 model Testimoni {

@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
           imageUrl: true,
           region: true,
           is_evaluation: true,
-          target: true
+          target: true,
+          name_group: true,
+          type_student: true,
         },
       },
       "findMany"

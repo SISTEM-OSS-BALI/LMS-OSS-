@@ -28,6 +28,7 @@ import {
   FileTextOutlined,
 } from "@ant-design/icons";
 import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 dayjs.extend(utc);
 
 const { Title, Text } = Typography;
@@ -47,10 +48,16 @@ export default function StudentDetailComponent() {
     handleFinish,
     sectionTypes,
     loading,
+    userGroup,
+    setSelectedGroupMemberId,
+    selectedGroupMemberId,
+    programDataAll,
   } = useDetailStudentViewModel();
 
   const query = useParams();
   const student_id = query.user_id;
+
+  console.log(filteredMeetings);
 
   type SectionType = "LISTENING" | "READING" | "WRITING" | "SPEAKING";
 
@@ -211,8 +218,89 @@ export default function StudentDetailComponent() {
     ],
   };
 
+  // Data meeting untuk table (individual & group)
+  const data = filteredMeetings?.flatMap((meeting) => {
+    if (filteredStudent?.type_student === "GROUP") {
+      const groupMeeting = meeting as typeof meeting & {
+        groupProgress?: {
+          user_group_id: string;
+          progress_student: string;
+          abilityScale: string;
+          studentPerformance: string;
+        }[];
+      };
+      const progress = groupMeeting.groupProgress?.find(
+        (p) => p.user_group_id === selectedGroupMemberId
+      );
+      if (!progress) return [];
+      return {
+        key: `${meeting.meeting_id}-${progress.user_group_id}`,
+        method: meeting.method,
+        teacherName: meeting.teacherName,
+        progress_student: progress.progress_student,
+        abilityScale: progress.abilityScale,
+        studentPerformance: progress.studentPerformance,
+        dateTime: meeting.dateTime,
+      };
+    } else {
+      // PENTING! Jangan lupa programType dan programId disertakan!
+      return {
+        key: meeting.meeting_id,
+        method: meeting.method,
+        teacherName: meeting.teacherName,
+        progress_student: meeting.progress_student,
+        abilityScale: meeting.abilityScale,
+        studentPerformance: meeting.studentPerformance,
+        dateTime: meeting.dateTime,
+        programType: meeting.programType,
+        programId: meeting.programId,
+      };
+    }
+  });
+
+  // Get default program type (NEW_PROGRAM preferred, else OLD_PROGRAM)
+
+  // Hanya OLD_PROGRAM yang muncul di dropdown
+  const programTypeOptions = useMemo(() => {
+    if (!filteredMeetings) return [];
+    const typeLabel = {
+      OLD_PROGRAM: "Program sebelumnya: ",
+    };
+    const types = Array.from(
+      new Set(filteredMeetings.map((m) => m.programType))
+    ).filter((type) => type === "OLD_PROGRAM");
+    return types.map((type) => {
+      const sampleMeeting = filteredMeetings.find(
+        (m) => m.programType === type
+      );
+      const programName =
+        programDataAll?.data.find(
+          (p) => p.program_id === sampleMeeting?.programId
+        )?.name || "-";
+      return {
+        value: type,
+        label: `${typeLabel[type] || ""}${programName}`,
+      };
+    });
+  }, [filteredMeetings, programDataAll]);
+
+ const [selectedProgramType, setSelectedProgramType] = useState<string>("");
+const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
+  
+
+
+  // Data tabel difilter sesuai selectedProgramType
+  const filteredTableData = useMemo(() => {
+    if (!data) return [];
+   
+    if (viewNewProgram) {
+      return data.filter((row) => row.programType === "NEW_PROGRAM");
+    }
+
+    return data.filter((row) => row.programType === selectedProgramType);
+  }, [viewNewProgram, selectedProgramType, data]);
   const handleLevelChange = (value: string, index: number, type: string) => {
-    // Pastikan type ada dalam levelOptions
+
     const selectedLevel = levelOptions[type as keyof typeof levelOptions]?.find(
       (level) => level.value === value
     );
@@ -263,15 +351,50 @@ export default function StudentDetailComponent() {
     },
   ];
 
-  const data = filteredMeetings?.map((meeting) => ({
-    key: meeting.meeting_id,
-    method: meeting.method,
-    teacherName: meeting.teacherName,
-    progress_student: meeting.progress_student,
-    abilityScale: meeting.abilityScale,
-    studentPerformance: meeting.studentPerformance,
-    dateTime: meeting.dateTime,
-  }));
+  // const data = filteredMeetings?.flatMap((meeting) => {
+  //   if (filteredStudent?.type_student === "GROUP") {
+  //     const groupMeeting = meeting as typeof meeting & {
+  //       groupProgress?: {
+  //         user_group_id: string;
+  //         progress_student: string;
+  //         abilityScale: string;
+  //         studentPerformance: string;
+  //       }[];
+  //     };
+
+  //     const progress = groupMeeting.groupProgress?.find(
+  //       (p) => p.user_group_id === selectedGroupMemberId
+  //     );
+
+  //     if (!progress) return [];
+
+  //     return {
+  //       key: `${meeting.meeting_id}-${progress.user_group_id}`,
+  //       method: meeting.method,
+  //       teacherName: meeting.teacherName,
+  //       progress_student: progress.progress_student,
+  //       abilityScale: progress.abilityScale,
+  //       studentPerformance: progress.studentPerformance,
+  //       dateTime: meeting.dateTime,
+  //     };
+  //   } else {
+  //     return {
+  //       key: meeting.meeting_id,
+  //       method: meeting.method,
+  //       teacherName: meeting.teacherName,
+  //       progress_student: meeting.progress_student,
+  //       abilityScale: meeting.abilityScale,
+  //       studentPerformance: meeting.studentPerformance,
+  //       dateTime: meeting.dateTime,
+  //     };
+  //   }
+  // });
+
+  console.log("Filtered Table Data:", filteredTableData);
+  console.log("Selected Program Type:", selectedProgramType);
+  console.log("Program Type Options:", programTypeOptions);
+  console.log("Filtered Student:", filteredMeetings);
+  console.log(data);
 
   const columnsInfo = [
     {
@@ -295,21 +418,29 @@ export default function StudentDetailComponent() {
       label: (
         <>
           <UserOutlined style={{ marginRight: 5 }} />
-          Nama
+          {filteredStudent?.username != null ? "Nama" : "Nama Kelompok"}
         </>
       ),
-      value: filteredStudent?.username || "Tidak tersedia",
+      value:
+        filteredStudent?.username != null
+          ? filteredStudent?.username
+          : filteredStudent?.name_group || "Tidak tersedia",
     },
-    {
-      key: "phone",
-      label: (
-        <>
-          <PhoneOutlined style={{ marginRight: 5 }} />
-          No Telepon
-        </>
-      ),
-      value: filteredStudent?.no_phone || "Tidak tersedia",
-    },
+    // Hanya render phone jika username tidak null
+    ...(filteredStudent?.username != null
+      ? [
+          {
+            key: "phone",
+            label: (
+              <>
+                <PhoneOutlined style={{ marginRight: 5 }} />
+                No Telepon
+              </>
+            ),
+            value: filteredStudent?.no_phone || "Tidak tersedia",
+          },
+        ]
+      : []),
     {
       key: "region",
       label: (
@@ -564,13 +695,85 @@ export default function StudentDetailComponent() {
             )}
           </Flex>
         </Flex>
+        {filteredStudent?.type_student === "GROUP" &&
+          userGroup &&
+          userGroup.length > 0 && (
+            <div style={{ width: "100%", marginTop: "20px" }}>
+              <Title level={4} style={{ marginBottom: "12px" }}>
+                Anggota Kelompok
+              </Title>
+              <Row gutter={[16, 16]} style={{ marginBottom: "32px" }}>
+                {userGroup.map((group: any, index: number) => {
+                  const isSelected =
+                    selectedGroupMemberId === group.user_group_id;
+
+                  return (
+                    <Col
+                      key={group.user_group_id || index}
+                      xs={24}
+                      sm={12}
+                      md={8}
+                      lg={6}
+                    >
+                      <Card
+                        hoverable
+                        onClick={() => {
+                          setSelectedGroupMemberId(
+                            isSelected ? null : group.user_group_id
+                          );
+                        }}
+                        style={{
+                          borderRadius: "12px",
+                          border: isSelected
+                            ? "2px solid #1890ff"
+                            : "1px solid #eaeaea",
+                          boxShadow: isSelected
+                            ? "0 0 8px rgba(24, 144, 255, 0.5)"
+                            : "none",
+                        }}
+                      >
+                        <Text strong>{group.username || group.name}</Text>
+                      </Card>
+                    </Col>
+                  );
+                })}
+              </Row>
+            </div>
+          )}
+
+        {programTypeOptions.length > 0 && (
+          <div style={{ marginBottom: 16, display: "flex", gap: 8 }}>
+            <Button
+              type={viewNewProgram ? "primary" : "default"}
+              onClick={() => setViewNewProgram(true)}
+              // disabled={viewNewProgram}
+            >
+              Lihat Data New Program
+            </Button>
+            <Select
+              value={viewNewProgram ? undefined : selectedProgramType}
+              options={programTypeOptions}
+              onChange={(value) => {
+                setSelectedProgramType(value);
+                setViewNewProgram(false);
+              }}
+              style={{ minWidth: 220 }}
+              // disabled={viewNewProgram}
+              placeholder="Pilih Program Lama"
+            />
+          </div>
+        )}
 
         {isLoadingMeeting ? (
           <Skeleton active paragraph={{ rows: 5 }} />
         ) : (
           <Table
             columns={columns}
-            dataSource={data}
+            dataSource={
+              filteredTableData && filteredTableData.length > 0
+                ? filteredTableData
+                : data
+            }
             pagination={{ pageSize: 5 }}
             scroll={{ x: true }}
           />

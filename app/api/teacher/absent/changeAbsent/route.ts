@@ -25,10 +25,11 @@ export async function POST(request: NextRequest) {
       select: {
         startTime: true,
         endTime: true,
-        progress_student: true,
-        abilityScale: true,
-        studentPerformance: true,
       },
+    });
+
+    const progressData = await prisma.progressMeeting.findMany({
+      where: { meeting_id },
     });
 
     if (!meetingData) throw new Error("Meeting tidak ditemukan");
@@ -98,11 +99,13 @@ export async function POST(request: NextRequest) {
     let updatedCountProgramTeacher = (teacherData?.count_program ?? 0) + 1;
 
     if (absent) {
-      if (
-        !meetingData.progress_student ||
-        !meetingData.abilityScale ||
-        !meetingData.studentPerformance
-      ) {
+      const isProgressIncomplete = progressData.some(
+        (progress) =>
+          !progress.progress_student ||
+          !progress.abilityScale ||
+          !progress.studentPerformance
+      );
+      if (isProgressIncomplete) {
         return NextResponse.json({
           status: 422,
           error: true,

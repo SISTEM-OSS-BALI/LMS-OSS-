@@ -1,22 +1,26 @@
 import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
 import { Section } from "@prisma/client";
+import { raw } from "@prisma/client/runtime/library";
 import { notification } from "antd";
 import { useForm } from "antd/es/form/Form";
 import jsPDF from "jspdf";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 
 interface Certificate {
   certificate_id: string;
   no_certificate: string;
-  student_id: string;
+  student_id: string | null;
+  user_group_id: string | null;
   is_complated_meeting: boolean;
   is_complated_testimoni: boolean;
-  overall: string | null;
+  overall?: string | null;
   is_download: boolean;
   student_name: string;
   program_name: string;
+  type_student: "INDIVIDUAL" | "GROUP";
+  group_members?: any[];
 }
 
 interface CertificateResponse {
@@ -33,8 +37,9 @@ export const useCertificateViewModel = () => {
     isLoading,
     mutate: mutateCertificateData,
   } = useSWR<CertificateResponse>(`/api/student/certificate/show`, fetcher);
+
   const {
-    data: evaluationData,
+    data: evaluationSWR,
     isLoading: evaluationLoading,
     mutate: mutateEvaluationData,
   } = useSWR<EvaluationResponse>(
@@ -42,6 +47,22 @@ export const useCertificateViewModel = () => {
     fetcher
   );
 
+  const defaultCertificate: Certificate = {
+    certificate_id: "",
+    no_certificate: "-",
+    student_id: null,
+    user_group_id: null,
+    is_complated_meeting: false,
+    is_complated_testimoni: false,
+    is_download: false,
+    student_name: "-",
+    program_name: "-",
+    type_student: "INDIVIDUAL",
+  };
+
+  const [selectedGroupMember, setSelectedGroupMember] = useState<any | null>(
+    null
+  );
   const [isModalTestimoniVisible, setIsModalTestimoniVisible] = useState(false);
   const [form] = useForm();
   const [loading, setLoading] = useState(false);
@@ -52,17 +73,45 @@ export const useCertificateViewModel = () => {
     string | null
   >(null);
 
-  const certificate: Certificate | null = certificateData?.data ?? null;
+  const rawCertificate = certificateData?.data ?? null;
+
+
+  const certificate: Certificate =
+    selectedGroupMember?.certificate ??
+    (rawCertificate
+      ? {
+          ...defaultCertificate,
+          ...rawCertificate,
+        }
+      : defaultCertificate);
+
+
+    const evaluationData = selectedGroupMember?.sections
+      ? { data: selectedGroupMember.sections }
+      : evaluationSWR?.data
+      ? { data: evaluationSWR.data }
+      : { data: [] }; 
+
+  const groupMembers = certificateData?.data?.group_members || [];
+
+  const handleSelectGroupMember = (member: any) => {
+    setSelectedGroupMember(member);
+    setCertificateFrontPreview(null);
+    setCertificateBackPreview(null);
+  };
 
   const generateCertificatePreview = async (): Promise<void> => {
     if (certificate && evaluationData) {
-      const { student_name, no_certificate } = certificate;
+      const studentNameToUse =
+        certificate?.type_student === "GROUP" && selectedGroupMember
+          ? selectedGroupMember.username
+          : certificate?.student_name;
+      const { no_certificate } = certificate;
 
       const doc = new jsPDF("landscape", "px", "a4");
       const canvas: HTMLCanvasElement = document.createElement("canvas");
       const context = canvas.getContext("2d");
 
-      /** ---- Generate Halaman Depan ---- **/
       const imgFront = new Image();
       imgFront.src = "/assets/images/certificate_front.png";
 
@@ -79,7 +128,7 @@ export const useCertificateViewModel = () => {
         context.font = "bold 150px Montserrat";
         context.textAlign = "center";
         context.textBaseline = "middle";
-        context.fillText(student_name, canvas.width / 2, 1300);
+        context.fillText(studentNameToUse, canvas.width / 2, 1300);
         context.font = "italic 100px Montserrat";
         context.fillText(
           `NO: ${no_certificate ?? "-"}`,
@@ -90,7 +139,6 @@ export const useCertificateViewModel = () => {
 
       setCertificateFrontPreview(canvas.toDataURL("image/png"));
 
-      /** ---- Generate Halaman Belakang ---- **/
       const imgBack = new Image();
       imgBack.src = "/assets/images/certificate_back.png";
 
@@ -108,7 +156,7 @@ export const useCertificateViewModel = () => {
         const sectionX = 570;
         const levelX = 1050;
         const commentX = 1350;
-        const maxWidthComment = 1300; 
+        const maxWidthComment = 1300;
         const lineHeight = 50;
         const rowHeight = 250;
 
@@ -116,7 +164,6 @@ export const useCertificateViewModel = () => {
         context.font = "bold 60px Montserrat";
         context.textAlign = "left";
 
-        // Fungsi untuk membungkus teks dalam beberapa baris secara optimal
         const wrapText = (
           ctx: CanvasRenderingContext2D,
           text: string,
@@ -141,43 +188,31 @@ export const useCertificateViewModel = () => {
               line = testLine;
             }
 
-            // Gambar kata terakhir
             if (index === words.length - 1) {
               ctx.fillText(line, x, y + yOffset);
             }
           });
 
-          return yOffset; // Return total height yang digunakan
+          return yOffset;
         };
 
-        evaluationData.data.forEach(
-          (evalItem: {
-            section_type: string;
-            level: string;
-            comment: string;
-          }) => {
-            let commentStartY = startY;
-
-            // Gambar teks untuk Section dan Level
-            context.font = "bold 60px Montserrat";
-            context.fillText(evalItem.section_type, sectionX, startY);
-            context.fillText(evalItem.level, levelX, startY);
-
-            // Gambar teks untuk Comment dengan wrapping
-            context.font = "bold 40px Montserrat";
-            const commentHeightUsed = wrapText(
-              context,
-              evalItem.comment,
-              commentX,
-              commentStartY,
-              maxWidthComment,
-              lineHeight
-            );
-
-            // Geser ke bawah untuk item berikutnya
-            startY += Math.max(rowHeight, commentHeightUsed + lineHeight);
-          }
-        );
+        (evaluationData?.data || []).forEach((section: Section) => {
+          const { section_type, level, comment } = section;
+          let commentStartY = startY;
+          context.font = "bold 60px Montserrat";
+          context.fillText(section_type, sectionX, startY);
+          context.fillText(level, levelX, startY);
+          context.font = "bold 40px Montserrat";
+          const commentHeightUsed = wrapText(
+            context,
+            comment,
+            commentX,
+            commentStartY,
+            maxWidthComment,
+            lineHeight
+          );
+          startY += Math.max(rowHeight, commentHeightUsed + lineHeight);
+        });
 
         setCertificateBackPreview(canvas.toDataURL("image/png"));
       }
@@ -243,6 +278,10 @@ export const useCertificateViewModel = () => {
     isModalTestimoniVisible,
     form,
     handleSubmit,
+    groupMembers,
     loading,
+    handleSelectGroupMember,
+    selectedGroupMember,
+    setSelectedGroupMember,
   };
 };

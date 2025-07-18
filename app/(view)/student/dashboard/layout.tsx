@@ -104,7 +104,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
   const [collapsed, setCollapsed] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const pathname = usePathname();
-  const { username, imageUrl } = useAuth();
+  const { username, imageUrl, name_group } = useAuth();
   const router = useRouter();
   const screens = useBreakpoint();
 
@@ -327,7 +327,7 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
                       }}
                     />
                     <div style={{ color: "black", textAlign: "right" }}>
-                      <div>{username}</div>
+                      <div>{username || name_group}</div>
                       <div style={{ fontSize: "smaller", marginTop: 5 }}>
                         Student
                       </div>

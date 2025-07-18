@@ -11,6 +11,7 @@ import {
   UsergroupAddOutlined,
   UserOutlined,
   MenuOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import {
@@ -24,6 +25,7 @@ import {
   Modal,
   Button,
   Grid,
+  Calendar,
 } from "antd";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -43,6 +45,8 @@ const menuMap: { [key: string]: string } = {
   "/teacher/dashboard/student": "/teacher/dashboard/student",
   "/teacher/dashboard/placement-test": "/teacher/dashboard/placement-test",
   "/teacher/dashboard/mock-test": "/teacher/dashboard/mock-test",
+  "/teacher/dashboard/schedule": "/teacher/dashboard/schedule",
+
 };
 
 const items: MenuItem[] = [
@@ -75,6 +79,11 @@ const items: MenuItem[] = [
     key: "/teacher/dashboard/mock-test",
     icon: <FileOutlined />,
     label: <Link href="/teacher/dashboard/mock-test">Try Out</Link>,
+  },
+  {
+    key: "/teacher/dashboard/schedule",
+    icon: <CalendarOutlined />,
+    label: <Link href="/teacher/dashboard/schedule">Jadwal</Link>,
   },
 ];
 
@@ -259,12 +268,12 @@ const DashboardTeacher: React.FC<{ children: React.ReactNode }> = ({
                       size={45}
                       style={{ backgroundColor: "#1890ff" }}
                     />
-                      <div style={{ color: "black", textAlign: "right" }}>
-                        <div>{username}</div>
-                        <div style={{ fontSize: "smaller", marginTop: 5 }}>
-                          Teacher
-                        </div>
+                    <div style={{ color: "black", textAlign: "right" }}>
+                      <div>{username}</div>
+                      <div style={{ fontSize: "smaller", marginTop: 5 }}>
+                        Teacher
                       </div>
+                    </div>
                   </Flex>
                 </a>
               </Dropdown>

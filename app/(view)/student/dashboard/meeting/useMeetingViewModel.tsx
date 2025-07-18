@@ -16,6 +16,7 @@ import Cookies from "js-cookie";
 import { color } from "html2canvas/dist/types/css/types/color";
 import { User } from "@/app/model/user";
 import { useAuth } from "@/app/lib/auth/authServices";
+import { TeacherLeave } from "@prisma/client";
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -46,6 +47,10 @@ interface TimeSlot {
 
 interface ProgramResponse {
   data: Program[];
+}
+
+interface ScheduleTeacherResponse {
+  data: TeacherLeave;
 }
 
 interface UseMeetingViewModelReturn {
@@ -166,6 +171,17 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const { data: showScheduleAllTeacher, isLoading: isLoadingScheduleAll } =
     useSWR("/api/admin/schedule/showScheduleAll", fetcher);
 
+  const {
+    data: dayOffTeacher,
+    isLoading: isLoadingDayOff,
+    mutate: mutateDayOff,
+  } = useSWR<ScheduleTeacherResponse>(
+    selectedTeacher
+      ? `/api/student/showDayOffTeacher/${selectedTeacher?.user_id}`
+      : null,
+    fetcher
+  );
+
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [fileList, setFileList] = useState<any[]>([]);
   const [isModalInfoVisible, setIsModalInfoVisible] = useState(false);
@@ -188,6 +204,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     setIsModalInfoVisible(false);
   };
 
+
   const handleDateClick = (arg: any) => {
     if (!selectedTeacher) {
       message.warning("Silakan pilih guru terlebih dahulu.");
@@ -198,6 +215,20 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       .locale("id")
       .format("dddd, DD MMMM YYYY");
     setSelectedDate(selectedDay);
+
+   
+    const selectedDateFormatted = dayjs(arg.date).format("YYYY-MM-DD");
+    const dayOffDates = Array.isArray(dayOffTeacher?.data)
+      ? dayOffTeacher.data.map((item) => item.leave_date)
+      : [];
+
+
+    if (dayOffDates.includes(selectedDateFormatted)) {
+      message.warning(
+        `Tanggal ${selectedDateFormatted} adalah hari libur guru.`
+      );
+      return;
+    }
 
     // console.log(selectedDay);
 

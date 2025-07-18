@@ -1,8 +1,8 @@
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { User } from "@/app/model/user";
 import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { User } from "@prisma/client";
 
 interface StudentResponse {
   data: User[];
@@ -22,7 +22,11 @@ export const useStudentViewModel = () => {
   };
 
   const filteredStudent = studentDataAll?.data.filter((student: any) =>
-    student.username.toLowerCase().includes(searchTerm)
+    (
+      student.username?.toLowerCase() ||
+      student.name_group?.toLowerCase() ||
+      ""
+    ).includes(searchTerm)
   );
 
   const handleDetail = (user_id: string) => {

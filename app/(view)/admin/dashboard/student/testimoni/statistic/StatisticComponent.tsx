@@ -104,7 +104,7 @@ export default function StatisticComponent() {
           </Text>
         </Col>
       </Row>
-
+      
       <div style={{ height: screens.xs ? 300 : 420 }}>
         {isLoadingDataTestimoni ? (
           <Skeleton active paragraph={{ rows: 8 }} />

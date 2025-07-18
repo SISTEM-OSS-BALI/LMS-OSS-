@@ -1,6 +1,4 @@
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { Meeting } from "@/app/model/meeting";
-import { User } from "@/app/model/user";
 import { Form, message, notification } from "antd";
 import useSWR from "swr";
 import dayjs from "dayjs";
@@ -10,7 +8,8 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { crudService } from "@/app/lib/services/crudServices";
 import { useDashboardViewModel } from "../home/useDashboardViewModel";
-import { Program } from "@/app/model/program";
+import { Meeting, ProgressMeeting, User, UserGroup } from "@prisma/client";
+
 dayjs.extend(utc);
 
 interface MeetingResponse {
@@ -19,6 +18,10 @@ interface MeetingResponse {
 
 interface UserResponse {
   data: User[];
+}
+
+interface MemberGroupResponse {
+  data: UserGroup[];
 }
 
 export const useQueueViewModel = () => {
@@ -43,6 +46,17 @@ export const useQueueViewModel = () => {
   } = useSWR<MeetingResponse>(fetchUrl, fetcher);
   const { mutateCountProgram } = useDashboardViewModel();
 
+  const { data: progressData, mutate: progressMutate } = useSWR(
+    `/api/teacher/meeting/showProgress/`,
+    fetcher
+  );
+
+  const { data: memberGroup, isLoading: isLoadingMemberGroup } =
+    useSWR<MemberGroupResponse>(
+      "/api/teacher/student/showMemberGroup",
+      fetcher
+    );
+
   const {
     data: teacherAbsenceData,
     mutate: programDataMutate,
@@ -65,6 +79,12 @@ export const useQueueViewModel = () => {
   const [loadingState, setLoadingState] = useState<{
     [key: string]: boolean | null;
   }>({});
+  const [selectedUserGroupId, setSelectedUserGroupId] = useState<
+    string | undefined
+  >(undefined);
+  const [selectedUserId, setSelectedUserId] = useState<string | undefined>(
+    undefined
+  );
 
   const updateAbsentStatus = async (
     meeting_id: string,
@@ -106,6 +126,7 @@ export const useQueueViewModel = () => {
         });
       }
       meetingMutate();
+      progressMutate();
       mutateDataStudent();
       mutateCountProgram();
     } catch (error: any) {
@@ -133,19 +154,48 @@ export const useQueueViewModel = () => {
       (student: User) => student.user_id === meeting.student_id
     );
 
+    const isGroup = student?.type_student === "GROUP";
+
+    const groupMember = isGroup
+      ? memberGroup?.data
+          .filter((g) => g.userUser_id === meeting.student_id)
+          .map((member) => ({
+            ...member,
+            // meetings: meetingData?.data.filter(
+            //   (m) =>
+            //     m.student_id === member.userUser_id &&
+            //     m.meeting_id === meeting.meeting_id
+            // ),
+          }))
+      : null;
+
     const teacherAbsence = teacherAbsenceData?.data.find(
       (t: Meeting) => t.meeting_id === meeting.meeting_id
+    );
+
+    const filteredProgress = progressData?.data.filter(
+      (progress: any) => progress.meeting_id === meeting.meeting_id
     );
 
     return {
       ...meeting,
       studentName: student?.username,
+      groupMember,
+      nameGroup: student?.name_group,
       teacherAbsence,
+      typeStudent: student?.type_student,
+      progress: filteredProgress?.progress_student ?? null,
     };
   });
 
   const filteredData = mergedData?.filter((student) =>
-    student.studentName?.toLowerCase().includes(searchKeyword.toLowerCase())
+    (
+      student.studentName?.toLowerCase() ||
+      student.nameGroup?.toLowerCase() ||
+      ""
+    )
+      .toLowerCase()
+      .includes(searchKeyword.toLowerCase())
   );
 
   const handleChangeDate = (date: any) => {
@@ -207,12 +257,32 @@ export const useQueueViewModel = () => {
     setImageUrl(null);
   };
 
-  const handleOpenModalAddProges = (meeting_id: string) => {
+  const handleOpenModalAddProges = (
+    meeting_id: string,
+    user_group_id?: string,
+    user_id?: string
+  ) => {
     setIsModalVisibleAddProgesStudent(true);
     setMeetingId(meeting_id);
-    const findProgres = meetingData?.data.find(
-      (meeting: Meeting) => meeting.meeting_id === meeting_id
-    );
+    if (user_id) {
+      setSelectedUserId(user_id);
+    } else {
+      setSelectedUserGroupId(user_group_id);
+    }
+
+    const findProgres = progressData?.data.find((progress: ProgressMeeting) => {
+      if (user_id) {
+        return (
+          progress.user_id === user_id && progress.meeting_id === meeting_id
+        );
+      } else {
+        return (
+          progress.user_group_id === user_group_id &&
+          progress.meeting_id === meeting_id
+        );
+      }
+    });
+
     if (findProgres) {
       form.setFieldsValue({
         progress_student: findProgres.progress_student,
@@ -224,13 +294,24 @@ export const useQueueViewModel = () => {
 
   const handleAddProgresStudent = async (values: any) => {
     setLoading(true);
-    const payload = {
-      progress: values.progress_student,
-      abilityScale: values.ability_scale,
-      studentPerformance: values.student_performance,
-    };
+    let payload;
+    if (selectedUserGroupId) {
+      payload = {
+        user_group_id: selectedUserGroupId,
+        progress: values.progress_student,
+        abilityScale: values.ability_scale,
+        studentPerformance: values.student_performance,
+      };
+    } else {
+      payload = {
+        user_id: selectedUserId,
+        progress: values.progress_student,
+        abilityScale: values.ability_scale,
+        studentPerformance: values.student_performance,
+      };
+    }
     try {
-      await crudService.patch(
+      await crudService.post(
         `/api/teacher/meeting/addProgressStudent/${meetingId}`,
         payload
       );
@@ -238,6 +319,7 @@ export const useQueueViewModel = () => {
         message: "Berhasil Menambahkan Progress",
       });
       meetingMutate();
+      progressMutate();
       mutateDataStudent();
       mutateCountProgram();
       setMeetingId("");

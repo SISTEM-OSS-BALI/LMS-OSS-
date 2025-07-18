@@ -6,6 +6,7 @@ import {
   formatPhoneNumber,
   sendWhatsAppMessage,
 } from "@/app/lib/utils/notificationHelper";
+import { User } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,19 +19,19 @@ export async function POST(request: NextRequest) {
       program_id,
       region,
       signature,
+      name_group,
+      type,
+      members = [],
     } = body;
 
-    const apiKey = process.env.API_KEY_WATZAP!;
-    const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
-    if (!username || !email || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: "Username, email, password is required" },
+        { error: "Email, password is required" },
         { status: 400 }
       );
     }
 
-    // Cek apakah user sudah ada
     const existingUser = await getData(
       "user",
       { where: { email } },
@@ -44,66 +45,103 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    let user: User;
+    let userGroup = null;
+    let finalProgramId = program_id;
 
-    // Gunakan prisma langsung tanpa memanggil transaksi async di luar fungsi prisma.$transaction
-    const user = await prisma.user.create({
-      data: {
-        username,
-        email,
-        password: hashedPassword,
-        no_phone,
-        program_id,
-        region,
-      },
-    });
-
-    if (program_id) {
-      const program = await prisma.program.findUnique({
-        where: { program_id },
+    if (type === "GROUP") {
+      const programGroup = await prisma.program.findFirst({
+        where: { name: "Group Class" },
       });
+
+      finalProgramId = programGroup?.program_id || program_id;
+
+      // 1. Buat user utama terlebih dahulu
+      user = await prisma.user.create({
+        data: {
+          email,
+          name_group,
+          password: hashedPassword,
+          program_id: finalProgramId,
+          type_student: "GROUP",
+          region,
+        },
+      });
+
+      // 2. Buat UserGroup beserta member
+
+      members.map(async (member: User) => {
+        const userGroup = await prisma.userGroup.create({
+          data: {
+            username: member.username ?? "-",
+            no_phone: member.no_phone ?? "-",
+            userUser_id: user.user_id,
+          },
+        });
+      });
+    } else {
+      // Individual user
+      user = await prisma.user.create({
+        data: {
+          username,
+          email,
+          password: hashedPassword,
+          no_phone,
+          program_id,
+          type_student: "INDIVIDUAL",
+          region,
+        },
+      });
+    }
+
+    // Simpan terms agreement jika ada program_id
+    if (finalProgramId) {
+      const selectedProgram = await prisma.program.findUnique({
+        where: { program_id: finalProgramId },
+      });
+
       await prisma.termsAgreement.create({
         data: {
           user_id: user.user_id,
           is_agreed: true,
           email: user.email,
-          username: user.username,
-          program_name: program?.name ?? "",
+          username: type === "GROUP" ? name_group ?? "-" : user.username ?? "-",
+          program_name: selectedProgram?.name ?? "-",
           agreed_at: new Date(),
           signature_url: signature,
         },
       });
     }
 
-    const admin = await prisma.user.findFirst({
-      where: {
-        role: "ADMIN",
-      },
-    });
-
-    // Format nomor WhatsApp admin
-    const formattedPhoneNumber = formatPhoneNumber(admin?.no_phone || "");
-
-    // Pesan WhatsApp profesional untuk admin
-    const message = `📢 *Notifikasi Pendaftaran Pengguna Baru*
+    // Kirim notifikasi WhatsApp ke admin
+    const admin = await prisma.user.findFirst({ where: { role: "ADMIN" } });
+    const formattedPhone = formatPhoneNumber(admin?.no_phone || "-");
+    const waMessage = `📢 *Notifikasi Pendaftaran Pengguna Baru*
 
 Halo Admin 👋, ada pendaftaran baru di platform:
 
 📧 *Email*: ${user.email}
-👤 *Nama*: ${user.username}
+👤 *Nama*: ${user.username || "-"}
 📱 *No. Telp*: ${user.no_phone || "-"}
 🌍 *Region*: ${user.region || "-"}
 
 Silakan cek dan lakukan verifikasi jika diperlukan. ✅`;
 
-    await sendWhatsAppMessage(apiKey, numberKey, formattedPhoneNumber, message);
-
-    // Simpan persetujuan Terms & Conditions di dalam transaksi
+    await sendWhatsAppMessage(
+      process.env.API_KEY_WATZAP!,
+      process.env.NUMBER_KEY_WATZAP!,
+      formattedPhone,
+      waMessage
+    );
 
     return NextResponse.json({
       status: 200,
       error: false,
       data: user,
-      message: "User registered and Terms & Conditions accepted successfully",
+      message:
+        type === "GROUP"
+          ? "Group registered and Terms & Conditions accepted successfully"
+          : "User registered and Terms & Conditions accepted successfully",
     });
   } catch (error) {
     console.error("Error accessing database:", error);
@@ -114,9 +152,7 @@ Silakan cek dan lakukan verifikasi jika diperlukan. ✅`;
       }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } finally {

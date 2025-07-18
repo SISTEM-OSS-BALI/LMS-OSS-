@@ -12,7 +12,6 @@ dayjs.extend(timezone);
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
-    console.log(email);
     const user = await prisma.user.findFirst({ where: { email } });
 
     if (!user) {
@@ -42,7 +41,7 @@ export async function POST(req: Request) {
     });
 
     // Kirim email dengan token reset
-    await sendResetEmail(email, resetToken, user.username);
+    await sendResetEmail(email, resetToken, user.username ?? "");
 
     return NextResponse.json({
       message: "Cek email Anda untuk reset password",

@@ -30,17 +30,26 @@ async function crudRequest(
       },
       ...(body && { body: JSON.stringify(body) }),
     };
+
     const response = await fetch(endpoint, options);
 
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}));
+    let data: any = {};
+    const contentType = response.headers.get("Content-Type") || "";
+
+    if (contentType.includes("application/json")) {
+      data = await response.json().catch(() => ({}));
+    } else {
+      data = { message: await response.text() };
+    }
+
+    if (!response.ok || data.error) {
       throw {
         status: response.status,
-        message: errorBody?.error || response.statusText,
+        message: data?.message || response.statusText,
       };
     }
 
-    return await response.json();
+    return data;
   } catch (error: any) {
     throw error;
   }

@@ -20,6 +20,7 @@ import {
   Image,
   Grid,
   Drawer,
+  Tooltip,
 } from "antd";
 import {
   UserOutlined,
@@ -31,6 +32,7 @@ import {
   EditOutlined,
   ToTopOutlined,
   InboxOutlined,
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import Dragger from "antd/es/upload/Dragger";
 
@@ -193,6 +195,9 @@ export const ProfileComponents = ({
 
           <Title level={screens.xs ? 4 : 3} style={{ textAlign: "center" }}>
             {data?.username || "Tidak Diketahui"}
+            <Tooltip title="Pastikan menggunakan nama lengkap">
+              <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+            </Tooltip>
           </Title>
 
           <Descriptions bordered column={1} size="middle">
@@ -229,13 +234,25 @@ export const ProfileComponents = ({
                     <Badge status="warning" text="Belum Selesai" />
                   )}
                 </Descriptions.Item>
+                <Descriptions.Item label="Status Akun">
+                  <CheckCircleOutlined style={{ marginRight: 8 }} />
+                  {data?.is_active ? "Aktif" : "Tidak Aktif"}
+                </Descriptions.Item>
+                {data?.is_active && (
+                  <Descriptions.Item label="Aktif Hingga">
+                    <CheckCircleOutlined style={{ marginRight: 8 }} />
+                    {data?.end_date
+                      ? new Date(data.end_date).toLocaleDateString("id-ID")
+                      : "-"}
+                  </Descriptions.Item>
+                )}
+                <Descriptions.Item label="Bergabung Sejak">
+                  {data?.joined_at
+                    ? new Date(data.joined_at).toLocaleDateString("id-ID")
+                    : "-"}
+                </Descriptions.Item>
               </>
             )}
-            <Descriptions.Item label="Bergabung Sejak">
-              {data?.joined_at
-                ? new Date(data.joined_at).toLocaleDateString("id-ID")
-                : "-"}
-            </Descriptions.Item>
           </Descriptions>
         </>
       )}

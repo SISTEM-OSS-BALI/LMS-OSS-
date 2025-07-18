@@ -13,9 +13,12 @@ import {
   Flex,
   Image,
   Tooltip,
+  Tag,
+  Collapse,
+  Row,
+  Col,
 } from "antd";
-import { Meeting } from "@/app/model/meeting";
-import Table, { ColumnsType } from "antd/es/table";
+import Table, { ColumnProps, ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import TextArea from "antd/es/input/TextArea";
 import { useQueueViewModel } from "./useQueueViewModel";
@@ -24,9 +27,20 @@ import Icon, { InboxOutlined } from "@ant-design/icons";
 import { useEffect } from "react";
 import { TeacherAbsence } from "@/app/model/user";
 import { AddIcon, MinusIcon } from "@/app/components/Icon";
+import { Meeting } from "@prisma/client";
+import { groupsmigration } from "googleapis/build/src/apis/groupsmigration";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
+
+type MeetingTableData = Meeting & {
+  studentName?: string | null;
+  nameGroup?: string | null;
+  teacherAbsence?: boolean;
+  progress?: string | null;
+  typeStudent?: string | null;
+  groupMember?: any;
+};
 
 export default function QueueComponent() {
   const screens = useBreakpoint();
@@ -55,6 +69,7 @@ export default function QueueComponent() {
     teacherAbsenceData,
   } = useQueueViewModel();
 
+
   const cellRender = (currentDate: any) => {
     const formattedDate = dayjs(currentDate).format("YYYY-MM-DD");
     const isShowTime = showTimes.includes(formattedDate);
@@ -77,9 +92,7 @@ export default function QueueComponent() {
     );
   };
 
-  const columns: ColumnsType<
-    Meeting & { studentName: string | undefined; teacherAbsence: boolean }
-  > = [
+  const columns: ColumnProps<MeetingTableData>[] = [
     {
       title: "No",
       dataIndex: "no",
@@ -109,9 +122,10 @@ export default function QueueComponent() {
       key: "method",
     },
     {
-      title: "Nama Siswa",
-      dataIndex: "studentName",
-      key: "studentName",
+      title: "Nama",
+      key: "name",
+      render: (_, record) =>
+        record.typeStudent === "GROUP" ? record.nameGroup : record.studentName,
     },
     {
       title: "Absen",
@@ -175,13 +189,21 @@ export default function QueueComponent() {
               ? "Sedang Diproses Admin"
               : "Tidak Bisa Mengajar"}
           </Button>
-          <Button
-            type="primary"
-            onClick={() => handleOpenModalAddProges(record.meeting_id)}
-            disabled={record.teacherAbsence}
-          >
-            Tambah Progress Siswa
-          </Button>
+          {record.typeStudent !== "GROUP" && (
+            <Button
+              type="primary"
+              onClick={() =>
+                handleOpenModalAddProges(
+                  record.meeting_id,
+                  undefined,
+                  record.student_id
+                )
+              }
+              disabled={record.teacherAbsence}
+            >
+              Tambah Progress Siswa
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -189,32 +211,25 @@ export default function QueueComponent() {
 
   return (
     <div>
-      <Card
-        style={{
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-        }}
-      >
+      <Flex justify="space-between" gap={10}>
+        <Title level={3} style={{ marginBlock: 0 }}>
+          Daftar Antrian Siswa
+        </Title>
         <Flex justify="space-between" gap={10}>
-          <Title level={3} style={{ marginBlock: 0 }}>
-            Daftar Antrian Siswa
-          </Title>
-          <Flex justify="space-between" gap={10}>
-            <DatePicker
-              placeholder="Pilih Tanggal"
-              onChange={handleChangeDate}
-              cellRender={cellRender}
-              style={{ width: "100%" }}
-            />
-            <Input
-              placeholder="Cari nama siswa"
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              value={searchKeyword}
-              style={{ width: "100%" }}
-            />
-          </Flex>
+          <DatePicker
+            placeholder="Pilih Tanggal"
+            onChange={handleChangeDate}
+            cellRender={cellRender}
+            style={{ width: "100%" }}
+          />
+          <Input
+            placeholder="Cari nama siswa"
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            value={searchKeyword}
+            style={{ width: "100%" }}
+          />
         </Flex>
-      </Card>
+      </Flex>
       <Divider />
       <Card
         style={{
@@ -226,7 +241,47 @@ export default function QueueComponent() {
         <Table
           columns={columns}
           dataSource={filteredData}
-          scroll={{ x: screens.md ? undefined : 800 }}
+          rowKey="meeting_id"
+          expandable={{
+            expandedRowRender: (record) =>
+              record.typeStudent === "GROUP" ? (
+                <div style={{ padding: "16px 24px" }}>
+                  <Title level={5} style={{ marginBottom: 12 }}>
+                    Anggota
+                  </Title>
+                  {record.groupMember?.map((student: any, index: number) => (
+                    <Row
+                      key={index}
+                      gutter={[16, 16]}
+                      align="middle"
+                      style={{
+                        borderBottom: "1px solid #f0f0f0",
+                        padding: "8px 0",
+                      }}
+                    >
+                      <Col flex="auto"> {student.username}</Col>
+                      <Col>
+                        <Button
+                          type="primary"
+                          size="small"
+                          onClick={() =>
+                            handleOpenModalAddProges(
+                              record.meeting_id,
+                              student.user_group_id,
+                              undefined
+                            )
+                          }
+                          disabled={record.teacherAbsence}
+                        >
+                          Tambah Progress
+                        </Button>
+                      </Col>
+                    </Row>
+                  ))}
+                </div>
+              ) : null,
+            rowExpandable: (record) => record.typeStudent === "GROUP",
+          }}
         />
       </Card>
 

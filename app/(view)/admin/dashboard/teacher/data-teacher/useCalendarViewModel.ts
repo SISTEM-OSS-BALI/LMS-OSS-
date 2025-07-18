@@ -266,6 +266,7 @@ export const useCalendarViewModel = (): UseCalendarViewModelReturn => {
       schedule: formattedSchedule,
     };
 
+
     try {
       await crudService.post("/api/admin/schedule/create", payload);
       notification.success({ message: "Jadwal berhasil disimpan." });

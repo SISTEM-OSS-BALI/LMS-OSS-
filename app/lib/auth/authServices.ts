@@ -12,5 +12,6 @@ export const useAuth = () => {
     role: session?.user?.role || null,
     program_id: session?.user?.program_id || null,
     imageUrl: session?.user?.imageUrl || null,
+    name_group : session?.user.name_group
   };
 };

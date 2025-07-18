@@ -20,4 +20,5 @@ export interface Meeting {
   name_program: string;
   is_delete: boolean;
   platform: string;
+  createdAt: Date;
 }

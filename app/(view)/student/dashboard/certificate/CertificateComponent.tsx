@@ -1,9 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useCertificateViewModel } from "./useCertificateViewModel";
 import {
   Col,
   Row,
-  Checkbox,
   Button,
   Image,
   Spin,
@@ -17,14 +16,14 @@ import {
   Rate,
   Input,
   Grid,
+  Select,
 } from "antd";
-const { Text } = Typography;
+const { Text, Title } = Typography;
+const { Option } = Select;
 import generateCertificate from "@/app/lib/utils/generateCertificate";
 import Link from "next/link";
 
 const { useBreakpoint } = Grid;
-
-const { Title } = Typography;
 
 export default function CertificateComponent() {
   const {
@@ -34,22 +33,37 @@ export default function CertificateComponent() {
     certificateBackPreview,
     certificateFrontPreview,
     generateCertificatePreview,
-    certificate,
+    groupMembers,
+    selectedGroupMember,
+    handleSelectGroupMember,
     handleCancelModalTestimoni,
     handleOpenModalTestimoni,
     isModalTestimoniVisible,
     form,
     handleSubmit,
     loading,
+    certificateData,
+    setSelectedGroupMember,
   } = useCertificateViewModel();
 
+  const screens = useBreakpoint();
+
+  const certificate = selectedGroupMember?.certificate ?? certificateData?.data;
+  const evaluation = useMemo(() => {
+    return selectedGroupMember?.sections ?? evaluationData?.data ?? [];
+  }, [selectedGroupMember, evaluationData]);
+
   useEffect(() => {
-    if (certificate && evaluationData) {
+    if (!selectedGroupMember && groupMembers.length > 0) {
+      setSelectedGroupMember(groupMembers[0]);
+    }
+  }, [groupMembers, selectedGroupMember, setSelectedGroupMember]);
+
+  useEffect(() => {
+    if (certificate) {
       generateCertificatePreview();
     }
-  }, [certificate, evaluationData, generateCertificatePreview]);
-
-  const screens = useBreakpoint();
+  }, [certificate, evaluation, selectedGroupMember, generateCertificatePreview]);
 
   return (
     <div style={{ padding: screens.xs ? "0px" : "24px", textAlign: "center" }}>
@@ -61,8 +75,6 @@ export default function CertificateComponent() {
         <Card style={{ borderRadius: "10px", padding: "24px" }}>
           <Skeleton active paragraph={{ rows: 4 }} />
         </Card>
-      ) : !certificate ? (
-        <Spin tip="Memuat sertifikat..." />
       ) : (
         <Row gutter={[24, 24]} justify="center">
           <Col xs={24} md={8}>
@@ -81,7 +93,6 @@ export default function CertificateComponent() {
                 size="middle"
                 style={{ width: "100%" }}
               >
-                {/* Status Meeting */}
                 <Tag
                   color={certificate.is_complated_meeting ? "green" : "red"}
                   style={{
@@ -90,7 +101,7 @@ export default function CertificateComponent() {
                     borderRadius: "8px",
                     width: "100%",
                     display: "flex",
-                    flexDirection: "column", // << penting
+                    flexDirection: "column",
                     alignItems: "flex-start",
                     gap: "8px",
                   }}
@@ -112,7 +123,6 @@ export default function CertificateComponent() {
                   )}
                 </Tag>
 
-                {/* Status Testimoni */}
                 <Tag
                   color={certificate.is_complated_testimoni ? "green" : "red"}
                   style={{
@@ -121,7 +131,7 @@ export default function CertificateComponent() {
                     borderRadius: "8px",
                     width: "100%",
                     display: "flex",
-                    flexDirection: "column", // << penting
+                    flexDirection: "column",
                     alignItems: "flex-start",
                     gap: "8px",
                   }}
@@ -146,8 +156,37 @@ export default function CertificateComponent() {
                   )}
                 </Tag>
               </Space>
+
+              <div style={{ marginTop: "16px" }}>
+                {groupMembers.length > 0 && (
+                  <Form layout="vertical">
+                    <Form.Item label="Pilih Anggota Grup">
+                      <Select
+                        placeholder="Pilih anggota grup"
+                        onChange={(val) => {
+                          const member = groupMembers.find(
+                            (m) => m.user_group_id === val
+                          );
+                          if (member) handleSelectGroupMember(member);
+                        }}
+                        value={selectedGroupMember?.user_group_id}
+                      >
+                        {groupMembers.map((member) => (
+                          <Option
+                            key={member.user_group_id}
+                            value={member.user_group_id}
+                          >
+                            {member.username || member.user_group_id}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Form>
+                )}
+              </div>
             </Card>
           </Col>
+
           <Col xs={24} md={12}>
             <Card
               title="Pratinjau Sertifikat"
@@ -187,22 +226,21 @@ export default function CertificateComponent() {
                   )}
                 </Col>
               </Row>
-
               <br />
               <Button
                 type="primary"
                 disabled={!certificate.is_download}
                 onClick={() =>
                   generateCertificate(
-                    certificate.student_name,
+                    selectedGroupMember?.username ||
+                      certificateData?.data?.student_name ||
+                      "-",
                     certificate.no_certificate,
-                    (evaluationData?.data ?? []).map(
-                      ({ section_type, level, comment }) => ({
-                        section_type,
-                        level,
-                        comment,
-                      })
-                    ),
+                    evaluation.map((item: any) => ({
+                      section_type: item.section_type,
+                      level: item.level,
+                      comment: item.comment,
+                    })),
                     "/assets/images/certificate_front.png",
                     "/assets/images/certificate_back.png"
                   )
@@ -215,12 +253,13 @@ export default function CertificateComponent() {
           </Col>
         </Row>
       )}
+
       <Modal
         open={isModalTestimoniVisible}
         onCancel={handleCancelModalTestimoni}
         title="Testimoni"
         footer={null}
-        width={900} // Lebih lebar agar cukup untuk dua kolom
+        width={900}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Row gutter={[16, 16]}>

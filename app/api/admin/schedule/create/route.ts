@@ -55,6 +55,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       schedule,
     }: { teacherId: string; schedule: ScheduleInput[] } = body;
 
+    console.log(body);
+
     if (!teacherId || !Array.isArray(schedule)) {
       return new NextResponse(
         JSON.stringify({ error: "Payload tidak valid" }),
@@ -150,8 +152,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       message: "Jadwal berhasil diperbarui",
     });
   } catch (error) {
+    console.error("Error accessing database:", error);
     return new NextResponse(
-      JSON.stringify({ error: "Kesalahan Server Internal" }),
+      JSON.stringify({ error: error }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },

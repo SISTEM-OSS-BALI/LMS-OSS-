@@ -39,6 +39,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           role: user.role as Role,
           program_id: user.program_id,
+          name_group: user.name_group,
         } as any;
       },
     }),
@@ -52,13 +53,20 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.role = user.role;
         token.program_id = user.program_id;
+        token.name_group = user.name_group;
       }
       return token;
     },
     async session({ session, token }) {
       const dbUser = await prisma.user.findUnique({
         where: { user_id: token.user_id as string },
-        select: { username: true, email: true, role: true, imageUrl: true },
+        select: {
+          username: true,
+          email: true,
+          role: true,
+          imageUrl: true,
+          name_group: true,
+        },
       });
 
       session.user = {
@@ -71,6 +79,9 @@ export const authOptions: NextAuthOptions = {
           dbUser?.imageUrl ||
           (typeof token.imageUrl === "string" ? token.imageUrl : null) ||
           null,
+        name_group:
+          dbUser?.name_group ??
+          (typeof token.name_group === "string" ? token.name_group : null),
       };
 
       return session;

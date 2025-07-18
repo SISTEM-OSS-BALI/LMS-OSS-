@@ -57,7 +57,9 @@ export default function StudentComponent() {
                 ]}
               >
                 <Title level={5} style={{ color: "#333" }}>
-                  {student.username}
+                  {student.username != null
+                    ? student.username
+                    : student.name_group}
                 </Title>
               </Card>
             </Col>

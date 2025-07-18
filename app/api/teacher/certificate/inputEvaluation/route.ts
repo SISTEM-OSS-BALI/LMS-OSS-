@@ -1,49 +1,113 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import prisma from "@/lib/prisma";
+
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
-
-  if (user instanceof NextResponse) {
-    return user;
-  }
+  if (user instanceof NextResponse) return user;
 
   const body = await request.json();
-  const { student_id, sections } = body;
+  const { student_id, sections, type, user_group_id } = body;
 
   try {
-    let certificate = await prisma.certificate.findFirst({
-      where: { student_id },
-    });
+    let certificate;
 
-    if (!certificate) {
-      certificate = await prisma.certificate.create({
+    if (type === "GROUP") {
+      certificate = await prisma.certificate.findFirst({
+        where: { user_group_id: student_id },
+      });
+
+      if (!certificate) {
+        certificate = await prisma.certificate.create({
+          data: {
+            user_group_id: user_group_id,
+            type_student: "GROUP",
+            student_id: student_id,
+            no_certificate: await generateCertificateNumber(),
+            is_complated_meeting: true,
+            is_complated_testimoni: false,
+            is_download: false,
+          },
+        });
+      }
+
+      await prisma.section.createMany({
+        data: sections.map((section: any) => ({
+          section_type: section.section_type,
+          level: section.level,
+          comment: section.comment,
+          student_id: student_id,
+          user_group_id: user_group_id,
+          type_student: type,
+          certificate_id: certificate!.certificate_id,
+        })),
+      });
+
+      // Cek semua anggota grup
+      const groupMembers = await prisma.user.findMany({
+        where: {
+          UserGroupMembers: {
+            some: {
+              user_group_id: student_id,
+            },
+          },
+        },
+      });
+
+      const allEvaluated = groupMembers.every(
+        (member) => member.is_evaluation === true
+      );
+
+      if (!allEvaluated) {
+        await prisma.user.updateMany({
+          where: {
+            user_id: {
+              in: groupMembers.map((m) => m.user_id),
+            },
+          },
+          data: {
+            is_evaluation: true,
+          },
+        });
+      }
+    } else {
+      // INDIVIDUAL
+      certificate = await prisma.certificate.findFirst({
+        where: { student_id },
+      });
+
+      if (!certificate) {
+        certificate = await prisma.certificate.create({
+          data: {
+            student_id,
+            type_student: "INDIVIDUAL",
+            no_certificate: await generateCertificateNumber(),
+            is_complated_meeting: true,
+            is_complated_testimoni: false,
+            is_download: false,
+          },
+        });
+      }
+
+      await prisma.section.createMany({
+        data: sections.map((section: any) => ({
+          section_type: section.section_type,
+          level: section.level,
+          comment: section.comment,
+          type_student: type,
+          student_id: student_id,
+          certificate_id: certificate!.certificate_id,
+        })),
+      });
+
+      // Langsung update
+      await prisma.user.update({
+        where: { user_id: student_id },
         data: {
-          student_id,
-          no_certificate: await generateCertificateNumber(),
-          is_complated_meeting: true,
-          is_complated_testimoni: false,
-          is_download: false,
+          is_evaluation: true,
         },
       });
     }
-
-    await prisma.section.createMany({
-      data: sections.map((section: any) => ({
-        section_type: section.section_type,
-        level: section.level,
-        comment: section.comment,
-        student_id: student_id,
-        certificate_id: certificate.certificate_id,
-      })),
-    });
-
-    await prisma.user.update({
-      where: { user_id: student_id },
-      data: {
-        is_evaluation: true,
-      },
-    });
 
     return NextResponse.json({
       status: 200,
@@ -74,7 +138,7 @@ async function generateCertificateNumber() {
       },
     },
     orderBy: {
-      no_certificate: "desc", 
+      no_certificate: "desc",
     },
     select: {
       no_certificate: true,

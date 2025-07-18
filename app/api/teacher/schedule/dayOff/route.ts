@@ -1,0 +1,49 @@
+import { authenticateRequest } from "@/app/lib/auth/authUtils";
+import { createData } from "@/app/lib/db/createData";
+import { NextRequest, NextResponse } from "next/server";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
+    const body = await request.json();
+    const { tanggal, alasan } = body;
+
+    if (!tanggal) {
+      return NextResponse.json(
+        { error: "Field 'tanggal' is required" },
+        { status: 400 }
+      );
+    }
+
+    const user = await authenticateRequest(request);
+    if (user instanceof NextResponse) return user;
+
+    // Konversi tanggal ke zona waktu Asia/Makassar atau Asia/Singapore (GMT+8)
+    const leaveDate = dayjs(tanggal).utcOffset(8).startOf("day").toDate();
+
+    await createData("teacherLeave", {
+      teacher_id: user.user_id,
+      leave_date: leaveDate,
+      reason: alasan || null,
+    });
+
+    return NextResponse.json(
+      { success: true, message: "Jadwal libur berhasil disimpan" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("❌ Error saat menyimpan data libur:", error);
+    return NextResponse.json(
+      {
+        error: "Internal Server Error",
+        details: error instanceof Error ? error.message : error,
+      },
+      { status: 500 }
+    );
+  }
+}

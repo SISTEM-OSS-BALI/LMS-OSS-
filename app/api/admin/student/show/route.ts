@@ -28,6 +28,10 @@ export async function GET(request: NextRequest) {
           is_evaluation: true,
           consultant_id: true,
           target: true,
+          name_group: true,
+          type_student: true,
+          is_active: true,
+          renew_program: true,
         },
       },
       "findMany"

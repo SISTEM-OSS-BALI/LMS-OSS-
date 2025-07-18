@@ -8,7 +8,6 @@ import {
   Layout,
   Row,
   Typography,
-  Space,
   Image,
   Select,
   DatePicker,
@@ -40,6 +39,8 @@ interface FormValues {
   program_id: string;
   region: string;
   program_name: string;
+  type: string; 
+  name_group: string | null;
 }
 
 export default function Register() {
@@ -58,7 +59,6 @@ export default function Register() {
     }
     handleFinish({ ...values, signature });
   };
-
   const [formValues, setFormValues] = useState<FormValues>({
     username: "",
     email: "",
@@ -69,6 +69,8 @@ export default function Register() {
     program_id: "",
     region: "",
     program_name: "",
+    type: "INDIVIDUAL",
+    name_group: null,
   });
 
   const handleFormChange = (changedValues: any, allValues: any) => {
@@ -284,6 +286,7 @@ export default function Register() {
                 </Row>
 
                 <TermsCheckbox
+                  type="register"
                   formValues={formValues}
                   setIsAgreed={setIsAgreed}
                   setSignature={setSignature}
@@ -306,15 +309,24 @@ export default function Register() {
                     Register
                   </Button>
                 </Form.Item>
-                <Row justify="end">
+                <Flex justify="space-between">
                   <Link href="/login">Sudah Punya Akun?</Link>
-                </Row>
+                  <Link href="/register-group-class">Register Grup Kelas</Link>
+                </Flex>
               </Form>
             </Flex>
           </Col>
 
           {/* Gambar */}
-          <Col xs={24} md={10} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <Col
+            xs={24}
+            md={10}
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
             <Image
               src="/assets/images/logo_login.png"
               alt="Register Image"

@@ -9,12 +9,15 @@ const { Title, Paragraph } = Typography;
 
 interface FormValues {
   username: string;
+  email: string;
   birth_date: string | null;
   address: string;
   no_phone: string;
+  name_group: string | null;
 }
 
 export default function TermsCheckbox({
+  type,  
   formValues,
   setIsAgreed,
   setSignature,
@@ -22,12 +25,15 @@ export default function TermsCheckbox({
   formValues: FormValues;
   setIsAgreed: (value: boolean) => void;
   setSignature: (value: string | null) => void;
+  type: string
 }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [currentValues, setCurrentValues] = useState<FormValues>({
     username: "",
+    name_group: null,
     birth_date: null,
+    email: "",
     address: "",
     no_phone: "",
   });
@@ -109,11 +115,19 @@ export default function TermsCheckbox({
           <strong>Yang bertanda tangan di bawah ini:</strong>
         </Paragraph>
         <Paragraph>
-          <strong>Nama:</strong> {currentValues.username || "-"} <br />
-          <strong>Tanggal Lahir:</strong> {formatDate(currentValues.birth_date)}{" "}
+          <strong>{type === "register-group" ? "Nama Grup" : "Username"}:</strong>{" "}
+          {type === "register-group"
+            ? currentValues.name_group
+            : currentValues.username || "-"}{" "}
           <br />
-          <strong>Alamat:</strong> {currentValues.address || "-"} <br />
-          <strong>No. Telepon:</strong> {currentValues.no_phone || "-"}
+          {type === "register" && (
+            <>
+              <strong>Tanggal Lahir:</strong> {formatDate(currentValues.birth_date)}{" "}
+              <br />
+              <strong>Alamat:</strong> {currentValues.address || "-"} <br />
+              <strong>No. Telepon:</strong> {currentValues.no_phone || "-"}
+            </>
+          )}
         </Paragraph>
         <Divider />
         <Paragraph>
