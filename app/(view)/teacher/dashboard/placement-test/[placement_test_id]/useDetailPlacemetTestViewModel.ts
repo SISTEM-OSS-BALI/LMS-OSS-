@@ -1,10 +1,10 @@
 import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { User } from "@/app/model/user";
 import {
   BasePlacementTest,
   MultipleChoicePlacementTest,
   PlacementTest,
+  User,
 } from "@prisma/client";
 import { Form, notification } from "antd";
 import { useParams } from "next/navigation";
@@ -64,10 +64,19 @@ export const useDetailPlacementTestViewModel = () => {
     setSearchTerm(e.target.value.toLowerCase());
   };
 
+  const normalizedSearch = (searchTerm ?? "").toLowerCase();
+
   const filteredStudent = Array.isArray(dataStudentResponse?.data)
-    ? dataStudentResponse.data.filter((student) =>
-        student.username.toLowerCase().includes(searchTerm)
-      )
+    ? dataStudentResponse.data.filter((student) => {
+        const username = (student.username ?? "").toLowerCase();
+        const nameGroup = (student.name_group ?? "").toLowerCase();
+
+        // Filter jika username atau name_group mengandung kata kunci
+        return (
+          username.includes(normalizedSearch) ||
+          nameGroup.includes(normalizedSearch)
+        );
+      })
     : [];
 
   const handleOpenModalAccess = () => {

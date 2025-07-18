@@ -53,10 +53,18 @@ export const useDetailMockTestViewModel = () => {
     setSearchTerm(e.target.value.toLowerCase());
   };
 
+  const normalizedSearch = (searchTerm ?? "").toLowerCase();
+
   const filteredStudent = Array.isArray(dataStudentResponse?.data)
-    ? dataStudentResponse.data.filter((student) =>
-        student.username.toLowerCase().includes(searchTerm)
-      )
+    ? dataStudentResponse.data.filter((student) => {
+        const username = (student.username ?? "").toLowerCase();
+        const nameGroup = (student.name_group ?? "").toLowerCase();
+
+        return (
+          username.includes(normalizedSearch) ||
+          nameGroup.includes(normalizedSearch)
+        );
+      })
     : [];
 
   const handleOpenModalAccess = () => {
