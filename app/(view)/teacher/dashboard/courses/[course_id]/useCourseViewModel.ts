@@ -72,9 +72,13 @@ export const useCourseViewModel = () => {
   });
 
   const filteredStudent = Array.isArray(dataStudentResponse?.data)
-    ? mergedData?.filter((student) =>
-        student.username.toLowerCase().includes(searchTermStudent)
-      )
+    ? mergedData?.filter((student) => {
+        const search = searchTermStudent.toLowerCase();
+        const username = (student.username ?? "").toLowerCase();
+        const nameGroup = (student.name_group ?? "").toLowerCase();
+
+        return username.includes(search) || nameGroup.includes(search);
+      })
     : [];
 
   const handleCancel = () => {
