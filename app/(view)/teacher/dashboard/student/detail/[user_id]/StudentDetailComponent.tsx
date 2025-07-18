@@ -57,7 +57,6 @@ export default function StudentDetailComponent() {
   const query = useParams();
   const student_id = query.user_id;
 
-  console.log(filteredMeetings);
 
   type SectionType = "LISTENING" | "READING" | "WRITING" | "SPEAKING";
 

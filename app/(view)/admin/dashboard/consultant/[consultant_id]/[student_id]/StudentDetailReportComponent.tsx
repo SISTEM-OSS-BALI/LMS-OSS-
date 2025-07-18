@@ -1,9 +1,3 @@
-import { useParams } from "next/navigation";
-import { useStudentDetailReportViewModel } from "./useStudentDetailReport";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import { saveAs } from "file-saver";
-import * as XLSX from "xlsx";
 import {
   Avatar,
   Button,
@@ -11,11 +5,21 @@ import {
   Col,
   Flex,
   Row,
-  Skeleton,
   Table,
+  Tooltip,
   Typography,
+  Skeleton,
+  Modal,
+  Form,
+  Select,
+  Space,
+  Input,
   Tag,
 } from "antd";
+;
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import TextArea from "antd/es/input/TextArea";
 import {
   UserOutlined,
   PhoneOutlined,
@@ -23,22 +27,114 @@ import {
   BookOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
-
+import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useStudentDetailReportViewModel } from "./useStudentDetailReport";
 dayjs.extend(utc);
+
 const { Title, Text } = Typography;
 
-export default function StudentDetailReportComponent() {
+export default function StudentDetailComponent() {
   const {
+    filteredStudent,
     filteredMeetings,
     filteredPrograms,
-    filteredStudent,
     isLoadingStudent,
     isLoadingMeeting,
     isLoadingProgram,
+    programDataAll,
+    selectedGroupMemberId,
+    setSelectedGroupMemberId,
+    userGroup,
   } = useStudentDetailReportViewModel();
 
   const query = useParams();
-  const student_id = query.student_id;
+  const student_id = query.user_id;
+
+ 
+
+  // Data meeting untuk table (individual & group)
+  const data = filteredMeetings?.flatMap((meeting) => {
+    if (filteredStudent?.type_student === "GROUP") {
+      const groupMeeting = meeting as typeof meeting & {
+        groupProgress?: {
+          user_group_id: string;
+          progress_student: string;
+          abilityScale: string;
+          studentPerformance: string;
+        }[];
+      };
+      const progress = groupMeeting.groupProgress?.find(
+        (p) => p.user_group_id === selectedGroupMemberId
+      );
+      if (!progress) return [];
+      return {
+        key: `${meeting.meeting_id}-${progress.user_group_id}`,
+        method: meeting.method,
+        teacherName: meeting.teacherName,
+        progress_student: progress.progress_student,
+        abilityScale: progress.abilityScale,
+        studentPerformance: progress.studentPerformance,
+        dateTime: meeting.dateTime,
+      };
+    } else {
+      // PENTING! Jangan lupa programType dan programId disertakan!
+      return {
+        key: meeting.meeting_id,
+        method: meeting.method,
+        teacherName: meeting.teacherName,
+        progress_student: meeting.progress_student,
+        abilityScale: meeting.abilityScale,
+        studentPerformance: meeting.studentPerformance,
+        dateTime: meeting.dateTime,
+        programType: meeting.programType,
+        programId: meeting.programId,
+      };
+    }
+  });
+
+  // Get default program type (NEW_PROGRAM preferred, else OLD_PROGRAM)
+
+  // Hanya OLD_PROGRAM yang muncul di dropdown
+  const programTypeOptions = useMemo(() => {
+    if (!filteredMeetings) return [];
+    const typeLabel = {
+      OLD_PROGRAM: "Program sebelumnya: ",
+    };
+    const types = Array.from(
+      new Set(filteredMeetings.map((m) => m.programType))
+    ).filter((type) => type === "OLD_PROGRAM");
+    return types.map((type) => {
+      const sampleMeeting = filteredMeetings.find(
+        (m) => m.programType === type
+      );
+      const programName =
+        programDataAll?.data.find(
+          (p) => p.program_id === sampleMeeting?.programId
+        )?.name || "-";
+      return {
+        value: type,
+        label: `${typeLabel[type] || ""}${programName}`,
+      };
+    });
+  }, [filteredMeetings, programDataAll]);
+
+ const [selectedProgramType, setSelectedProgramType] = useState<string>("");
+const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
+  
+
+
+  // Data tabel difilter sesuai selectedProgramType
+  const filteredTableData = useMemo(() => {
+    if (!data) return [];
+   
+    if (viewNewProgram) {
+      return data.filter((row) => row.programType === "NEW_PROGRAM");
+    }
+
+    return data.filter((row) => row.programType === selectedProgramType);
+  }, [viewNewProgram, selectedProgramType, data]);
+
 
   const columns: any = [
     {
@@ -54,6 +150,7 @@ export default function StudentDetailReportComponent() {
       render: (text: any) => dayjs.utc(text).format("YYYY-MM-DD HH:mm"),
     },
     { title: "Metode", dataIndex: "method", key: "method" },
+    { title: "Pengajar", dataIndex: "teacherName", key: "teacherName" },
     {
       title: "Skala Kemampuan",
       dataIndex: "abilityScale",
@@ -71,15 +168,50 @@ export default function StudentDetailReportComponent() {
     },
   ];
 
-  const data = filteredMeetings?.map((meeting, index) => ({
-    no: index + 1,
-    key: meeting.meeting_id,
-    method: meeting.method,
-    progress_student: meeting.progress_student,
-    abilityScale: meeting.abilityScale,
-    studentPerformance: meeting.studentPerformance,
-    dateTime: meeting.dateTime,
-  }));
+  // const data = filteredMeetings?.flatMap((meeting) => {
+  //   if (filteredStudent?.type_student === "GROUP") {
+  //     const groupMeeting = meeting as typeof meeting & {
+  //       groupProgress?: {
+  //         user_group_id: string;
+  //         progress_student: string;
+  //         abilityScale: string;
+  //         studentPerformance: string;
+  //       }[];
+  //     };
+
+  //     const progress = groupMeeting.groupProgress?.find(
+  //       (p) => p.user_group_id === selectedGroupMemberId
+  //     );
+
+  //     if (!progress) return [];
+
+  //     return {
+  //       key: `${meeting.meeting_id}-${progress.user_group_id}`,
+  //       method: meeting.method,
+  //       teacherName: meeting.teacherName,
+  //       progress_student: progress.progress_student,
+  //       abilityScale: progress.abilityScale,
+  //       studentPerformance: progress.studentPerformance,
+  //       dateTime: meeting.dateTime,
+  //     };
+  //   } else {
+  //     return {
+  //       key: meeting.meeting_id,
+  //       method: meeting.method,
+  //       teacherName: meeting.teacherName,
+  //       progress_student: meeting.progress_student,
+  //       abilityScale: meeting.abilityScale,
+  //       studentPerformance: meeting.studentPerformance,
+  //       dateTime: meeting.dateTime,
+  //     };
+  //   }
+  // });
+
+  console.log("Filtered Table Data:", filteredTableData);
+  console.log("Selected Program Type:", selectedProgramType);
+  console.log("Program Type Options:", programTypeOptions);
+  console.log("Filtered Student:", filteredMeetings);
+  console.log(data);
 
   const columnsInfo = [
     {
@@ -103,21 +235,29 @@ export default function StudentDetailReportComponent() {
       label: (
         <>
           <UserOutlined style={{ marginRight: 5 }} />
-          Nama
+          {filteredStudent?.username != null ? "Nama" : "Nama Kelompok"}
         </>
       ),
-      value: filteredStudent?.username || "Tidak tersedia",
+      value:
+        filteredStudent?.username != null
+          ? filteredStudent?.username
+          : filteredStudent?.name_group || "Tidak tersedia",
     },
-    {
-      key: "phone",
-      label: (
-        <>
-          <PhoneOutlined style={{ marginRight: 5 }} />
-          No Telepon
-        </>
-      ),
-      value: filteredStudent?.no_phone || "Tidak tersedia",
-    },
+    // Hanya render phone jika username tidak null
+    ...(filteredStudent?.username != null
+      ? [
+          {
+            key: "phone",
+            label: (
+              <>
+                <PhoneOutlined style={{ marginRight: 5 }} />
+                No Telepon
+              </>
+            ),
+            value: filteredStudent?.no_phone || "Tidak tersedia",
+          },
+        ]
+      : []),
     {
       key: "region",
       label: (
@@ -151,49 +291,37 @@ export default function StudentDetailReportComponent() {
     },
   ];
 
-  const handleDownloadExcel = () => {
-    if (!filteredMeetings?.length) {
-      alert("Tidak ada data pertemuan yang dapat diekspor.");
-      return;
-    }
-
-    // 1️⃣ Siapkan Data untuk Excel
-    const excelData = filteredMeetings.map((meeting, index) => ({
-      No: index + 1,
-      Tanggal: dayjs.utc(meeting.dateTime).format("YYYY-MM-DD HH:mm"),
-      Metode: meeting.method,
-      "Skala Kemampuan": meeting.abilityScale,
-      "Kinerja Siswa": meeting.studentPerformance,
-      "Hasil Inputan Guru": meeting.progress_student,
-    }));
-
-    // 2️⃣ Buat WorkSheet & WorkBook
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Pertemuan");
-
-    // 3️⃣ Konversi ke Blob & Simpan sebagai File `.xlsx`
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-    const dataBlob = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    saveAs(
-      dataBlob,
-      `Riwayat_Pertemuan_${filteredStudent?.username || "Siswa"}.xlsx`
-    );
-  };
-
   return (
-    <div style={{ padding: "24px" }}>
-      <Row gutter={[24, 24]}>
+    <div
+      style={{
+        marginTop: 64,
+        padding: "24px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
+      }}
+    >
+      <Row gutter={[24, 24]} justify="center" style={{ width: "100%" }}>
         {/* Student Details */}
-        <Col md={16}>
-          <Card style={{ borderRadius: "12px", padding: "20px" }}>
-            <Title level={3} style={{ marginBottom: "24px" }}>
+        <Col
+          xs={24}
+          sm={24}
+          md={16}
+          lg={16}
+          xl={16}
+          style={{ display: "flex", justifyContent: "center" }}
+        >
+          <Card
+            style={{ borderRadius: "12px", padding: "20px", width: "100%" }}
+          >
+            <Title
+              level={3}
+              style={{
+                marginBottom: "24px",
+                fontSize: "clamp(18px, 2.5vw, 24px)",
+              }}
+            >
               Detail Siswa
             </Title>
             <Row
@@ -207,7 +335,11 @@ export default function StudentDetailReportComponent() {
             >
               {/* Avatar Section */}
               <Col
-                span={6}
+                xs={24}
+                sm={24}
+                md={6}
+                lg={6}
+                xl={6}
                 style={{
                   display: "flex",
                   justifyContent: "center",
@@ -239,7 +371,11 @@ export default function StudentDetailReportComponent() {
 
               {/* Table Section */}
               <Col
-                span={17} // Memberikan lebih banyak ruang untuk tabel
+                xs={24}
+                sm={24}
+                md={17}
+                lg={17}
+                xl={17}
                 style={{ display: "flex", justifyContent: "flex-start" }}
               >
                 {isLoadingStudent ? (
@@ -251,7 +387,7 @@ export default function StudentDetailReportComponent() {
                     pagination={false}
                     bordered
                     size="small"
-                    style={{ width: "100%", maxWidth: "600px" }} // Membatasi lebar tabel agar proporsional
+                    style={{ width: "100%", maxWidth: "600px" }}
                   />
                 )}
               </Col>
@@ -260,7 +396,14 @@ export default function StudentDetailReportComponent() {
         </Col>
 
         {/* Total Meetings */}
-        <Col md={8}>
+        <Col
+          xs={24}
+          sm={24}
+          md={8}
+          lg={8}
+          xl={8}
+          style={{ display: "flex", justifyContent: "center" }}
+        >
           <Card
             style={{
               textAlign: "center",
@@ -271,15 +414,26 @@ export default function StudentDetailReportComponent() {
               justifyContent: "center",
               alignItems: "center",
               flexDirection: "column",
+              width: "100%",
+              maxWidth: "300px",
             }}
           >
-            <Title level={3} style={{ marginBottom: "16px" }}>
+            <Title
+              level={3}
+              style={{
+                marginBottom: "16px",
+                fontSize: "clamp(18px, 2.5vw, 24px)",
+              }}
+            >
               Total Pertemuan
             </Title>
             {isLoadingStudent ? (
               <Skeleton.Input active size="large" style={{ width: "80px" }} />
             ) : (
-              <Text strong style={{ fontSize: "48px", color: "#1890ff" }}>
+              <Text
+                strong
+                style={{ fontSize: "clamp(32px, 5vw, 48px)", color: "#1890ff" }}
+              >
                 {filteredStudent?.count_program}
               </Text>
             )}
@@ -289,25 +443,111 @@ export default function StudentDetailReportComponent() {
 
       {/* Meeting History */}
       <Card
-        style={{ marginTop: "24px", borderRadius: "12px", padding: "24px" }}
+        style={{
+          marginTop: "24px",
+          borderRadius: "12px",
+          padding: "24px",
+          width: "100%",
+        }}
       >
-        <Flex justify="space-between" style={{ marginBlock: "10px" }}>
-          <Title level={3}>Riwayat Pertemuan</Title>
-          <Button type="primary" onClick={handleDownloadExcel}>
-            Cetak Pertemuan
-          </Button>
+        <Flex
+          justify="space-between"
+          style={{
+            marginBlock: "10px",
+            flexDirection: "column",
+            gap: "16px",
+            alignItems: "flex-start",
+          }}
+        >
+          <Title level={3} style={{ fontSize: "clamp(18px, 2.5vw, 24px)" }}>
+            Riwayat Pertemuan
+          </Title>
         </Flex>
+        {filteredStudent?.type_student === "GROUP" &&
+          userGroup &&
+          userGroup.length > 0 && (
+            <div style={{ width: "100%", marginTop: "20px" }}>
+              <Title level={4} style={{ marginBottom: "12px" }}>
+                Anggota Kelompok
+              </Title>
+              <Row gutter={[16, 16]} style={{ marginBottom: "32px" }}>
+                {userGroup.map((group: any, index: number) => {
+                  const isSelected =
+                    selectedGroupMemberId === group.user_group_id;
+
+                  return (
+                    <Col
+                      key={group.user_group_id || index}
+                      xs={24}
+                      sm={12}
+                      md={8}
+                      lg={6}
+                    >
+                      <Card
+                        hoverable
+                        onClick={() => {
+                          setSelectedGroupMemberId(
+                            isSelected ? null : group.user_group_id
+                          );
+                        }}
+                        style={{
+                          borderRadius: "12px",
+                          border: isSelected
+                            ? "2px solid #1890ff"
+                            : "1px solid #eaeaea",
+                          boxShadow: isSelected
+                            ? "0 0 8px rgba(24, 144, 255, 0.5)"
+                            : "none",
+                        }}
+                      >
+                        <Text strong>{group.username || group.name}</Text>
+                      </Card>
+                    </Col>
+                  );
+                })}
+              </Row>
+            </div>
+          )}
+
+        {programTypeOptions.length > 0 && (
+          <div style={{ marginBottom: 16, display: "flex", gap: 8 }}>
+            <Button
+              type={viewNewProgram ? "primary" : "default"}
+              onClick={() => setViewNewProgram(true)}
+              // disabled={viewNewProgram}
+            >
+              Lihat Data New Program
+            </Button>
+            <Select
+              value={viewNewProgram ? undefined : selectedProgramType}
+              options={programTypeOptions}
+              onChange={(value) => {
+                setSelectedProgramType(value);
+                setViewNewProgram(false);
+              }}
+              style={{ minWidth: 220 }}
+              // disabled={viewNewProgram}
+              placeholder="Pilih Program Lama"
+            />
+          </div>
+        )}
 
         {isLoadingMeeting ? (
           <Skeleton active paragraph={{ rows: 5 }} />
         ) : (
           <Table
             columns={columns}
-            dataSource={data}
+            dataSource={
+              filteredTableData && filteredTableData.length > 0
+                ? filteredTableData
+                : data
+            }
             pagination={{ pageSize: 5 }}
+            scroll={{ x: true }}
           />
         )}
       </Card>
+
     </div>
   );
 }

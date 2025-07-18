@@ -193,7 +193,6 @@ const filteredMeetings = meetingDataAll?.data
     }
   });
 
-  console.log("✅ Final filteredMeetings:", filteredMeetings);
   const filteredPrograms = programDataAll?.data.filter(
     (program) => program.program_id === filteredStudent?.program_id
   );
