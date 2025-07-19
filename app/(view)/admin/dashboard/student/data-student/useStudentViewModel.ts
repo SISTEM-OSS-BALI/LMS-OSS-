@@ -45,13 +45,12 @@ export const useStudentViewModel = () => {
     fetcher
   );
 
-  const { data: programDetail, mutate: mutateProgramDetail } =
-    useSWR(
-      selectedUserId
-        ? `/api/admin/student/${selectedUserId}/detailProgram`
-        : null,
-      fetcher
-    );
+  const { data: programDetail, mutate: mutateProgramDetail } = useSWR(
+    selectedUserId
+      ? `/api/admin/student/${selectedUserId}/detailProgram`
+      : null,
+    fetcher
+  );
 
   const {
     data: meetingDataAll,
@@ -104,11 +103,11 @@ export const useStudentViewModel = () => {
     }) ?? [];
 
   const filteredStudent =
-    mergedStudent.filter(
-      (student: any) =>
-        student.username ||
-        student.name_group.toLowerCase().includes(searchTerm)
-    ) ?? [];
+    mergedStudent.filter((student: any) => {
+      const username = student.username?.toLowerCase() ?? "";
+      const nameGroup = student.name_group?.toLowerCase() ?? "";
+      return username.includes(searchTerm) || nameGroup.includes(searchTerm);
+    }) ?? [];
 
   let filteredProgramRenewal;
   if (Array.isArray(renewalData?.data)) {
