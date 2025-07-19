@@ -263,7 +263,12 @@ export const useScheduleViewModel = () => {
   const handleFinish = async (values: any) => {
     setLoading(true);
     try {
-      await crudService.post("/api/teacher/schedule/dayOff", values);
+      const payload = {
+        alasan: values.alasan,
+        tanggal: selectedDate ? dayjs(selectedDate).format("YYYY-MM-DD") : null
+      }
+      console.log(payload)
+      await crudService.post("/api/teacher/schedule/dayOff", payload);
       setIsModalOpen(false);
       notification.success({
         message: "Data berhasil disimpan!",

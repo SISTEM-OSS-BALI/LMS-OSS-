@@ -13,6 +13,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = await request.json();
     const { tanggal, alasan } = body;
 
+    console.log("Received data:", { tanggal, alasan });
+
     if (!tanggal) {
       return NextResponse.json(
         { error: "Field 'tanggal' is required" },
@@ -23,12 +25,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const user = await authenticateRequest(request);
     if (user instanceof NextResponse) return user;
 
-    // Konversi tanggal ke zona waktu Asia/Makassar atau Asia/Singapore (GMT+8)
-    const leaveDate = dayjs(tanggal).utcOffset(8).startOf("day").toDate();
-
+    // Konversi tanggal ke zona waktu Asia/Makassar (WITA, GMT+8)
+    const date = dayjs(tanggal).add(8, "hour")
+    console.log("Converted date:", date);
     await createData("teacherLeave", {
       teacher_id: user.user_id,
-      leave_date: leaveDate,
+      leave_date: date.toDate(),
       reason: alasan || null,
     });
 
