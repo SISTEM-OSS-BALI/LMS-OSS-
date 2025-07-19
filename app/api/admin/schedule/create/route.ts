@@ -55,7 +55,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       schedule,
     }: { teacherId: string; schedule: ScheduleInput[] } = body;
 
-    console.log(body);
 
     if (!teacherId || !Array.isArray(schedule)) {
       return new NextResponse(

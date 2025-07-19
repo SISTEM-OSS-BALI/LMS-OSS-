@@ -43,7 +43,6 @@ export default function CoursesFollowedComponent() {
   const filteredCourses = () => {
     if (!courseData) return [];
     let courses = courseData.data;
-    console.log(courses);
 
     if (filterStatus === "completed") {
       courses = courses.filter((course) => course.completed === true);

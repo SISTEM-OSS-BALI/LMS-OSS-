@@ -207,11 +207,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
   //   }
   // });
 
-  console.log("Filtered Table Data:", filteredTableData);
-  console.log("Selected Program Type:", selectedProgramType);
-  console.log("Program Type Options:", programTypeOptions);
-  console.log("Filtered Student:", filteredMeetings);
-  console.log(data);
+
 
   const columnsInfo = [
     {

@@ -13,7 +13,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = await request.json();
     const { tanggal, alasan } = body;
 
-    console.log("Received data:", { tanggal, alasan });
 
     if (!tanggal) {
       return NextResponse.json(
@@ -25,9 +24,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const user = await authenticateRequest(request);
     if (user instanceof NextResponse) return user;
 
-    // Konversi tanggal ke zona waktu Asia/Makassar (WITA, GMT+8)
     const date = dayjs(tanggal).add(8, "hour")
-    console.log("Converted date:", date);
     await createData("teacherLeave", {
       teacher_id: user.user_id,
       leave_date: date.toDate(),

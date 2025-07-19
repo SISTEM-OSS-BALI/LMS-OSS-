@@ -267,7 +267,6 @@ export const useScheduleViewModel = () => {
         alasan: values.alasan,
         tanggal: selectedDate ? dayjs(selectedDate).format("YYYY-MM-DD") : null
       }
-      console.log(payload)
       await crudService.post("/api/teacher/schedule/dayOff", payload);
       setIsModalOpen(false);
       notification.success({
@@ -279,7 +278,6 @@ export const useScheduleViewModel = () => {
       form.resetFields();
       setSelectedDate(null);
     } catch (error) {
-      console.error("Error:", error);
       notification.error({
         message: "Gagal menyimpan data!",
         description: "Terjadi kesalahan saat menyimpan data.",
@@ -347,6 +345,7 @@ export const useScheduleViewModel = () => {
       notification.success({ message: "Jadwal berhasil disimpan." });
       setIsDrawerVisible(false);
       mutateShowScheduleTeacher();
+      mutateSchedule();
       setSchedule(
         DAYS.map((day) => ({
           schedule_id: "",

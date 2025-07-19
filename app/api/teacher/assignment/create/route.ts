@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
       description,
     } = body;
 
-    console.log("Request body:", body);
 
     const user = await authenticateRequest(request);
     if (user instanceof NextResponse) {

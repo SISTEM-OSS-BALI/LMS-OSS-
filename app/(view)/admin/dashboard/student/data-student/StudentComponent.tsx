@@ -114,7 +114,6 @@ export default function StudentComponent() {
     filteredProgramRenewal: any;
   } = useStudentViewModel();
 
-  console.log(filteredProgramRenewal);  
 
   const isLoading =
     meetingDataLoading || programDataLoading || teacherDataLoading;

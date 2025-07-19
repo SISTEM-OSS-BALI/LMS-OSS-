@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
   const { tokens } = await oauth2Client.getToken(code);
   oauth2Client.setCredentials(tokens);
 
-  console.log("Refresh Token:", tokens.refresh_token);
 
   return NextResponse.redirect(new URL("/dashboard", req.url));
 }

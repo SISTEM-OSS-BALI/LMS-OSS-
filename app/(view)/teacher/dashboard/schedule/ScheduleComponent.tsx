@@ -212,11 +212,6 @@ export default function ScheduleComponent() {
   );
 
   useEffect(() => {
-    console.log("isLoadingSchedule:", isLoadingSchedule);
-    console.log("isLoadingDayOff:", isLoadingDayOff);
-    console.log("scheduleTeacher:", scheduleTeacher);
-    console.log("dayOffTeacher:", dayOffTeacher);
-
     if (
       !isLoadingSchedule &&
       !isLoadingDayOff &&
@@ -226,7 +221,6 @@ export default function ScheduleComponent() {
       const start = dayjs().startOf("month").toDate();
       const end = dayjs().endOf("month").toDate();
       const newEvents = generateEventsInRange(start, end);
-      console.log("Generated Events:", newEvents);
       setEvents(newEvents);
     }
   }, [

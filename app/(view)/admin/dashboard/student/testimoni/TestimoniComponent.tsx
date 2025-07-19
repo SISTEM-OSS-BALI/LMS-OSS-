@@ -71,7 +71,6 @@ export default function TestimoniComponent() {
   const { dataTestimoni, isLoadingDataTestimoni, handleDelete } =
     useTestimoniViewModel();
 
-    console.log("Data Testimoni:", dataTestimoni);
 
   const showDeleteConfirm = (testimonial_id: string) => {
     Modal.confirm({
