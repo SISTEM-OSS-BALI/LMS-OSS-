@@ -35,7 +35,7 @@ interface RenewelResponse {
 }
 
 export const useDetailStudentViewModel = () => {
-  const { data: studentDataAll, isLoading: isLoadingStudent } =
+  const { data: studentDataAll, isLoading: isLoadingStudent, mutate: mutateStudent } =
     useSWR<UserResponse>("/api/teacher/student/showAll", fetcher);
   const { data: teacherDataAll } = useSWR<UserResponse>(
     "/api/admin/teacher/show",
@@ -235,6 +235,8 @@ const filteredMeetings = meetingDataAll?.data
         message: "Success",
         description: "Data berhasil disimpan",
       });
+
+      mutateStudent();
 
       handleCancel();
     } catch (error) {
