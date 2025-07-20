@@ -63,7 +63,14 @@ export default function CertificateComponent() {
     if (certificate) {
       generateCertificatePreview();
     }
-  }, [certificate, evaluation, selectedGroupMember, generateCertificatePreview]);
+  }, [
+    certificate,
+    evaluation,
+    selectedGroupMember,
+    generateCertificatePreview,
+  ]);
+
+  console.log(certificate);
 
   return (
     <div style={{ padding: screens.xs ? "0px" : "24px", textAlign: "center" }}>
@@ -94,7 +101,14 @@ export default function CertificateComponent() {
                 style={{ width: "100%" }}
               >
                 <Tag
-                  color={certificate.is_complated_meeting ? "green" : "red"}
+                  color={
+                    (certificate.certificateData &&
+                      certificate.certificateData[0].is_complated_meeting) ||
+                    (groupMembers &&
+                      groupMembers[0].certificate.is_complated_meeting)
+                      ? "green"
+                      : "red"
+                  }
                   style={{
                     fontSize: "16px",
                     padding: "8px 12px",
@@ -107,7 +121,10 @@ export default function CertificateComponent() {
                   }}
                 >
                   <Text strong>Melakukan Jadwal Pertemuan</Text>
-                  {certificate.is_complated_meeting ? (
+                  {(certificate.certificateData &&
+                    certificate.certificateData[0].is_complated_meeting) ||
+                  (groupMembers &&
+                    groupMembers[0].certificate.is_complated_meeting) ? (
                     <Text strong style={{ color: "green" }}>
                       Selesai
                     </Text>
@@ -124,7 +141,14 @@ export default function CertificateComponent() {
                 </Tag>
 
                 <Tag
-                  color={certificate.is_complated_testimoni ? "green" : "red"}
+                  color={
+                    (certificate.certificateData &&
+                      certificate.certificateData[0].is_complated_testimoni) ||
+                    (groupMembers &&
+                      groupMembers[0].certificate.is_complated_testimoni)
+                      ? "green"
+                      : "red"
+                  }
                   style={{
                     fontSize: "16px",
                     padding: "8px 12px",
@@ -137,7 +161,10 @@ export default function CertificateComponent() {
                   }}
                 >
                   <Text strong>Melakukan Testimoni</Text>
-                  {certificate.is_complated_testimoni ? (
+                  {(certificate.certificateData &&
+                    certificate.certificateData[0].is_complated_testimoni) ||
+                  (groupMembers &&
+                    groupMembers[0].certificate.is_complated_testimoni) ? (
                     <Text strong style={{ color: "green" }}>
                       Selesai
                     </Text>
@@ -229,13 +256,23 @@ export default function CertificateComponent() {
               <br />
               <Button
                 type="primary"
-                disabled={!certificate.is_download}
+                disabled={
+                  (certificate.certificateData &&
+                    !certificate.certificateData[0].is_download) ||
+                  (Array.isArray(groupMembers) &&
+                    groupMembers.length > 0 &&
+                    groupMembers[0]?.certificate &&
+                    !groupMembers[0].certificate.is_download)
+                }
                 onClick={() =>
                   generateCertificate(
                     selectedGroupMember?.username ||
                       certificateData?.data?.student_name ||
                       "-",
-                    certificate.no_certificate,
+                    certificate.no_certificate ||
+                      (certificate.certificateData &&
+                        certificate.certificateData[0].no_certificate) ||
+                      "-",
                     evaluation.map((item: any) => ({
                       section_type: item.section_type,
                       level: item.level,

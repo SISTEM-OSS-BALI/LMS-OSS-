@@ -21,10 +21,17 @@ interface Certificate {
   program_name: string;
   type_student: "INDIVIDUAL" | "GROUP";
   group_members?: any[];
+  certificateData?: CertificateData[];
 }
 
 interface CertificateResponse {
   data: Certificate;
+}
+
+
+interface CertificateData {
+  no_certificate: string;
+  group_members: any[];
 }
 
 interface EvaluationResponse {
@@ -58,6 +65,7 @@ export const useCertificateViewModel = () => {
     student_name: "-",
     program_name: "-",
     type_student: "INDIVIDUAL",
+    group_members: [],
   };
 
   const [selectedGroupMember, setSelectedGroupMember] = useState<any | null>(
@@ -100,13 +108,20 @@ export const useCertificateViewModel = () => {
     setCertificateBackPreview(null);
   };
 
+  console.log(certificate);
+
+  // const no_certificate_individual = certificate?.
+
   const generateCertificatePreview = async (): Promise<void> => {
     if (certificate && evaluationData) {
       const studentNameToUse =
         certificate?.type_student === "GROUP" && selectedGroupMember
           ? selectedGroupMember.username
           : certificate?.student_name;
-      const { no_certificate } = certificate;
+      const no_certificate =
+        certificate?.type_student === "GROUP" && selectedGroupMember
+          ? selectedGroupMember.certificate?.no_certificate
+          : certificate?.certificateData?.[0]?.no_certificate;
 
       const doc = new jsPDF("landscape", "px", "a4");
       const canvas: HTMLCanvasElement = document.createElement("canvas");
