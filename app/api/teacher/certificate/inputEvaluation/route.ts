@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         where: {
           UserGroupMembers: {
             some: {
-              user_group_id: student_id,
+              userUser_id: student_id,
             },
           },
         },
