@@ -92,8 +92,8 @@ export const useQueueViewModel = () => {
     absent: boolean
   ) => {
     const payload = {
-      meeting_id: meeting_id,
-      absent: absent,
+      meeting_id,
+      absent,
       student_id,
     };
 
@@ -108,29 +108,37 @@ export const useQueueViewModel = () => {
         payload
       );
 
-      // ✅ Jika berhasil, tampilkan notifikasi sukses
-      if (response.status === 200) {
+      // Jika status 200 tapi message error, treat as error
+      const isError =
+        typeof response.message === "string" &&
+        (response.message.toLowerCase().includes("gagal") ||
+          response.message.toLowerCase().includes("hanya bisa mengupdate") ||
+          response.message.toLowerCase().includes("tidak bisa") ||
+          response.error); // bisa juga cek response.error
+
+      if (response.status === 200 && !isError) {
         notification.success({
-          message: "Absensi Berhasil ",
-          description: `Absensi telah diperbarui.`,
+          message: "Absensi Berhasil",
+          description: response.message || "Absensi telah diperbarui.",
         });
-      } else if (response.status === 403) {
+      } else {
         notification.error({
           message: "Absensi Gagal",
-          description: response.message,
-        });
-      } else if (response.status === 422) {
-        notification.error({
-          message: "Absensi Gagal",
-          description: response.message,
+          description: response.message || "Terjadi kesalahan saat absensi.",
         });
       }
+
       meetingMutate();
       progressMutate();
       mutateDataStudent();
       mutateCountProgram();
     } catch (error: any) {
-      console.error("Failed to update arrival status:", error);
+      notification.error({
+        message: "Absensi Gagal",
+        description:
+          error?.message || "Gagal terhubung ke server. Silakan coba lagi.",
+      });
+      console.error("Failed to update absent status:", error);
     } finally {
       setLoadingState((prev) => ({
         ...prev,

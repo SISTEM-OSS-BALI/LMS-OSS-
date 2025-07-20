@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
           consultant_id: true,
           count_program: true,
           is_active: true,
+          name_group: true,
         },
       }),
       prisma.user.findUnique({
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
 
     const formattedTeacherPhone = formatPhoneNumber(teacherData.no_phone ?? "");
     const formattedStudentPhone = formatPhoneNumber(studentData.no_phone ?? "");
-    const studentName = studentData.username;
+    const studentName = studentData.username? studentData.username : studentData.name_group;
     const teacherName = teacherData.username;
 
     const messages = [

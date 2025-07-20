@@ -20,6 +20,12 @@ export async function POST(request: NextRequest) {
   try {
     const { meeting_id, absent, student_id } = await request.json();
 
+    console.log("Received data:", {
+      meeting_id,
+      absent,
+      student_id,
+    });
+
     const meetingData = await prisma.meeting.findUnique({
       where: { meeting_id },
       select: {
@@ -99,20 +105,30 @@ export async function POST(request: NextRequest) {
     let updatedCountProgramTeacher = (teacherData?.count_program ?? 0) + 1;
 
     if (absent) {
-      const isProgressIncomplete = progressData.some(
-        (progress) =>
-          !progress.progress_student ||
-          !progress.abilityScale ||
-          !progress.studentPerformance
-      );
-      if (isProgressIncomplete) {
-        return NextResponse.json({
-          status: 422,
-          error: true,
-          message:
-            "Silakan isi progress student terlebih dahulu sebelum absen.",
-        });
-      }
+
+        if (!progressData.length) {
+          return NextResponse.json({
+            status: 422,
+            error: true,
+            message:
+              "Silakan isi progress student terlebih dahulu sebelum absen.",
+          });
+        }
+
+      // const isProgressIncomplete = progressData.some(
+      //   (progress) =>
+      //     !progress.progress_student ||
+      //     !progress.abilityScale ||
+      //     !progress.studentPerformance
+      // );
+      // if (isProgressIncomplete) {
+      //   return NextResponse.json({
+      //     status: 422,
+      //     error: true,
+      //     message:
+      //       "Silakan isi progress student terlebih dahulu sebelum absen.",
+      //   });
+      // }
 
       await prisma.meeting.update({
         where: { meeting_id },

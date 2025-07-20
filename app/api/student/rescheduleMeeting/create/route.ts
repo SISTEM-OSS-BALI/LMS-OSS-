@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
         user_id: true,
         username: true,
         program_id: true,
+        name_group: true,
       },
     });
 
@@ -118,7 +119,9 @@ export async function POST(request: NextRequest) {
 
     const adminPhone = formatPhoneNumber(getAdmin?.no_phone || "");
     const adminName = getAdmin?.username || "";
-    const studentName = getStudent?.username;
+    const studentName = getStudent?.username
+      ? getStudent?.username
+      : getStudent?.name_group;
     const teacherName = getTeacher?.username;
     const formattedDate = dayjs(dateTime).format("DD MMMM YYYY");
 
@@ -136,7 +139,6 @@ export async function POST(request: NextRequest) {
       message: "Reschedule meeting berhasil diajukan.",
     });
   } catch (error) {
-    console.error("Error creating reschedule:", error);
     return new NextResponse(
       JSON.stringify({ error: "Internal Server Error" }),
       { status: 500, headers: { "Content-Type": "application/json" } }

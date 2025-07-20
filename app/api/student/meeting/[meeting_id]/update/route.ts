@@ -177,7 +177,7 @@ export async function PUT(
     const formattedStudentPhone = formatPhoneNumber(
       existingMeeting.student.no_phone ?? ""
     );
-    const studentName = existingMeeting.student.username;
+    const studentName = existingMeeting.student.username ? existingMeeting.student.username : existingMeeting.student.name_group;
     const teacherName = existingMeeting.teacher.username;
     const formattedDate = dayjs(dateTime).format("dddd, DD MMMM YYYY HH:mm");
 
