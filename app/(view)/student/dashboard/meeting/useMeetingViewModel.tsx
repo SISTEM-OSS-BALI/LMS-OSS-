@@ -13,9 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { Meeting } from "@/app/model/meeting";
 import Cookies from "js-cookie";
-import { color } from "html2canvas/dist/types/css/types/color";
 import { User } from "@/app/model/user";
-import { useAuth } from "@/app/lib/auth/authServices";
 import { TeacherLeave } from "@prisma/client";
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
@@ -51,6 +49,10 @@ interface ProgramResponse {
 
 interface ScheduleTeacherResponse {
   data: TeacherLeave;
+}
+
+interface ProgramDetailResponse {
+  data: Program;
 }
 
 interface UseMeetingViewModelReturn {
@@ -113,13 +115,18 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
   const searchParams = useSearchParams();
   const date = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
-  const { program_id } = useAuth();
+  // const { program_id } = useAuth();
 
   const {
     data: programData,
     mutate: programDataMutate,
     isLoading: isLoadingProgram,
   } = useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
+
+  const { data: programDetail } = useSWR<ProgramDetailResponse>(
+    `/api/student/programDetail`,
+    fetcher
+  );
 
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -188,7 +195,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const [isModalVisibleEmergency, setIsModalVisibleEmergency] = useState(false);
   const [form] = Form.useForm();
   const filterProgram = programData?.data.filter(
-    (program) => program.program_id === program_id
+    (program) => program.program_id === programDetail?.data?.program_id
   );
 
   const handleOpenModalDateClick = () => {
@@ -204,7 +211,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     setIsModalInfoVisible(false);
   };
 
-
   const handleDateClick = (arg: any) => {
     if (!selectedTeacher) {
       message.warning("Silakan pilih guru terlebih dahulu.");
@@ -216,12 +222,10 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       .format("dddd, DD MMMM YYYY");
     setSelectedDate(selectedDay);
 
-   
     const selectedDateFormatted = dayjs(arg.date).format("YYYY-MM-DD");
     const dayOffDates = Array.isArray(dayOffTeacher?.data)
       ? dayOffTeacher.data.map((item) => item.leave_date)
       : [];
-
 
     if (dayOffDates.includes(selectedDateFormatted)) {
       message.warning(
