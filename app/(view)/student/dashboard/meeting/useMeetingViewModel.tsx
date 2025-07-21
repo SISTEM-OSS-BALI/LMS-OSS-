@@ -194,9 +194,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const [isModalInfoVisible, setIsModalInfoVisible] = useState(false);
   const [isModalVisibleEmergency, setIsModalVisibleEmergency] = useState(false);
   const [form] = Form.useForm();
-  const filterProgram = programData?.data.filter(
-    (program) => program.program_id === programDetail?.data?.program_id
-  );
+  const filterProgram = programDetail?.data.program_id;
+
 
   const handleOpenModalDateClick = () => {
     setIsModalVisible(true);
@@ -266,7 +265,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       return;
     }
 
-    const programDuration = filterProgram?.[0]?.duration ?? 60;
+    const programDuration = programDetail?.data.duration ?? 0;
 
     const meetingsToday =
       showMeeting?.data?.filter(
@@ -354,7 +353,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
     // const teacherTimes = availableDays.flatMap((day: any) => day.times);
 
-    const programDuration = filterProgram?.[0]?.duration ?? 60;
+    const programDuration = programDetail?.data.duration ?? 0;
 
     // 🔍 Filter meetings pada tanggal & guru yang sama
     const meetingsToday =
