@@ -89,12 +89,13 @@ export const useMeetings = () => {
     };
   });
 
-  const mergedDataMockTest = accessMockTestData?.data.map((mockTest) => {
+  const mergedDataMockTest = accessMockTestData?.data.map((access) => {
     const accessMockTest = mockTestData?.data.find(
-      (mockTest) => mockTest.mock_test_id === mockTest.mock_test_id
+      (mockTest) => mockTest.mock_test_id === access.mock_test_id
     );
+
     return {
-      ...mockTest,
+      ...access,
       ...accessMockTest,
     };
   });

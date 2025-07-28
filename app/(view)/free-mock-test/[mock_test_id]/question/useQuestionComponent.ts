@@ -156,7 +156,7 @@ export const useQuestionViewModel = () => {
   };
 
   // 🔹 Fungsi Kirim Semua Jawaban ke Backend
-  const handleFinalSubmit = async () => {
+  const handleFinalSubmit = useCallback(async () => {
     setLoading(true); // tambahkan setLoading true sebelum mengirim request
     const payload = {
       answers: answersBySection,
@@ -188,7 +188,7 @@ export const useQuestionViewModel = () => {
     } finally {
       setLoading(false); // tambahkan setLoading false setelah request selesai
     }
-  };
+  }, [answersBySection, mock_test_id, audioBlob, speakingId, email, router]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

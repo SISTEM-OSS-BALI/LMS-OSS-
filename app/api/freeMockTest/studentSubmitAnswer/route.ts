@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { transcribeAudioFromBase64 } from "@/app/lib/utils/speechToTextHelper";
+import { transcribeAudioFromUrl } from "@/app/lib/utils/speechToTextHelper";
 import { evaluateWritingAnswer } from "@/app/lib/utils/geminiHelper";
 import {
   formatPhoneNumber,
   sendWhatsAppMessage,
 } from "@/app/lib/utils/notificationHelper";
+import { uploadBase64Audio } from "@/app/lib/utils/uploadAudioHelper";
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,6 +53,8 @@ export async function POST(request: NextRequest) {
     }[] = [];
 
     if (speaking_id && audio) {
+       const fileName = `speaking/${user.participant_id}_${Date.now()}.mp3`;
+       const publicUrl = await uploadBase64Audio(audio, fileName);
       const speakingTest = baseMockTests.find(
         (section) => section.speaking?.speaking_id === speaking_id
       );
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const transcriptionText = await transcribeAudioFromBase64(audio);
+        const transcriptionText = await transcribeAudioFromUrl(publicUrl);
         const evaluation = speakingTest.speaking?.prompt
           ? await evaluateWritingAnswer(
               speakingTest.speaking.prompt,
@@ -88,7 +91,7 @@ export async function POST(request: NextRequest) {
             base_mock_test_id: speakingTest.base_mock_test_id,
             speaking_test_id: speaking_id,
             studentAnswer: null,
-            recording_url: audio,
+            recording_url: publicUrl,
             feedback: aiFeedback,
             isCorrect: null,
             score: aiScore,
@@ -113,7 +116,7 @@ export async function POST(request: NextRequest) {
             base_mock_test_id: speakingTest.base_mock_test_id,
             speaking_test_id: speaking_id,
             studentAnswer: null,
-            recording_url: audio,
+            recording_url: publicUrl,
             feedback: "Evaluation failed.",
             isCorrect: null,
             score: 0,

@@ -9,7 +9,7 @@ import {
   Tooltip,
   Skeleton,
   Spin,
-  Grid
+  Grid,
 } from "antd";
 import Title from "antd/es/typography/Title";
 import { useProgramViewModel } from "./useProgramViewModel";
@@ -37,7 +37,7 @@ export default function ProgramComponent() {
     selectedProgram,
   } = useProgramViewModel();
 
-    const screens = useBreakpoint();
+  const screens = useBreakpoint();
 
   const showDeleteConfirm = (program_id: string) => {
     Modal.confirm({
@@ -105,31 +105,24 @@ export default function ProgramComponent() {
 
   return (
     <div style={{ padding: screens.xs ? "10px" : "24px" }}>
-      <Card
-        style={{
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-        }}
+      <Flex
+        justify="space-between"
+        gap={screens.xs ? 10 : 30}
+        wrap={screens.xs ? "wrap" : "nowrap"}
       >
-        <Flex
-          justify="space-between"
-          gap={screens.xs ? 10 : 30}
-          wrap={screens.xs ? "wrap" : "nowrap"}
+        <Title
+          level={screens.xs ? 4 : 3}
+          style={{ marginBottom: "20px", marginBlock: 0 }}
         >
-          <Title
-            level={screens.xs ? 4 : 3}
-            style={{ marginBottom: "20px", marginBlock: 0 }}
-          >
-            Data Program
-          </Title>
-          <Input
-            style={{ width: screens.xs ? "100%" : "500px" }}
-            placeholder="Cari nama program"
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            value={searchKeyword}
-          />
-        </Flex>
-      </Card>
+          Data Program
+        </Title>
+        <Input
+          style={{ width: screens.xs ? "100%" : "500px" }}
+          placeholder="Cari nama program"
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          value={searchKeyword}
+        />
+      </Flex>
       <Divider />
       <Card
         style={{
@@ -166,7 +159,12 @@ export default function ProgramComponent() {
         onCancel={handleCancel}
       >
         <Spin spinning={loading}>
-          <Form name="createProgram" onFinish={handleOk} form={form} layout="vertical">
+          <Form
+            name="createProgram"
+            onFinish={handleOk}
+            form={form}
+            layout="vertical"
+          >
             <Form.Item name="name">
               <Input placeholder="Masukan Nama Program Kursus" />
             </Form.Item>
