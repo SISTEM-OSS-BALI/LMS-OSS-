@@ -10,7 +10,7 @@ import utc from "dayjs/plugin/utc";
 
 dayjs.extend(utc);
 
-export async function POST(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   const user = await authenticateRequest(request);
   if (user instanceof NextResponse) return user;
 
@@ -18,13 +18,7 @@ export async function POST(request: NextRequest) {
   const numberKey = process.env.NUMBER_KEY_WATZAP!;
 
   try {
-    const { meeting_id, absent, student_id } = await request.json();
-
-    console.log("Received data:", {
-      meeting_id,
-      absent,
-      student_id,
-    });
+    const { meeting_id, activity, student_id } = await request.json();
 
     const meetingData = await prisma.meeting.findUnique({
       where: { meeting_id },
@@ -46,14 +40,14 @@ export async function POST(request: NextRequest) {
     const timeDifferenceMinutes = now.diff(startTime, "minute");
     const timeDifferenceDays = now.diff(startTime, "day");
 
-    if (timeDifferenceMinutes < 40) {
-      return NextResponse.json({
-        status: 403,
-        error: true,
-        message:
-          "Anda hanya bisa mengupdate absensi setelah 40 menit dari waktu mulai.",
-      });
-    }
+    // if (timeDifferenceMinutes < 40) {
+    //   return NextResponse.json({
+    //     status: 403,
+    //     error: true,
+    //     message:
+    //       "Anda hanya bisa mengupdate absensi setelah 40 menit dari waktu mulai.",
+    //   });
+    // }
 
     if (!now.isAfter(startTime)) {
       return NextResponse.json({
@@ -104,47 +98,29 @@ export async function POST(request: NextRequest) {
     let updatedCountProgramStudent = (studentData.count_program ?? 0) + 1;
     let updatedCountProgramTeacher = (teacherData?.count_program ?? 0) + 1;
 
-    if (absent) {
+    if (activity) {
 
-        if (!progressData.length) {
-          return NextResponse.json({
-            status: 422,
-            error: true,
-            message:
-              "Silakan isi progress student terlebih dahulu sebelum absen.",
-          });
-        }
-
-      // const isProgressIncomplete = progressData.some(
-      //   (progress) =>
-      //     !progress.progress_student ||
-      //     !progress.abilityScale ||
-      //     !progress.studentPerformance
-      // );
-      // if (isProgressIncomplete) {
-      //   return NextResponse.json({
-      //     status: 422,
-      //     error: true,
-      //     message:
-      //       "Silakan isi progress student terlebih dahulu sebelum absen.",
-      //   });
-      // }
 
       await prisma.meeting.update({
         where: { meeting_id },
-        data: { absent },
+        data: {
+          is_started: true,
+          absent:true,
+          status: "PROGRESS",
+          started_time: dayjs().toDate(),
+        },
       });
 
-      await Promise.all([
-        prisma.user.update({
-          where: { user_id: student_id },
-          data: { count_program: updatedCountProgramStudent },
-        }),
-        prisma.user.update({
-          where: { user_id: user.user_id },
-          data: { count_program: updatedCountProgramTeacher },
-        }),
-      ]);
+      // await Promise.all([
+      //   prisma.user.update({
+      //     where: { user_id: student_id },
+      //     data: { count_program: updatedCountProgramStudent },
+      //   }),
+      //   prisma.user.update({
+      //     where: { user_id: user.user_id },
+      //     data: { count_program: updatedCountProgramTeacher },
+      //   }),
+      // ]);
 
       const formattedStudentPhone = formatPhoneNumber(
         studentData.no_phone ?? ""
@@ -156,30 +132,59 @@ export async function POST(request: NextRequest) {
         `📢 *Absensi Diterima!* \n\n🎓 *Siswa:* ${studentData.username}\n📚 *Program:* ${programData.name}\n✅ *Status:* Hadir\n\nTerus semangat belajar! 💪\n\n📊 *Progres Anda:* Anda telah menyelesaikan *${updatedCountProgramStudent}* sesi dari program ini. Tetap semangat! 🚀`
       );
     } else {
+
+      if (!progressData.length) {
+          return NextResponse.json({
+            status: 422,
+            error: true,
+            message:
+              "Silakan isi progress student terlebih dahulu sebelum absen.",
+          });
+        }
+
+      const isProgressIncomplete = progressData.some(
+        (progress) =>
+          !progress.progress_student ||
+          !progress.abilityScale ||
+          !progress.studentPerformance
+      );
+      if (isProgressIncomplete) {
+        return NextResponse.json({
+          status: 422,
+          error: true,
+          message:
+            "Silakan isi progress student terlebih dahulu sebelum absen.",
+        });
+      }
+
       await prisma.meeting.update({
         where: { meeting_id },
-        data: { absent },
-      });
-
-      await Promise.all([
-        prisma.user.update({
-          where: { user_id: student_id },
-          data: { count_program: updatedCountProgramStudent },
-        }),
-        prisma.user.update({
-          where: { user_id: user.user_id },
-          data: { count_program: updatedCountProgramTeacher },
-        }),
-      ]);
-
-      await prisma.meeting.update({
-        where: {
-          meeting_id: meeting_id,
-        },
         data: {
-          is_cancelled: true,
+          is_started: false,
+          status: "FINISHED",
+          finished_time: dayjs().toDate(), // gunakan dayjs now
         },
       });
+
+      // await Promise.all([
+      //   prisma.user.update({
+      //     where: { user_id: student_id },
+      //     data: { count_program: updatedCountProgramStudent },
+      //   }),
+      //   prisma.user.update({
+      //     where: { user_id: user.user_id },
+      //     data: { count_program: updatedCountProgramTeacher },
+      //   }),
+      // ]);
+
+      // await prisma.meeting.update({
+      //   where: {
+      //     meeting_id: meeting_id,
+      //   },
+      //   data: {
+      //     is_cancelled: true,
+      //   },
+      // });
     }
 
     const sessionThresholds =

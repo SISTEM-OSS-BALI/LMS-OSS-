@@ -71,36 +71,38 @@ export const useStudentViewModel = () => {
   } = useSWR<UserResponse>("/api/admin/teacher/show", fetcher);
 
   const mergedStudent =
-    studentDataAll?.data?.map((student) => {
-      const meetings =
-        meetingDataAll?.data?.filter(
-          (meeting) =>
-            meeting.student_id === student.user_id && meeting.absent !== null
-        ) ?? [];
+    studentDataAll?.data
+      .filter((student) => student.is_active === true)
+      .map((student) => {
+        const meetings =
+          meetingDataAll?.data?.filter(
+            (meeting) =>
+              meeting.student_id === student.user_id && meeting.absent !== null
+          ) ?? [];
 
-      const program = programDataAll?.data?.find(
-        (program) => program.program_id === student.program_id
-      );
-
-      const meetingsWithTeacher = meetings.map((meeting) => {
-        const teacher = teacherDataAll?.data?.find(
-          (teacher) => teacher.user_id === meeting.teacher_id
+        const program = programDataAll?.data?.find(
+          (program) => program.program_id === student.program_id
         );
 
-        return {
-          ...meeting,
-          teacherName: teacher?.username ?? "Unknown",
-        };
-      });
+        const meetingsWithTeacher = meetings.map((meeting) => {
+          const teacher = teacherDataAll?.data?.find(
+            (teacher) => teacher.user_id === meeting.teacher_id
+          );
 
-      return {
-        ...student,
-        meetings: meetingsWithTeacher,
-        program_name: program?.name,
-        program_id: program?.program_id,
-        program_count: program?.count_program,
-      };
-    }) ?? [];
+          return {
+            ...meeting,
+            teacherName: teacher?.username ?? "Unknown",
+          };
+        });
+
+        return {
+          ...student,
+          meetings: meetingsWithTeacher,
+          program_name: program?.name,
+          program_id: program?.program_id,
+          program_count: program?.count_program,
+        };
+      }) ?? [];
 
   const filteredStudent =
     mergedStudent.filter((student: any) => {

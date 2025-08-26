@@ -17,11 +17,21 @@ export const useDashboardViewModel = () => {
     "/api/teacher/meeting/showById",
     fetcher
   );
+
+  const {
+      data: queueData,
+      error: queueError,
+      mutate: queueMutate,
+      isLoading: isLoadingQueue,
+    } = useSWR("/api/admin/queue/show", fetcher);
+
+
   const count_program = countPogramData?.data?.count_program || 0;
   return {
     count_program,
     mutateCountProgram,
     meetingData,
-    isLoadingMeeting
+    isLoadingMeeting,
+    queueData,
   };
 };

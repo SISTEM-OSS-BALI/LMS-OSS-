@@ -11,31 +11,28 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const getStudent = await getData(
-      "user",
-      {
-        where: {
-          role: "STUDENT",
-        },
-        select: {
-          user_id: true,
-          username: true,
-          no_phone: true,
-          count_program: true,
-          program_id: true,
-          imageUrl: true,
-          region: true,
-          is_evaluation: true,
-          consultant_id: true,
-          target: true,
-          name_group: true,
-          type_student: true,
-          is_active: true,
-          renew_program: true,
-        },
+    const getStudent = await prisma.user.findMany({
+      where: {
+        role: "STUDENT",
       },
-      "findMany"
-    );
+      select: {
+        user_id: true,
+        username: true,
+        no_phone: true,
+        count_program: true,
+        program_id: true,
+        imageUrl: true,
+        region: true,
+        is_evaluation: true,
+        consultant_id: true,
+        target: true,
+        name_group: true,
+        type_student: true,
+        is_active: true,
+        renew_program: true,
+        consultant: true,
+      },
+    });
 
     return NextResponse.json({ status: 200, error: false, data: getStudent });
   } catch (error) {

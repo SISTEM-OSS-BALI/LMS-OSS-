@@ -5,6 +5,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
 );
 
+
+function extFromContentType(ct: string) {
+  // e.g. image/png -> png
+  const m = ct.match(/^image\/([\w+.-]+)$/i);
+  return m ? m[1] : "jpg";
+}
+
 export async function uploadBase64Image(
   base64: string,
   fileName: string
@@ -32,4 +39,14 @@ export async function uploadBase64Image(
     .getPublicUrl(fileName);
 
   return data.publicUrl;
+}
+
+export function buildMaterialImagePath(
+  materialId: string,
+  index: number,
+  contentType = "image/jpeg"
+) {
+  const ext = extFromContentType(contentType);
+  const ts = Date.now();
+  return `material/${materialId}/${ts}-${index}.${ext}`;
 }

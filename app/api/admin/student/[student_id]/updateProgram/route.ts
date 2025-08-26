@@ -19,30 +19,35 @@ export async function PATCH(
   }
 
   try {
-    const getStudent = await prisma.user.findFirst({
-      where: {
-        user_id: params.student_id,
-      },
+    const oldUser = await prisma.user.findUnique({
+      where: { user_id: params.student_id },
     });
- 
-    if (getStudent?.is_active === false) {
-      await prisma.user.update({
-        where: {
-          user_id: params.student_id,
-        },
+    if (!oldUser) {
+      return NextResponse.json(
+        { error: true, message: "User tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    if (oldUser?.is_active === false) {
+      const { user_id, createdAt, ...userData } = oldUser;
+      const newUser = await prisma.user.create({
         data: {
+          ...userData,
           program_id: program_id,
-          count_program: 0,
-          renew_program: true,
           is_active: true,
           is_completed: false,
           is_evaluation: false,
+          count_program: 0,
+          renew_program: true,
+          joined_at: dayjs().toDate(),
+          // createdAt otomatis
         },
       });
 
       await prisma.userProgramRenewal.create({
         data: {
-          user_id: params.student_id,
+          user_id: newUser.user_id,
           old_program_id: old_program_id,
           new_program_id: program_id,
           renew_date: dayjs().toDate(),
@@ -51,7 +56,7 @@ export async function PATCH(
       return NextResponse.json({
         status: 200,
         error: false,
-        data: "success",
+        data: newUser,
       });
     } else {
       return NextResponse.json(
@@ -63,7 +68,6 @@ export async function PATCH(
       );
     }
   } catch (error) {
-    console.error("Error accessing database:", error);
     return new NextResponse(
       JSON.stringify({ error: "Internal Server Error" }),
       {

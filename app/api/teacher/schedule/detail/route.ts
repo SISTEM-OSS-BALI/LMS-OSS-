@@ -14,28 +14,19 @@ export async function GET(request: NextRequest) {
 
   try {
     // Ambil jadwal dari ScheduleTeacher + Days + Times
-    const schedule = await prisma.user.findUnique({
-      where: {
-        user_id: user.user_id,
-      },
+    const data = await prisma.user.findUnique({
+      where: { user_id: user.user_id },
       select: {
         user_id: true,
-        scheduleTeacher: {
+        ScheduleMonth: {
+          orderBy: { createdAt: "desc" },
           select: {
-            schedule_id: true,
-            teacher_id: true,
-            days: {
-              select: {
-                day_id: true,
-                day: true,
-                isAvailable: true,
+            blocks: {
+              orderBy: { start_date: "asc" },
+              include: {
                 times: {
-                  select: {
-                    time_id: true,
-                    startTime: true,
-                    endTime: true,
-                  },
-                },
+                  include: { shift: true },
+                }, // <<< WAJIB supaya jam ikut terkirim
               },
             },
           },
@@ -46,9 +37,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: 200,
       error: false,
-      data: {
-        ...schedule,
-      },
+      data: data,
     });
   } catch (error) {
     console.error("❌ Error accessing schedule/leave:", error);

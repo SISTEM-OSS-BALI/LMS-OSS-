@@ -9,7 +9,7 @@ import { RcFile, UploadRequestOption } from "rc-upload/lib/interface";
 import { crudService } from "@/app/lib/services/crudServices";
 
 interface ContentItem {
-  type: "text" | "url" | "image" | null;
+  type: "text" | "url" | "image" | "pdf" | null;
   value: string;
   index: number;
 }
@@ -68,6 +68,11 @@ export const useAssignmentViewModel = () => {
         type: "image" as ContentItem["type"],
         value: image.imageUrl,
         index: image.index,
+      })),
+      ...(materialToMove.pdf || []).map((pdf: any) => ({
+        type: "pdf" as ContentItem["type"],
+        value: pdf.pdfUrl,
+        index: pdf.index,
       })),
     ].sort((a, b) => a.index - b.index);
 
@@ -153,7 +158,7 @@ export const useAssignmentViewModel = () => {
 
   const handleContentTypeChange = (
     index: number,
-    type: "text" | "url" | "image" | null
+    type: "text" | "url" | "image" | "pdf" | null
   ) => {
     if (type) {
       // Pastikan type tidak null
@@ -295,7 +300,7 @@ export const useAssignmentViewModel = () => {
   const handleDelete = async (
     index: number,
     materialId: string,
-    type: "text" | "url" | "image"
+    type: "text" | "url" | "image" | "pdf"
   ) => {
     try {
       const response = await fetch(
@@ -321,7 +326,7 @@ export const useAssignmentViewModel = () => {
     }
   };
 
-  const material = data?.data || { texts: [], urls: [], images: [] };
+  const material = data?.data || { texts: [], urls: [], images: [], pdf: [] };
   const name = nameMaterial?.data?.title;
   return {
     name,

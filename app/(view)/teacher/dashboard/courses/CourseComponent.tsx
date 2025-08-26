@@ -48,10 +48,10 @@ export default function CoursesTeacherComponent() {
     <div style={{ padding: screens.xs ? "10px" : "20px" }}>
       <Flex justify="space-between" align="center" wrap="wrap" gap={10}>
         <Title level={3} style={{ marginBlock: 0 }}>
-          Daftar Modul
+          Module List
         </Title>
         <Input
-          placeholder="Cari nama modul"
+          placeholder="Search Module"
           onChange={handleSearch}
           style={{ width: screens.xs ? "100%" : "30%" }} // Lebar penuh di layar kecil
         />
@@ -171,7 +171,7 @@ export default function CoursesTeacherComponent() {
 
       {/* Modal untuk Tambah / Update Modul */}
       <Modal
-        title={selectedId ? "Update Modul" : "Tambah Modul"}
+        title={selectedId ? "Update Module" : "Add Module"}
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
@@ -188,7 +188,7 @@ export default function CoursesTeacherComponent() {
             name="name"
             rules={[{ required: true, message: "Masukkan nama kursus" }]}
           >
-            <Input placeholder="Nama Kursus" />
+            <Input placeholder="Name Module" />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading}>

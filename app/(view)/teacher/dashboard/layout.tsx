@@ -12,6 +12,7 @@ import {
   UserOutlined,
   MenuOutlined,
   CalendarOutlined,
+  ThunderboltFilled,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import {
@@ -46,7 +47,7 @@ const menuMap: { [key: string]: string } = {
   "/teacher/dashboard/placement-test": "/teacher/dashboard/placement-test",
   "/teacher/dashboard/mock-test": "/teacher/dashboard/mock-test",
   "/teacher/dashboard/schedule": "/teacher/dashboard/schedule",
-
+  "/teacher/dashboard/activity": "/teacher/dashboard/activity",
 };
 
 const items: MenuItem[] = [
@@ -58,17 +59,17 @@ const items: MenuItem[] = [
   {
     key: "/teacher/dashboard/courses",
     icon: <DesktopOutlined />,
-    label: <Link href="/teacher/dashboard/courses">Modul</Link>,
+    label: <Link href="/teacher/dashboard/courses">Module</Link>,
   },
   {
     key: "/teacher/dashboard/queue",
     icon: <TableOutlined />,
-    label: <Link href="/teacher/dashboard/queue">Antrian</Link>,
+    label: <Link href="/teacher/dashboard/queue">Timesheet</Link>,
   },
   {
     key: "/teacher/dashboard/student",
     icon: <UsergroupAddOutlined />,
-    label: <Link href="/teacher/dashboard/student">Siswa</Link>,
+    label: <Link href="/teacher/dashboard/student">Student</Link>,
   },
   {
     key: "/teacher/dashboard/placement-test",
@@ -78,12 +79,17 @@ const items: MenuItem[] = [
   {
     key: "/teacher/dashboard/mock-test",
     icon: <FileOutlined />,
-    label: <Link href="/teacher/dashboard/mock-test">Try Out</Link>,
+    label: <Link href="/teacher/dashboard/mock-test">Mock Test</Link>,
   },
   {
     key: "/teacher/dashboard/schedule",
     icon: <CalendarOutlined />,
-    label: <Link href="/teacher/dashboard/schedule">Jadwal</Link>,
+    label: <Link href="/teacher/dashboard/schedule">Schedule</Link>,
+  },
+  {
+    key: "/teacher/dashboard/activity",
+    icon: <ThunderboltFilled />,
+    label: <Link href="/teacher/dashboard/activity">Activity Tracking</Link>,
   },
 ];
 

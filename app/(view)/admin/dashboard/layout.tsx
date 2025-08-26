@@ -75,6 +75,9 @@ const menuMap: { [key: string]: string } = {
     "/admin/dashboard/report/placement-test",
   "/admin/dashboard/report/mock-test": "/admin/dashboard/report/mock-test",
   "/admin/dashboard/student/testimoni": "/admin/dashboard/student/testimoni",
+  "/admin/dashboard/student/student-done":
+    "/admin/dashboard/student/student-done",
+  "/admin/dashboard/teacher/data-shift": "/admin/dashboard/teacher/data-shift",
 };
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
@@ -225,6 +228,11 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <UserOutlined />
       ),
       getItem(
+        <Link href="/admin/dashboard/teacher/data-shift">Data Shift</Link>,
+        "/admin/dashboard/teacher/data-shift",
+        <FileTextOutlined />
+      ),
+      getItem(
         <Link href="/admin/dashboard/teacher/calendar">Kalender</Link>,
         "/admin/dashboard/teacher/calendar",
         <CalendarFilled />
@@ -258,8 +266,33 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <UserOutlined />
       ),
       getItem(
+        <Link href="/admin/dashboard/student/student-done">
+          <span
+            style={{
+              whiteSpace: "normal",
+              wordBreak: "break-word",
+              display: "block",
+              lineHeight: 1.3,
+            }}
+          >
+            Data Siswa Selesai
+          </span>
+        </Link>,
+        "/admin/dashboard/student/student-done",
+        <UserOutlined />
+      ),
+      getItem(
         <Link href="/admin/dashboard/student/confirm-account">
-          Konfirmasi Akun
+          <span
+            style={{
+              whiteSpace: "normal",
+              wordBreak: "break-word",
+              display: "block",
+              lineHeight: 1.3,
+            }}
+          >
+            Konfirmasi Akun
+          </span>
         </Link>,
         "/admin/dashboard/student/confirm-account",
         <CheckCircleFilled />

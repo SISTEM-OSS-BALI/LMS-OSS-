@@ -36,23 +36,10 @@ export default function AdminDashboardTeacheComponent() {
   const {
     isLoading,
     selectedTeacher,
-    setSelectedTeacher,
-    schedule,
-    setSchedule,
     searchKeyword,
     setSearchKeyword,
-    drawerVisible,
-    setIsDrawerVisible,
-    handleCheckboxChange,
-    handleTimeChange,
-    addTimeSlot,
-    removeTimeSlot,
-    handleSubmit,
     filteredData,
     handleEdit,
-    DAYS,
-    isLoadingSchedule,
-    loadingCheck,
     loading,
     handleCancel,
     handleFinish,
@@ -132,18 +119,6 @@ export default function AdminDashboardTeacheComponent() {
               <Icon component={EditIcon} />
             </Button>
           </Tooltip>
-          <Tooltip title="Jadwal Guru">
-            <Button
-              type="primary"
-              onClick={() => {
-                setSelectedTeacher(record);
-                setIsDrawerVisible(true);
-              }}
-              size={screens.xs ? "small" : "middle"}
-            >
-              <Icon component={CalendarIcon} />
-            </Button>
-          </Tooltip>
           <Tooltip title="Hapus">
             <Button
               danger
@@ -197,7 +172,7 @@ export default function AdminDashboardTeacheComponent() {
                 type="primary"
                 href="/admin/dashboard/teacher/data-teacher/report"
               >
-                Laporan
+                Timesheet
               </Button>
             </Flex>
             <Table
@@ -212,118 +187,6 @@ export default function AdminDashboardTeacheComponent() {
           </div>
         )}
       </Card>
-
-      <Drawer
-        placement="right"
-        open={drawerVisible}
-        loading={isLoadingSchedule}
-        onClose={() => {
-          setIsDrawerVisible(false);
-          setSelectedTeacher(null);
-          setSchedule(
-            DAYS.map((day) => ({
-              schedule_id: "",
-              day,
-              isAvailable: false,
-              times: [{ start: null, end: null }],
-            }))
-          );
-        }}
-        title={"Jadwal " + (selectedTeacher?.username || "")}
-        width={screens.xs ? "100%" : 480}
-      >
-        {loadingCheck && <Loading />}
-        {selectedTeacher && schedule ? (
-          <Form layout="vertical" onFinish={handleSubmit}>
-            {schedule.map((item) => (
-              <Form.Item key={item.day} style={{ marginBottom: 20 }}>
-                <Checkbox
-                  checked={item.isAvailable || false}
-                  onChange={(e) =>
-                    handleCheckboxChange(
-                      item.day,
-                      e.target.checked,
-                      item.schedule_id
-                    )
-                  }
-                >
-                  {item.day}
-                </Checkbox>
-
-                {item.isAvailable && (
-                  <div style={{ marginTop: 16 }}>
-                    {item.times.map((time, index) => (
-                      <Space
-                        key={index}
-                        size="middle"
-                        align="start"
-                        style={{ display: "flex", marginBottom: 8 }}
-                      >
-                        {/* TimePicker for Start */}
-                        <Form.Item style={{ marginBottom: 0 }} required>
-                          <TimePicker
-                            value={
-                              time.start ? dayjs(time.start, "HH:mm") : null
-                            }
-                            onChange={(value) =>
-                              handleTimeChange(item.day, index, "start", value)
-                            }
-                            format="HH:mm"
-                            placeholder="Waktu Mulai"
-                            style={{ width: 120 }}
-                          />
-                        </Form.Item>
-                        -{/* TimePicker for End */}
-                        <Form.Item style={{ marginBottom: 0 }} required>
-                          <TimePicker
-                            value={time.end ? dayjs(time.end, "HH:mm") : null}
-                            onChange={(value) =>
-                              handleTimeChange(item.day, index, "end", value)
-                            }
-                            format="HH:mm"
-                            placeholder="Waktu Berakhir"
-                            style={{ width: 120 }}
-                          />
-                        </Form.Item>
-                        {/* Remove Button */}
-                        <Button
-                          type="text"
-                          danger
-                          onClick={() =>
-                            removeTimeSlot(item.day, index, item.schedule_id)
-                          }
-                          icon={<Icon component={DeleteIcon} />}
-                        />
-                      </Space>
-                    ))}
-
-                    {/* Add Slot Button */}
-                    <Form.Item>
-                      <Button
-                        type="dashed"
-                        onClick={() => addTimeSlot(item.day)}
-                        style={{ marginTop: 8 }}
-                        icon={<Icon component={AddIcon} />}
-                      >
-                        Tambah Waktu
-                      </Button>
-                    </Form.Item>
-                  </div>
-                )}
-              </Form.Item>
-            ))}
-
-            {/* Save Button */}
-            <Form.Item style={{ marginTop: 20 }}>
-              <Button type="primary" htmlType="submit" block loading={loading}>
-                Simpan Jadwal
-              </Button>
-            </Form.Item>
-          </Form>
-        ) : (
-          <Loading />
-        )}
-      </Drawer>
 
       <Modal
         open={isModalVisible}

@@ -13,10 +13,10 @@ export default function StudentComponent() {
     <div style={{ padding: "20px" }}>
       <Flex justify="space-between" style={{ marginBottom: "20px" }}>
         <Title level={3} style={{ marginBlock: 0 }}>
-          Daftar Siswa
+          List Student
         </Title>
         <Input
-          placeholder="Cari nama siswa"
+          placeholder="Search by name student"
           onChange={handleSearch}
           style={{ width: "30%" }}
         />
@@ -52,7 +52,7 @@ export default function StudentComponent() {
                     href={`/teacher/dashboard/student/detail/${student.user_id}`}
                     style={{ color: "#1890ff" }}
                   >
-                    Detail
+                    Detail Student
                   </Link>,
                 ]}
               >

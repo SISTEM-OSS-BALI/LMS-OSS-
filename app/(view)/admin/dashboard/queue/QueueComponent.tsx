@@ -1,20 +1,48 @@
-import { Divider, Tag, Badge, Card, Skeleton, Grid, Typography } from "antd";
+import {
+  Divider,
+  Card,
+  Skeleton,
+  Grid,
+  Typography,
+  Modal,
+  Descriptions,
+} from "antd";
 import { useEffect, useState } from "react";
 import { useQueueViewModel } from "./useQueueViewModel";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import FullCalendar from "@fullcalendar/react";
+import { EventClickArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { secondaryColor } from "@/app/lib/utils/colors";
+import { UserOutlined, BookOutlined } from "@ant-design/icons";
+const { Title, Text } = Typography;
+
+interface QueueEvent {
+  id: string;
+  title: string;
+  start: string;
+  allDay: boolean;
+  backgroundColor: string;
+  timeStart: string;
+  timeEnd: string;
+  teacher: string;
+  teacher_count: number;
+  student: string;
+  student_count: number;
+  name_program: string;
+}
+
 dayjs.extend(utc);
 
 const { useBreakpoint } = Grid;
 
 export default function QueueComponent() {
   const { queueData, queueError, isLoadingQueue } = useQueueViewModel();
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<QueueEvent[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<QueueEvent | null>(null);
   const screens = useBreakpoint();
 
   useEffect(() => {
@@ -24,17 +52,22 @@ export default function QueueComponent() {
         title: `${item.teacher.username} - ${item.student.username}`,
         start: dayjs.utc(item.dateTime).format("YYYY-MM-DD HH:mm"),
         allDay: false,
-        backgroundColor: item.absent === true ? "#ff4d4f" : "#52c41a",
-        time: dayjs.utc(item.dateTime).format("HH:mm"),
+        backgroundColor: item.is_started === true ? "#ff4d4f" : "#52c41a",
+        timeStart: dayjs.utc(item.startTime).format("HH:mm"),
+        timeEnd: dayjs.utc(item.endTime).format("HH:mm"),
         teacher: item.teacher.username,
+        teacher_count: item.teacher.count_program,
         student: item.student.username,
+        student_count: item.student.count_program,
+        name_program: item.name_program,
       }));
       setEvents(formattedEvents);
     }
   }, [queueData]);
 
   const renderEventContent = (eventInfo: any) => {
-    const { title, time, teacher, student } = eventInfo.event.extendedProps;
+    const { timeStart, timeEnd, teacher, student } =
+      eventInfo.event.extendedProps;
 
     return (
       <div
@@ -48,7 +81,6 @@ export default function QueueComponent() {
           width: "100%",
         }}
       >
-        {/* Waktu di pojok atas dalam bentuk bubble */}
         <div
           style={{
             position: "absolute",
@@ -63,10 +95,9 @@ export default function QueueComponent() {
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
         >
-          {time}
+          {timeStart} - {timeEnd}
         </div>
 
-        {/* Konten utama */}
         <div
           style={{
             marginTop: "12px",
@@ -93,6 +124,10 @@ export default function QueueComponent() {
     );
   };
 
+  const handleEventClick = (clickInfo: EventClickArg) => {
+    setSelectedEvent(clickInfo.event.extendedProps as QueueEvent);
+    setIsModalOpen(true);
+  };
 
   return (
     <div
@@ -136,24 +171,59 @@ export default function QueueComponent() {
               overflowX: "auto",
               overflowY: "hidden",
               minWidth: "100%",
-              touchAction: "pan-x", // Ensures only horizontal scroll is active
-              WebkitOverflowScrolling: "touch", // Helps smooth scrolling on iOS
+              touchAction: "pan-x",
+              WebkitOverflowScrolling: "touch",
               display: "flex",
             }}
           >
-            {/* Adjust the calendar width for horizontal scrolling */}
-            <div style={{ minWidth: "1200px", pointerEvents: "auto" }}>
+            <div style={{ minWidth: "1300px", pointerEvents: "auto" }}>
               <FullCalendar
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView={screens.xs ? "timeGridDay" : "dayGridMonth"}
                 events={events}
                 locale={"id"}
                 eventContent={renderEventContent}
+                eventClick={handleEventClick}
               />
             </div>
           </div>
         )}
       </Card>
+
+      <Modal
+        title={
+          <Title level={4} style={{ marginBottom: 0 }}>
+            Detail Pertemuan
+          </Title>
+        }
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+      >
+        {selectedEvent && (
+          <Descriptions
+            bordered
+            column={1}
+            size="middle"
+            layout="vertical"
+            style={{ marginTop: 12 }}
+          >
+            <Descriptions.Item
+              label={
+                <span>
+                  <BookOutlined /> Nama Program
+                </span>
+              }
+            >
+              <Text>{selectedEvent.name_program || "-"}</Text>
+            </Descriptions.Item>
+
+            <Descriptions.Item label="Total Pertemuan">
+              <Text>{selectedEvent.student_count}</Text>
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
     </div>
   );
 }

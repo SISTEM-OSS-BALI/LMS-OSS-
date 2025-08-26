@@ -63,6 +63,7 @@ const menuMap: { [key: string]: string } = {
   "/student/dashboard/try-out": "/student/dashboard/try-out",
   "/student/dashboard/work-sheet": "/student/dashboard/work-sheet",
   "/student/dashboard/certificate": "/student/dashboard/certificate",
+  "/student/dashboard/my-progress": "/student/dashboard/my-progress",
 };
 
 const items: MenuItem[] = [
@@ -81,11 +82,11 @@ const items: MenuItem[] = [
     "/student/dashboard/meeting",
     <CalendarOutlined />
   ),
-  // getItem(
-  //   <Link href={"/student/dashboard/work-sheet"}>Work Sheet</Link>,
-  //   "/student/dashboard/work-sheet",
-  //   <CalendarOutlined />
-  // ),
+  getItem(
+    <Link href={"/student/dashboard/my-progress"}>Progress Belajar</Link>,
+    "/student/dashboard/my-progress",
+    <CalendarOutlined />
+  ),
   getItem(
     <Link href="/student/dashboard/course-followed">Modul</Link>,
     "/student/dashboard/course-followed",

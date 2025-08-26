@@ -128,7 +128,7 @@ export default function AssignmentComponent() {
         return null;
       })
     ) : (
-      <CustomAlert type="info" message="Belum Ada Assigment" />
+      <CustomAlert type="info" message="Assignment not found" />
     );
   };
 
@@ -138,7 +138,7 @@ export default function AssignmentComponent() {
         <Title level={3}>{name}</Title>
         {assigment && assigment.data && assigment.data.length === 0 && (
           <Button type="primary" onClick={() => setIsModalVisible(true)}>
-            Buat Assigment
+            Create Assigment
           </Button>
         )}
       </Flex>
@@ -168,7 +168,7 @@ export default function AssignmentComponent() {
               {currentAssignmentType === "MULTIPLE_CHOICE" && (
                 <>
                   <Form.Item
-                    label="Jumlah Soal"
+                    label="Number of Questions"
                     rules={[
                       {
                         required: true,
@@ -190,7 +190,7 @@ export default function AssignmentComponent() {
                   {questions.map((question, qIndex) => (
                     <div key={qIndex} style={{ marginBottom: "20px" }}>
                       <Form.Item
-                        label={`Pertanyaan ${qIndex + 1}`}
+                        label={`Question ${qIndex + 1}`}
                         required
                         validateStatus={question.question ? "success" : "error"}
                         help={
@@ -210,7 +210,7 @@ export default function AssignmentComponent() {
                       {question.options.map((option, oIndex) => (
                         <Form.Item
                           key={oIndex}
-                          label={`Opsi ${oIndex + 1}`}
+                          label={`Option ${oIndex + 1}`}
                           required
                           validateStatus={option ? "success" : "error"}
                           help={!option && "Opsi tidak boleh kosong"}
@@ -230,7 +230,7 @@ export default function AssignmentComponent() {
                         onClick={() => addOption(qIndex)}
                         style={{ marginBottom: "16px" }}
                       >
-                        Tambahkan Opsi
+                        Add Option
                       </Button>
 
                       <Form.Item label={`Jawaban yang Benar ${qIndex + 1}`}>
@@ -258,7 +258,7 @@ export default function AssignmentComponent() {
             </>
           ) : selectedMcqId ? (
             <>
-              <Form.Item label="Pertanyaan">
+              <Form.Item label="Question">
                 <ReactQuill
                   theme="snow"
                   value={selectedMultipleChoice.question}
@@ -291,7 +291,7 @@ export default function AssignmentComponent() {
                 )
               )}
 
-              <Form.Item label="Jawaban yang Benar">
+              <Form.Item label="Correct Answer">
                 <Radio.Group
                   value={selectedMultipleChoice.correctAnswer}
                   onChange={(e) =>
@@ -336,7 +336,7 @@ export default function AssignmentComponent() {
                 />
               </Form.Item>
               <Form.Item
-                label="Jumlah Soal"
+                label="Number of Questions"
                 rules={[
                   {
                     required: true,
@@ -396,7 +396,7 @@ export default function AssignmentComponent() {
                     onClick={() => addOption(qIndex)}
                     style={{ marginBottom: "16px" }}
                   >
-                    Tambahkan Opsi
+                    Add Option
                   </Button>
 
                   <Form.Item label={`Jawaban yang Benar ${qIndex + 1}`}>
@@ -430,7 +430,7 @@ export default function AssignmentComponent() {
         </Form>
       </Modal>
       <FloatButton.Group
-        tooltip="Tambahan"
+        tooltip="Addition"
         trigger="click"
         icon={<Icon component={SettingIcon} />}
         style={{ right: 24 }}
@@ -447,7 +447,7 @@ export default function AssignmentComponent() {
         />
 
         <FloatButton
-          tooltip="Tambahkan Pertanyaan"
+          tooltip="Add Question"
           icon={<Icon component={AddIcon} />}
           onClick={() => {
             if (assigment && assigment.data && assigment.data.length > 0) {

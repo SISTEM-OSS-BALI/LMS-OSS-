@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
       {
         where: {
           role: "STUDENT",
+          is_active: true,
         },
         select: {
           user_id: true,

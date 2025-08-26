@@ -11,34 +11,34 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const getScheduleTeacher = await getData(
-      "scheduleTeacher",
-      {
-        where: {
-          days: {
-            some: {
-              isAvailable: true,
-            },
+    const allSchedules = await prisma.scheduleMonth.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        teacher: {
+          select: {
+            user_id: true,
+            username: true,
+            email: true,
+            region: true,
           },
         },
-        include: {
-          days: {
-            where: {
-              isAvailable: true, // Filter hanya menampilkan days dengan isAvailable: true
-            },
-            include: {
-              times: true, 
-            },
+        blocks: {
+          orderBy: {
+            start_date: "asc",
+          },
+          include: {
+            times: true,
           },
         },
       },
-      "findMany"
-    );
+    });
 
     return NextResponse.json({
       status: 200,
       error: false,
-      data: getScheduleTeacher,
+      data: allSchedules,
     });
   } catch (error) {
     console.error("Error accessing database:", error);

@@ -160,6 +160,11 @@ export default function ShowMaterialComponent() {
                     value: imageItem.imageUrl,
                     index: imageItem.index,
                   })),
+                  ...material.pdf.map((pdfItem) => ({
+                    type: "pdf",
+                    value: pdfItem.pdfUrl,
+                    index: pdfItem.index,
+                  })),
                 ]
                   .sort((a, b) => a.index! - b.index!)
                   .map((item, idx) => (
@@ -205,6 +210,16 @@ export default function ShowMaterialComponent() {
                             alt="Image"
                             height={screens.xs ? 200 : 500}
                             style={{ maxWidth: "100%" }}
+                          />
+                        </div>
+                      )}
+                      {item.type === "pdf" && (
+                        <div style={{ textAlign: "center" }}>
+                          <iframe
+                            src={item.value}
+                            width={screens.xs ? "100%" : 700}
+                            height={screens.xs ? 800 : 700}
+                            style={{ maxWidth: "100%", margin: "0 auto" }}
                           />
                         </div>
                       )}

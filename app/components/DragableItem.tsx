@@ -13,7 +13,7 @@ const DraggableContentItem = ({
   materialId,
 }: {
   item: {
-    type: "text" | "url" | "image";
+    type: "text" | "url" | "image" | "pdf" | null;
     value: string;
     index: number;
   };
@@ -23,7 +23,7 @@ const DraggableContentItem = ({
   handleDelete: (
     index: number,
     materialId: string,
-    type: "text" | "url" | "image"
+    type: "text" | "url" | "image" | "pdf"
   ) => void;
   materialId: string;
 }) => {
@@ -117,6 +117,17 @@ const DraggableContentItem = ({
         </div>
       )}
 
+      {item.type === "pdf" && (
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <iframe
+            src={item.value}
+            width={700}
+            height={500}
+            style={{ border: 0 }}
+          />
+        </div>
+      )}
+
       {/* Edit and Delete Buttons */}
       <div
         style={{
@@ -164,7 +175,7 @@ const MaterialList = ({
   handleDelete: (
     index: number,
     materialId: string,
-    type: "text" | "url" | "image"
+    type: "text" | "url" | "image" | "pdf"
   ) => void;
 }) => {
   const items = [
@@ -182,6 +193,11 @@ const MaterialList = ({
       type: "image",
       value: imageItem.imageUrl,
       index: imageItem.index,
+    })),
+    ...(material.pdf || []).map((pdfItem: any) => ({
+      type: "pdf",
+      value: pdfItem.pdfUrl,
+      index: pdfItem.index,
     })),
   ].sort((a, b) => a.index - b.index);
 

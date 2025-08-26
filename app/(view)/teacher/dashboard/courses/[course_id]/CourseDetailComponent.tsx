@@ -89,10 +89,10 @@ export default function DetailCourseTeacherComponent() {
           <Title level={4}>{detailCourse.name}</Title>
           <Flex justify="space-between" gap={20}>
             <Button type="primary" onClick={handleCreate}>
-              Tambah Materi / Assignment
+              Add Material or Assignment
             </Button>
             <Button type="primary" onClick={() => handleOpenModalAccess()}>
-              Akses
+              Give Akses
             </Button>
           </Flex>
         </div>
@@ -186,12 +186,12 @@ export default function DetailCourseTeacherComponent() {
         <Modal
           title={
             isChoosingType
-              ? "Pilih Jenis yang Akan Dibuat"
+              ? "Select the Type to Create"
               : selectedId
-              ? `Edit ${isCreatingAssignment ? "Assignment" : "Materi"}`
+              ? `Edit ${isCreatingAssignment ? "Assignment" : "Material"}`
               : isCreatingAssignment
-              ? "Buat Assignment"
-              : "Masukan Nama Materi"
+              ? "Create Assignment"
+              : "Add Name Material"
           }
           open={isModalVisible}
           onCancel={handleCancel}
@@ -204,14 +204,14 @@ export default function DetailCourseTeacherComponent() {
                 block
                 onClick={() => handleTypeSelection("material")}
               >
-                Buat Materi
+                Create Material
               </Button>
               <Button
                 type="primary"
                 block
                 onClick={() => handleTypeSelection("assignment")}
               >
-                Buat Assignment
+                Create Assignment
               </Button>
             </Space>
           ) : (

@@ -94,8 +94,8 @@ model User {
   consultant_id String?
   consultant    Consultant? @relation(name: "ConsultantUsers", fields: [consultant_id], references: [consultant_id], onDelete: SetNull)
 
-  coursesTeaching           Course[]                     @relation("TeacherCourses")
-  scheduleTeacher           ScheduleTeacher[]            @relation("ScheduleTeacher")
+  coursesTeaching Course[] @relation("TeacherCourses")
+
   coursesEnrolled           CourseEnrollment[]           @relation("StudentCourses")
   materialCourseProgress    CourseProgress[]             @relation("StudentMaterialCourseProgress")
   materialProgress          MaterialProgress[]           @relation("StudentMaterialProgress")
@@ -125,6 +125,7 @@ model User {
   UserGroupMembers          UserGroup[]             @relation("UserGroupMembers")
   TeacherLeave              TeacherLeave[]
   UserProgramRenewal        UserProgramRenewal[]
+  ScheduleMonth             ScheduleMonth[]
 }
 
 model UserProgramRenewal {
@@ -187,30 +188,65 @@ model Consultant {
   students      User[] @relation(name: "ConsultantUsers")
 }
 
-model ScheduleTeacher {
-  schedule_id String        @id @default(uuid())
-  teacher     User          @relation("ScheduleTeacher", fields: [teacher_id], references: [user_id], onDelete: Cascade)
-  teacher_id  String
-  days        ScheduleDay[] @relation("TeacherScheduleDays") // Relasi ke hari-hari yang diatur
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+model ScheduleMonth {
+  id         String @id @default(uuid())
+  teacher    User   @relation(fields: [teacher_id], references: [user_id], onDelete: Cascade)
+  teacher_id String
+  year       Int // 2025
+  month      Int // 1..12
+
+  blocks ScheduleBlock[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Satu jadwal per guru per bulan
+  @@unique([teacher_id, year, month])
 }
 
-model ScheduleDay {
-  day_id      String          @id @default(uuid())
-  teacher     ScheduleTeacher @relation("TeacherScheduleDays", fields: [schedule_id], references: [schedule_id], onDelete: Cascade)
-  schedule_id String
-  day         DayOfWeek
-  isAvailable Boolean         @default(false)
-  times       ScheduleTime[]  @relation("DayScheduleTimes") // Relasi ke waktu-waktu di hari tersebut
+model ScheduleBlock {
+  id                String        @id @default(uuid())
+  scheduleMonth     ScheduleMonth @relation(fields: [schedule_month_id], references: [id], onDelete: Cascade)
+  schedule_month_id String
+  color             String? // hex opsional
+
+  // Rentang tanggal inklusif (simpan di UTC 00:00)
+  start_date DateTime
+  end_date   DateTime
+
+  times ScheduleBlockShift[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schedule_month_id])
+  @@index([start_date])
+  @@index([end_date])
 }
 
-model ScheduleTime {
-  time_id   String      @id @default(uuid())
-  day       ScheduleDay @relation("DayScheduleTimes", fields: [day_id], references: [day_id], onDelete: Cascade)
-  day_id    String
-  startTime DateTime // Waktu mulai
-  endTime   DateTime? // Waktu selesai
+model ScheduleBlockShift {
+  id       String        @id @default(uuid())
+  block    ScheduleBlock @relation(fields: [block_id], references: [id], onDelete: Cascade)
+  block_id String
+
+  shift    ShiftSchedule @relation(fields: [shift_id], references: [id], onDelete: Cascade)
+  shift_id String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([block_id])
+  @@index([shift_id])
+}
+
+model ShiftSchedule {
+  id                 String               @id @default(uuid())
+  title              String
+  start_time         DateTime
+  end_time           DateTime
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  ScheduleBlockShift ScheduleBlockShift[]
 }
 
 model TeacherLeave {
@@ -234,13 +270,17 @@ model Meeting {
   platform           String?
   teacher_id         String
   student_id         String
+  is_started         Boolean?
   absent             Boolean?
+  started_time       DateTime?
+  finished_time      DateTime?
   dateTime           DateTime
   startTime          DateTime?
   endTime            DateTime?
   name_program       String?
-  is_cancelled       Boolean?
+  is_cancelled       Boolean?            @default(false)
   reminder_sent_at   DateTime?
+  status             String              @default("PENDING")
   createdAt          DateTime            @default(now())
   TeacherAbsence     TeacherAbsence[]    @relation("TeacherAbsences")
   RescheduleMeetings RescheduleMeeting[] @relation("MeetingReschedules")
@@ -312,7 +352,7 @@ model MaterialAssigmentBase {
 
 model Material {
   material_id  String                @id @default(uuid())
-  materialBase MaterialAssigmentBase @relation(fields: [base_id], references: [base_id])
+  materialBase MaterialAssigmentBase @relation(fields: [base_id], references: [base_id], onDelete: Cascade, onUpdate: Cascade)
   base_id      String
   createdAt    DateTime              @default(now())
 
@@ -320,11 +360,12 @@ model Material {
   images   MaterialImage[]
   urls     MaterialUrl[]
   texts    MaterialText[]
+  pdf      MaterialPdf[]
 }
 
 model MaterialImage {
   image_id    String   @id @default(uuid())
-  material    Material @relation(fields: [material_id], references: [material_id])
+  material    Material @relation(fields: [material_id], references: [material_id], onDelete: Cascade, onUpdate: Cascade)
   material_id String
   imageUrl    String   @db.LongText
   index       Int?
@@ -332,7 +373,7 @@ model MaterialImage {
 
 model MaterialUrl {
   url_id      String   @id @default(uuid())
-  material    Material @relation(fields: [material_id], references: [material_id])
+  material    Material @relation(fields: [material_id], references: [material_id], onDelete: Cascade, onUpdate: Cascade)
   material_id String
   contentUrl  String?
   index       Int?
@@ -340,9 +381,17 @@ model MaterialUrl {
 
 model MaterialText {
   text_id     String   @id @default(uuid())
-  material    Material @relation(fields: [material_id], references: [material_id])
+  material    Material @relation(fields: [material_id], references: [material_id], onDelete: Cascade, onUpdate: Cascade)
   material_id String
   contentText String?  @db.LongText
+  index       Int?
+}
+
+model MaterialPdf {
+  pdf_id      String   @id @default(uuid())
+  material    Material @relation(fields: [material_id], references: [material_id], onDelete: Cascade, onUpdate: Cascade)
+  material_id String
+  pdfUrl      String
   index       Int?
 }
 
@@ -367,9 +416,9 @@ model MaterialProgress {
   completed   Boolean               @default(false)
   user        User                  @relation("StudentMaterialProgress", fields: [user_id], references: [user_id], onDelete: Cascade)
   user_id     String
-  material    Material              @relation(fields: [material_id], references: [material_id])
+  material    Material              @relation(fields: [material_id], references: [material_id], onDelete: Cascade, onUpdate: Cascade)
   material_id String
-  base        MaterialAssigmentBase @relation(fields: [base_id], references: [base_id]) // Relates to material base
+  base        MaterialAssigmentBase @relation(fields: [base_id], references: [base_id], onDelete: Cascade) // Relates to material base
   base_id     String
   updatedAt   DateTime              @updatedAt
   createdAt   DateTime              @default(now())
@@ -383,11 +432,11 @@ model AssignmentProgress {
   score         Int?
   user          User                  @relation("StudentAssignmentProgress", fields: [user_id], references: [user_id], onDelete: Cascade)
   user_id       String
-  base          MaterialAssigmentBase @relation(fields: [base_id], references: [base_id]) // Relates to material base
+  base          MaterialAssigmentBase @relation(fields: [base_id], references: [base_id], onDelete: Cascade) // Relates to material base
   base_id       String
   updatedAt     DateTime              @updatedAt
   createdAt     DateTime              @default(now())
-  Assignment    Assignment            @relation(fields: [assignment_id], references: [assignment_id])
+  Assignment    Assignment            @relation(fields: [assignment_id], references: [assignment_id], onDelete: Cascade)
   assignment_id String
 
   @@unique([user_id, base_id])
@@ -397,7 +446,7 @@ model Assignment {
   assignment_id         String                @id @default(uuid())
   description           String                @db.LongText
   timeLimit             Int
-  materialAssigmentBase MaterialAssigmentBase @relation(fields: [base_id], references: [base_id])
+  materialAssigmentBase MaterialAssigmentBase @relation(fields: [base_id], references: [base_id], onDelete: Cascade, onUpdate: Cascade)
   base_id               String
   type                  TypeAssigment
   createdAt             DateTime              @default(now())

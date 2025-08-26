@@ -37,6 +37,12 @@ export interface Material {
     imageUrl: string;
     index: number;
   }>;
+  pdf: Array<{
+    pdf_id: string;
+    material_id: string;
+    pdfUrl: string;
+    index: number;
+  }>;
 }
 
 export interface MaterialImage {

@@ -55,8 +55,12 @@ export const useDetailMockTestViewModel = () => {
 
   const normalizedSearch = (searchTerm ?? "").toLowerCase();
 
-  const filteredStudent = Array.isArray(dataStudentResponse?.data)
-    ? dataStudentResponse.data.filter((student) => {
+  const activeStudents = dataStudentResponse?.data.filter(
+    (student) => student.is_active === true
+  );
+
+  const filteredStudent = Array.isArray(activeStudents)
+    ? activeStudents.filter((student) => {
         const username = (student.username ?? "").toLowerCase();
         const nameGroup = (student.name_group ?? "").toLowerCase();
 

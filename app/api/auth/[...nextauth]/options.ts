@@ -22,24 +22,32 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = await prisma.user.findFirst({
-          where: { email: credentials.email, is_verified: true },
+          where: {
+            email: credentials.email,
+            is_verified: true,
+            is_active: true,
+          },
         });
 
-        if (!user || !user.is_verified) {
+        if (!user!.is_verified) {
           throw new Error("Email belum diverifikasi");
         }
 
-        if (!(await bcrypt.compare(credentials.password, user.password))) {
+        if (!user!.email) {
+          throw new Error("Email belum terdaftar");
+        }
+
+        if (!(await bcrypt.compare(credentials.password, user!.password))) {
           throw new Error("Email atau Password salah");
         }
 
         return {
-          user_id: user.user_id,
-          username: user.username,
-          email: user.email,
-          role: user.role as Role,
-          program_id: user.program_id,
-          name_group: user.name_group,
+          user_id: user!.user_id,
+          username: user!.username,
+          email: user!.email,
+          role: user!.role as Role,
+          program_id: user!.program_id,
+          name_group: user!.name_group,
         } as any;
       },
     }),

@@ -18,6 +18,7 @@ import CustomAlert from "@/app/components/CustomAlert";
 import Title from "antd/es/typography/Title";
 import MaterialList from "@/app/components/DragableItem";
 import { useAssignmentViewModel } from "./useMaterialViewModel";
+import SupaPdfUploader from "@/app/lib/utils/pdf-uploader";
 
 const { Option } = Select;
 
@@ -50,16 +51,20 @@ export default function MaterialComponent() {
         <Title level={3}>{name}</Title>
         {!material.texts?.length &&
           !material.urls?.length &&
-          !material.images?.length && (
-            <Button onClick={() => setIsModalVisible(true)}>Buat Materi</Button>
+          !material.images?.length &&
+          !material.pdf?.length && (
+            <Button onClick={() => setIsModalVisible(true)}>
+              Create Material
+            </Button>
           )}
       </div>
       <Divider />
       {!material ||
       (!material.texts?.length &&
         !material.urls?.length &&
-        !material.images?.length) ? (
-        <CustomAlert type="info" message="Tidak ada data materi" />
+        !material.images?.length &&
+        !material.pdf?.length) ? (
+        <CustomAlert type="info" message="Material not found" />
       ) : (
         <MaterialList
           material={material}
@@ -70,7 +75,7 @@ export default function MaterialComponent() {
       )}
 
       <Modal
-        title={editingIndex !== null ? "Edit Materi" : "Buat Materi"} // Ganti judul berdasarkan tindakan
+        title={editingIndex !== null ? "Edit Material" : "Create Material"} // Ganti judul berdasarkan tindakan
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
@@ -83,11 +88,12 @@ export default function MaterialComponent() {
                 <Select
                   value={item.type || undefined}
                   onChange={(value) => handleContentTypeChange(index, value)}
-                  placeholder="Pilih jenis konten"
+                  placeholder="Select type content"
                 >
                   <Option value="text">Teks</Option>
                   <Option value="url">URL</Option>
-                  <Option value="image">Gambar</Option>
+                  <Option value="image">Image</Option>
+                  <Option value="pdf">PDF</Option>
                 </Select>
               </Form.Item>
 
@@ -112,7 +118,7 @@ export default function MaterialComponent() {
               )}
 
               {item.type === "image" && (
-                <Form.Item label="Gambar">
+                <Form.Item label="Image">
                   <Upload
                     customRequest={(options) =>
                       handleImageUpload(index, options)
@@ -132,12 +138,28 @@ export default function MaterialComponent() {
                   )}
                 </Form.Item>
               )}
+              {item.type === "pdf" && (
+                <Form.Item label="File PDF">
+                  <SupaPdfUploader
+                    bucket="teacher-absence"
+                    value={item.value}
+                    onChange={(val) =>
+                      handleContentValueChange(index, val || "")
+                    }
+                    onUpload={(_path, url) =>
+                      handleContentValueChange(index, url)
+                    }
+                    onDelete={() => handleContentValueChange(index, "")}
+                    label="Upload PDF"
+                  />
+                </Form.Item>
+              )}
             </div>
           ))}
 
           <Form.Item>
             <Button type="dashed" onClick={handleAddContent}>
-              Tambahkan Konten
+              Add Content
             </Button>
           </Form.Item>
 

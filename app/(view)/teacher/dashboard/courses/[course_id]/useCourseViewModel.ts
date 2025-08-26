@@ -61,7 +61,11 @@ export const useCourseViewModel = () => {
     setSearchTermStudent(e.target.value.toLowerCase());
   };
 
-  const mergedData = dataStudentResponse?.data.map((student) => {
+  const activeStudents = dataStudentResponse?.data.filter(
+    (student) => student.is_active === true
+  );
+
+  const mergedData = activeStudents?.map((student) => {
     const program = programDataAll?.data.find(
       (program) => program.program_id === student.program_id
     );

@@ -46,31 +46,36 @@ const dayToIndex = {
 const mapScheduleToEvents = (scheduleData: any) => {
   if (!scheduleData || !Array.isArray(scheduleData.data)) return [];
 
-  const events = scheduleData.data.flatMap((schedule: any) =>
-    schedule.days.flatMap((day: any) =>
-      day.times.map((time: any) => {
-        const dayIndex = dayToIndex[day.day as keyof typeof dayToIndex];
+  const events = scheduleData.data.flatMap((schedule: any) => {
+    const teacher: { region?: keyof typeof regionColorMapping; username?: string } = schedule.teacher;
+    const teacherColor = regionColorMapping[teacher?.region as keyof typeof regionColorMapping] || "#3b82f6";
 
-        const startTime = dayjs(time.startTime).utc().format("HH:mm");
-        const endTime = dayjs(time.endTime).utc().format("HH:mm");
+    return schedule.blocks.flatMap((block: any) =>
+      block.times.map((time: any) => {
+        const startDate = dayjs(block.start_date);
+        const endDate = dayjs(block.end_date);
 
-        const filteredData = dataTeacher?.data.find(
-          (teacher) => teacher.user_id === schedule.teacher_id
-        );
+        const startTime = dayjs(time.start_time).utc().format("HH:mm");
+        const endTime = dayjs(time.end_time).utc().format("HH:mm");
 
         return {
-          id: time.time_id,
-          daysOfWeek: [dayIndex],
+          id: time.id,
+          title: `${teacher?.username || "Guru"} (${startTime} - ${endTime})`,
+          startRecur: startDate.format("YYYY-MM-DD"),
+          endRecur: endDate.add(1, "day").format("YYYY-MM-DD"),
+          backgroundColor: teacherColor,
           extendedProps: {
-            teacherName: filteredData?.username,
-            startTime: startTime,
-            endTime: endTime,
-            region: filteredData?.region,
+            teacherName: teacher?.username,
+            region: teacher?.region,
+            blockId: block.id,
+            scheduleMonthId: schedule.id,
+            startTime, 
+            endTime, 
           },
         };
       })
-    )
-  );
+    );
+  });
 
   return events;
 };

@@ -326,25 +326,25 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
-      title: "Tanggal",
+      title: "Date",
       dataIndex: "dateTime",
       key: "dateTime",
       render: (text: any) => dayjs.utc(text).format("YYYY-MM-DD HH:mm"),
     },
-    { title: "Metode", dataIndex: "method", key: "method" },
-    { title: "Pengajar", dataIndex: "teacherName", key: "teacherName" },
+    { title: "Method", dataIndex: "method", key: "method" },
+    { title: "Teacher", dataIndex: "teacherName", key: "teacherName" },
     {
-      title: "Skala Kemampuan",
+      title: "Ability Scale",
       dataIndex: "abilityScale",
       key: "abilityScale",
     },
     {
-      title: "Kinerja Siswa",
+      title: "Student Performance",
       dataIndex: "studentPerformance",
       key: "studentPerformance",
     },
     {
-      title: "Hasil Inputan Guru",
+      title: "Teacher Input Results",
       dataIndex: "progress_student",
       key: "progress_student",
     },
@@ -392,7 +392,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
 
   const columnsInfo = [
     {
-      title: "Informasi",
+      title: "Information",
       dataIndex: "label",
       key: "label",
       render: (text: any) => <Text strong>{text}</Text>,
@@ -412,13 +412,13 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
       label: (
         <>
           <UserOutlined style={{ marginRight: 5 }} />
-          {filteredStudent?.username != null ? "Nama" : "Nama Kelompok"}
+          {filteredStudent?.username != null ? "Name" : "Group Name"}
         </>
       ),
       value:
         filteredStudent?.username != null
           ? filteredStudent?.username
-          : filteredStudent?.name_group || "Tidak tersedia",
+          : filteredStudent?.name_group || "Not Available",
     },
     // Hanya render phone jika username tidak null
     ...(filteredStudent?.username != null
@@ -431,7 +431,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
                 No Telepon
               </>
             ),
-            value: filteredStudent?.no_phone || "Tidak tersedia",
+            value: filteredStudent?.no_phone || "Not Available",
           },
         ]
       : []),
@@ -440,17 +440,17 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
       label: (
         <>
           <EnvironmentOutlined style={{ marginRight: 5 }} />
-          Asal
+          From
         </>
       ),
-      value: filteredStudent?.region || "Tidak tersedia",
+      value: filteredStudent?.region || "Not Available",
     },
     ...(filteredPrograms?.map((program) => ({
       key: program.program_id,
       label: (
         <>
           <BookOutlined style={{ marginRight: 5 }} />
-          Program
+          Name Program
         </>
       ),
       value: program.name,
@@ -461,10 +461,10 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
       label: (
         <>
           <FileTextOutlined style={{ marginRight: 5 }} />
-          Catatan
+          Note
         </>
       ),
-      value: filteredStudent?.target || "Tidak tersedia",
+      value: filteredStudent?.target || "Not Available",
     },
   ];
 
@@ -499,7 +499,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
                 fontSize: "clamp(18px, 2.5vw, 24px)",
               }}
             >
-              Detail Siswa
+              Detail Student
             </Title>
             <Row
               gutter={[16, 16]}
@@ -602,7 +602,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
                 fontSize: "clamp(18px, 2.5vw, 24px)",
               }}
             >
-              Total Pertemuan
+              Total Meetings
             </Title>
             {isLoadingStudent ? (
               <Skeleton.Input active size="large" style={{ width: "80px" }} />
@@ -637,7 +637,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
           }}
         >
           <Title level={3} style={{ fontSize: "clamp(18px, 2.5vw, 24px)" }}>
-            Riwayat Pertemuan
+            Meeting History
           </Title>
           <Flex
             justify="space-between"
@@ -650,7 +650,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
               href={`/teacher/dashboard/history-test/${student_id}`}
               style={{ flex: 1, minWidth: "200px" }}
             >
-              Riwayat Placement Test
+              History Placement Test
             </Button>
             {isLoadingProgram ? (
               <Skeleton.Button active />
@@ -671,17 +671,17 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
                     style={{ flex: 1, minWidth: "200px" }}
                   >
                     {filteredStudent?.is_evaluation
-                      ? "Sudah Menilai Sertifikat"
-                      : "Isi Nilai Sertifikat"}
+                      ? "Already Assessed Certificate"
+                      : "Fill in the Certificate Value"}
                   </Button>
                 ) : (
-                  <Tooltip title="Pertemuan belum selesai">
+                  <Tooltip title="The meeting is not over yet">
                     <Button
                       type="primary"
                       disabled
                       style={{ flex: 1, minWidth: "200px" }}
                     >
-                      Nilai Sertifikat
+                      Certificate Value
                     </Button>
                   </Tooltip>
                 )}
@@ -694,7 +694,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
           userGroup.length > 0 && (
             <div style={{ width: "100%", marginTop: "20px" }}>
               <Title level={4} style={{ marginBottom: "12px" }}>
-                Anggota Kelompok
+                Group Member
               </Title>
               <Row gutter={[16, 16]} style={{ marginBottom: "32px" }}>
                 {userGroup.map((group: any, index: number) => {
@@ -742,7 +742,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
               onClick={() => setViewNewProgram(true)}
               // disabled={viewNewProgram}
             >
-              Lihat Data New Program
+              View New Program Data
             </Button>
             <Select
               value={viewNewProgram ? undefined : selectedProgramType}
@@ -753,7 +753,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
               }}
               style={{ minWidth: 220 }}
               // disabled={viewNewProgram}
-              placeholder="Pilih Program Lama"
+              placeholder="Select Old Program"
             />
           </div>
         )}
@@ -777,7 +777,7 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
       <Modal
         open={isModalCertificate}
         onCancel={handleCancel}
-        title="Nilai Sertifikat"
+        title="Certificate Value"
         footer={null}
       >
         <Form
@@ -823,12 +823,12 @@ const [viewNewProgram, setViewNewProgram] = useState<boolean>(true);
                   rules={[
                     {
                       required: true,
-                      message: `Masukkan komentar untuk ${type}!`,
+                      message: `Enter a comment for ${type}!`,
                     },
                   ]}
                 >
                   <TextArea
-                    placeholder={`Komentar akan muncul otomatis`}
+                    placeholder={`Comments will appear automatically`}
                     autoSize={{ minRows: 2, maxRows: 4 }}
                   />
                 </Form.Item>

@@ -3,6 +3,7 @@ import { createData } from "@/app/lib/db/createData";
 import { getData } from "@/app/lib/db/getData";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { buildMaterialImagePath, uploadBase64Image } from "@/app/lib/utils/uploadHelper";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -40,15 +41,37 @@ export async function POST(request: NextRequest) {
       const { type, value, index } = item;
 
       switch (type) {
-        case "image":
+        case "image": {
+          // Jika base64 → upload ke Supabase, jika URL → pakai langsung
+          let imageUrl = value as string;
+
+          const isBase64Img =
+            typeof value === "string" &&
+            /^data:image\/[\w+.-]+;base64,/i.test(value);
+          if (isBase64Img) {
+            const contentType =
+              value.match(/^data:(image\/[\w+.-]+);base64,/i)?.[1] ||
+              "image/jpeg";
+            const filePath = buildMaterialImagePath(
+              material.material_id,
+              index,
+              contentType
+            );
+            imageUrl = await uploadBase64Image(
+              value,
+              filePath,
+            ); // ganti bucket jika perlu
+          }
+
           await prisma.materialImage.create({
             data: {
               material_id: material.material_id,
-              imageUrl: value,
-              index: index,
+              imageUrl,
+              index,
             },
           });
           break;
+        }
         case "url":
           await prisma.materialUrl.create({
             data: {
@@ -66,9 +89,16 @@ export async function POST(request: NextRequest) {
               index: index,
             },
           });
+
+        case "pdf":
+          await prisma.materialPdf.create({
+            data: {
+              material_id: material.material_id,
+              pdfUrl: value,
+            },
+          });
           break;
         default:
-          console.warn(`Unknown content type: ${type}`);
           continue;
       }
     }

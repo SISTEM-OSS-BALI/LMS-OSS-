@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Suspense } from "react";
-import Loading from "@/app/components/Loading";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/app/lib/auth/authServices";
 import {
   Typography,
@@ -14,6 +12,7 @@ import {
   Descriptions,
   Grid,
   Divider,
+  Radio,
 } from "antd";
 import {
   VideoCameraOutlined,
@@ -29,31 +28,40 @@ import utc from "dayjs/plugin/utc";
 import locale from "dayjs/locale/id";
 import { Meeting } from "@prisma/client";
 import Link from "next/link";
+
 dayjs.extend(utc);
 dayjs.locale(locale);
 
 const { useBreakpoint } = Grid;
-
 const { Title, Text } = Typography;
 
 export default function DashboardComponent() {
   const { username } = useAuth();
-  const { meetingData, isLoadingMeeting } = useDashboardViewModel();
+  const { meetingData, isLoadingMeeting, queueData } = useDashboardViewModel();
   const screens = useBreakpoint();
+  const [viewMode, setViewMode] = useState<"my" | "all">("my");
 
-  // State untuk menyimpan detail event yang diklik
   const [selectedEvent, setSelectedEvent] = useState<Meeting | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // Format data API ke event FullCalendar
-  const events = meetingData?.data.map((meeting) => ({
-    id: meeting.meeting_id,
-    title: `Meeting (${meeting.method})`, // Menampilkan metode meeting
-    start: dayjs.utc(meeting.startTime).format("YYYY-MM-DD HH:mm"), // Format waktu UTC
-    backgroundColor: meeting.method === "ONLINE" ? "#1890ff" : "#52c41a", // Warna event (online biru, offline hijau)
-    borderColor: "transparent", // Hapus border event agar lebih clean
-    extendedProps: { ...meeting }, // Simpan semua detail di event
-  }));
+  const events = useMemo(() => {
+    const dataToUse = viewMode === "all" ? queueData?.data : meetingData?.data;
+
+    if (!Array.isArray(dataToUse)) return [];
+
+    return dataToUse.map((meeting) => ({
+      id: meeting.meeting_id,
+      title: `Meeting (${meeting.method})${
+        viewMode === "all" && meeting.teacher?.username
+          ? ` - ${meeting.teacher.username}`
+          : ""
+      }`,
+      start: dayjs.utc(meeting.startTime).format("YYYY-MM-DD HH:mm"),
+      backgroundColor: meeting.method === "ONLINE" ? "#1890ff" : "#52c41a",
+      borderColor: "transparent",
+      extendedProps: { ...meeting },
+    }));
+  }, [viewMode, meetingData, queueData]);
 
   const handleEventClick = (info: any) => {
     setSelectedEvent(info.event.extendedProps as Meeting);
@@ -81,7 +89,7 @@ export default function DashboardComponent() {
                 color: "#333",
               }}
             >
-              Selamat Datang, {username}!
+              Welcome, {username}!
             </Title>
             <Text
               style={{
@@ -92,13 +100,12 @@ export default function DashboardComponent() {
                 color: "#666",
               }}
             >
-              Jangan lupa untuk selalu mengikuti jadwal meeting Anda.
+              Dont forget to always follow your meeting schedule.
             </Text>
           </Card>
         </Col>
       </Row>
 
-      {/* Skeleton Loading */}
       {isLoadingMeeting ? (
         <Row justify="center" style={{ marginTop: "32px" }}>
           <Col xs={24} sm={22} md={20} lg={18}>
@@ -123,7 +130,18 @@ export default function DashboardComponent() {
               }}
             >
               <div style={{ pointerEvents: "auto" }}>
-                <Title level={3}>Jadwal Meeting</Title>
+                <Row justify="space-between" align="middle">
+                  <Title level={3}>Meeting Schedule</Title>
+                  <Radio.Group
+                    value={viewMode}
+                    onChange={(e) => setViewMode(e.target.value)}
+                    buttonStyle="solid"
+                    style={{ marginBottom: 16 }}
+                  >
+                    <Radio.Button value="my">My Schedule</Radio.Button>
+                    <Radio.Button value="all">All Schedule</Radio.Button>
+                  </Radio.Group>
+                </Row>
                 <Divider />
                 <FullCalendar
                   plugins={[dayGridPlugin, interactionPlugin]}
@@ -149,13 +167,12 @@ export default function DashboardComponent() {
         </Row>
       )}
 
-      {/* Modal Detail Meeting */}
       <Modal
         title="Detail Meeting"
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
-        width="50%" // Ukuran modal lebih luas untuk tampilan rapi
+        width="50%"
       >
         {selectedEvent ? (
           <Descriptions bordered column={1} size="middle">
@@ -200,11 +217,11 @@ export default function DashboardComponent() {
             </Descriptions.Item>
             <Descriptions.Item label="Waktu Mulai">
               <ClockCircleOutlined style={{ marginRight: 8 }} />
-              {dayjs.utc(selectedEvent.startTime).format(" HH:mm")}
+              {dayjs.utc(selectedEvent.startTime).format("HH:mm")}
             </Descriptions.Item>
             <Descriptions.Item label="Waktu Berakhir">
               <ClockCircleOutlined style={{ marginRight: 8 }} />
-              {dayjs.utc(selectedEvent.endTime).format(" HH:mm")}
+              {dayjs.utc(selectedEvent.endTime).format("HH:mm")}
             </Descriptions.Item>
           </Descriptions>
         ) : (

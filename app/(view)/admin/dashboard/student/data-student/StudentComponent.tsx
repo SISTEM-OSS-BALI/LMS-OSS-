@@ -47,6 +47,12 @@ interface Meeting {
   dateTime: Date;
 }
 
+interface Consultant {
+  consultant_id: string;
+  name: string;
+  no_phone: string;
+}
+
 interface Student {
   user_id: string;
   username: string | null;
@@ -59,6 +65,7 @@ interface Student {
   name_group?: string | null;
   is_active: boolean | null;
   renew_program: boolean | null;
+  consultant?: Consultant | null;
 }
 
 interface ProgramResponse {
@@ -121,6 +128,8 @@ export default function StudentComponent() {
 
   const programList = programDataAll?.data || [];
 
+  console.log(filteredStudent);
+
   const showConfirmDelete = (student_id: string) => {
     Modal.confirm({
       title: "Konfirmasi",
@@ -165,6 +174,15 @@ export default function StudentComponent() {
         <Space>
           <PhoneOutlined style={{ color: "#1890ff" }} />{" "}
           {text ?? "Tidak Diketahui"}
+        </Space>
+      ),
+    },
+    {
+      title: "Nama Konsultan",
+      key: "consultant_name",
+      render: (record: any) => (
+        <Space>
+          <UserOutlined style={{ color: "#1890ff" }} /> {record.consultant?.name ?? "-"}
         </Space>
       ),
     },
@@ -271,7 +289,6 @@ export default function StudentComponent() {
         ));
       },
     },
-
     {
       title: "Status",
       key: "status",

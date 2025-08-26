@@ -24,11 +24,7 @@ import TextArea from "antd/es/input/TextArea";
 import { useQueueViewModel } from "./useQueueViewModel";
 import Dragger from "antd/es/upload/Dragger";
 import Icon, { InboxOutlined } from "@ant-design/icons";
-import { useEffect } from "react";
-import { TeacherAbsence } from "@/app/model/user";
-import { AddIcon, MinusIcon } from "@/app/components/Icon";
 import { Meeting } from "@prisma/client";
-import { groupsmigration } from "googleapis/build/src/apis/groupsmigration";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -67,8 +63,8 @@ export default function QueueComponent() {
     handleBeforeUpload,
     fileList,
     teacherAbsenceData,
+    updateCancelled,
   } = useQueueViewModel();
-
 
   const cellRender = (currentDate: any) => {
     const formattedDate = dayjs(currentDate).format("YYYY-MM-DD");
@@ -100,83 +96,98 @@ export default function QueueComponent() {
       render: (_, __, index) => index + 1,
     },
     {
-      title: "Waktu Mulai",
-      dataIndex: "startTime",
-      key: "startTime",
-      render: (startTime: string) => dayjs.utc(startTime).format("HH:mm"),
-    },
-    {
-      title: "Waktu Selesai",
-      dataIndex: "endTime",
-      key: "endTime",
-      render: (endTime: string) => dayjs.utc(endTime).format("HH:mm"),
-    },
-    {
-      title: "Program",
-      dataIndex: "name_program",
-      key: "name_program",
-    },
-    {
-      title: "Metode",
-      dataIndex: "method",
-      key: "method",
-    },
-    {
-      title: "Nama",
+      title: "Name",
       key: "name",
       render: (_, record) =>
         record.typeStudent === "GROUP" ? record.nameGroup : record.studentName,
     },
     {
-      title: "Absen",
+      title: "Start Time",
+      dataIndex: "startTime",
+      key: "startTime",
+      render: (startTime: string) => dayjs.utc(startTime).format("HH:mm"),
+    },
+    {
+      title: "End Time",
+      dataIndex: "endTime",
+      key: "endTime",
+      render: (endTime: string) => dayjs.utc(endTime).format("HH:mm"),
+    },
+    {
+      title: "Name Program",
+      dataIndex: "name_program",
+      key: "name_program",
+    },
+    {
+      title: "Method",
+      dataIndex: "method",
+      key: "method",
+    },
+    {
+      title: "Attendance",
       dataIndex: "absent",
       key: "absent",
       render: (_, record) => (
-        <Space>
-          <Tooltip title="Hadir">
+        <Space direction={screens.xs ? "vertical" : "horizontal"}>
+          <Tooltip title="Start Class">
             <Button
-              loading={loadingState[record.meeting_id] == true}
-              disabled={record.absent == true || record.teacherAbsence}
+              loading={loadingState[`start-${record.meeting_id}`] === true}
+              disabled={record.is_started == true || record.teacherAbsence}
               style={{
-                cursor: record.absent == true ? "not-allowed" : "pointer",
+                cursor: record.is_started == true ? "not-allowed" : "pointer",
                 backgroundColor:
-                  record.absent == true ? "green" : "transparent",
-                color: record.absent == true ? "white" : "black",
+                  record.is_started == true ? "green" : "transparent",
+                color: record.is_started == true ? "white" : "black",
               }}
               onClick={() =>
                 updateAbsentStatus(record.meeting_id, record.student_id, true)
               }
             >
-              Hadir
+              Start Class
             </Button>
           </Tooltip>
-          <Tooltip title="Tidak Hadir">
+          <Tooltip title="End Class">
             <Button
-              loading={loadingState[record.meeting_id] == false}
-              disabled={record.absent == false || record.teacherAbsence}
+              loading={loadingState[`end-${record.meeting_id}`] === true}
+              disabled={record.is_started == false || record.teacherAbsence}
               style={{
-                cursor: record.absent == false ? "not-allowed" : "pointer",
-                backgroundColor: record.absent == false ? "red" : "transparent",
-                color: record.absent == false ? "white" : "black",
+                cursor: record.is_started == false ? "not-allowed" : "pointer",
+                backgroundColor:
+                  record.is_started == false ? "red" : "transparent",
+                color: record.is_started == false ? "white" : "black",
               }}
               onClick={() =>
                 updateAbsentStatus(record.meeting_id, record.student_id, false)
               }
             >
-              Tidak Hadir
+              End Class
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Absent">
+            <Button
+              loading={loadingState[`cancel-${record.meeting_id}`] === true}
+              style={{
+                backgroundColor:
+                  record.is_cancelled == true ? "red" : "transparent",
+                color: record.is_cancelled == true ? "white" : "black",
+              }}
+              onClick={() =>
+                updateCancelled(
+                  record.meeting_id,
+                  record.student_id,
+                  !record?.is_cancelled
+                )
+              }
+            >
+              Absent
             </Button>
           </Tooltip>
         </Space>
       ),
     },
-    // {
-    //   title: "Modul",
-    //   dataIndex: "module",
-    //   key: "module",
-    //   render: (module: boolean) => (module ? "Yes" : "No"),
-    // },
     {
-      title: "Aksi",
+      title: "Action",
       key: "action",
       render: (_, record) => (
         <Space>
@@ -186,8 +197,8 @@ export default function QueueComponent() {
             onClick={() => handleOpenModalAction(record.meeting_id)}
           >
             {record.teacherAbsence
-              ? "Sedang Diproses Admin"
-              : "Tidak Bisa Mengajar"}
+              ? "Under Processing by Admin"
+              : "Cannot Teach"}
           </Button>
           {record.typeStudent !== "GROUP" && (
             <Button
@@ -201,7 +212,7 @@ export default function QueueComponent() {
               }
               disabled={record.teacherAbsence}
             >
-              Tambah Progress Siswa
+              Add Progress
             </Button>
           )}
         </Space>
@@ -213,17 +224,17 @@ export default function QueueComponent() {
     <div>
       <Flex justify="space-between" gap={10}>
         <Title level={3} style={{ marginBlock: 0 }}>
-          Daftar Antrian Siswa
+          Student Queue List
         </Title>
         <Flex justify="space-between" gap={10}>
           <DatePicker
-            placeholder="Pilih Tanggal"
+            placeholder="Select Date"
             onChange={handleChangeDate}
             cellRender={cellRender}
             style={{ width: "100%" }}
           />
           <Input
-            placeholder="Cari nama siswa"
+            placeholder="Search by name student"
             onChange={(e) => setSearchKeyword(e.target.value)}
             value={searchKeyword}
             style={{ width: "100%" }}
@@ -242,42 +253,47 @@ export default function QueueComponent() {
           columns={columns}
           dataSource={filteredData}
           rowKey="meeting_id"
+          scroll={{ x: true }}
           expandable={{
             expandedRowRender: (record) =>
               record.typeStudent === "GROUP" ? (
                 <div style={{ padding: "16px 24px" }}>
                   <Title level={5} style={{ marginBottom: 12 }}>
-                    Anggota
+                    Group Member
                   </Title>
-                  {record.groupMember?.map((student: any, index: number) => (
-                    <Row
-                      key={index}
-                      gutter={[16, 16]}
-                      align="middle"
-                      style={{
-                        borderBottom: "1px solid #f0f0f0",
-                        padding: "8px 0",
-                      }}
-                    >
-                      <Col flex="auto"> {student.username}</Col>
-                      <Col>
-                        <Button
-                          type="primary"
-                          size="small"
-                          onClick={() =>
-                            handleOpenModalAddProges(
-                              record.meeting_id,
-                              student.user_group_id,
-                              undefined
-                            )
-                          }
-                          disabled={record.teacherAbsence}
+                  <Row gutter={[16, 16]} wrap>
+                    {record.groupMember?.map((student: any, index: number) => (
+                      <Col key={index} xs={24} sm={12} md={8} lg={6} xl={4}>
+                        <Card
+                          style={{
+                            marginBottom: 16,
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                          }}
                         >
-                          Tambah Progress
-                        </Button>
+                          <Card.Meta
+                            title={student.username}
+                            description={
+                              <Button
+                                type="primary"
+                                size="small"
+                                onClick={() =>
+                                  handleOpenModalAddProges(
+                                    record.meeting_id,
+                                    student.user_group_id,
+                                    undefined
+                                  )
+                                }
+                                disabled={record.teacherAbsence}
+                                style={{ width: "100%" }}
+                              >
+                                Add Progress
+                              </Button>
+                            }
+                          />
+                        </Card>
                       </Col>
-                    </Row>
-                  ))}
+                    ))}
+                  </Row>
                 </div>
               ) : null,
             rowExpandable: (record) => record.typeStudent === "GROUP",
@@ -293,13 +309,13 @@ export default function QueueComponent() {
       >
         <Form form={form} onFinish={handleAddProgresStudent}>
           <Form.Item name="ability_scale">
-            <TextArea placeholder="Masukan Skala Kemapuan Pertemuan Hari Ini" />
+            <TextArea placeholder="Enter Today's Meeting Ability Scale" />
           </Form.Item>
           <Form.Item name="student_performance">
-            <TextArea placeholder="Masukan Kinerja Siswa Pertemuan Hari Ini" />
+            <TextArea placeholder="Student Performance Feedback for Today's Meeting" />
           </Form.Item>
           <Form.Item name="progress_student">
-            <TextArea placeholder="Masukan Inputan Pertemuan Hari Ini" />
+            <TextArea placeholder="Input for Today's Meeting" />
           </Form.Item>
           <Form.Item>
             <Button
@@ -317,12 +333,12 @@ export default function QueueComponent() {
       <Modal
         open={isModalVisibleAddAction}
         onCancel={handleCancelAddAction}
-        title="Tidak Bisa Mengajar"
+        title="Cannot Teach"
         footer={null}
       >
         <Form form={form} onFinish={handleAction}>
           <Form.Item name="reason">
-            <TextArea placeholder="Masukan Alasan" />
+            <TextArea placeholder="Reason" />
           </Form.Item>
           <Form.Item>
             <Form.Item name="image">
@@ -348,11 +364,11 @@ export default function QueueComponent() {
                       <InboxOutlined />
                     </p>
                     <p className="ant-upload-text">
-                      Klik atau drag file ke area ini untuk upload
+                      Drag and drop, or click to upload
                     </p>
                     <p className="ant-upload-hint">
-                      Support untuk single upload. Hanya file PNG, JPEG, dan JPG
-                      yang diterima.
+                      Support for a single or bulk upload. Strictly prohibited
+                      from uploading company data or other banned files
                     </p>
                   </div>
                 )}

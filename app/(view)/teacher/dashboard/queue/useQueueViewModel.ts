@@ -89,26 +89,24 @@ export const useQueueViewModel = () => {
   const updateAbsentStatus = async (
     meeting_id: string,
     student_id: string,
-    absent: boolean
+    activity: boolean
   ) => {
     const payload = {
       meeting_id,
-      absent,
+      activity,
       student_id,
     };
 
-    setLoadingState((prev) => ({
-      ...prev,
-      [meeting_id]: absent ? true : false,
-    }));
+    const key = activity ? `start-${meeting_id}` : `end-${meeting_id}`;
+
+    setLoadingState((prev) => ({ ...prev, [key]: true }));
 
     try {
-      const response = await crudService.post(
-        "/api/teacher/absent/changeAbsent",
+      const response = await crudService.patch(
+        "/api/teacher/activity-class/changeActivity",
         payload
       );
 
-      // Jika status 200 tapi message error, treat as error
       const isError =
         typeof response.message === "string" &&
         (response.message.toLowerCase().includes("gagal") ||
@@ -117,13 +115,20 @@ export const useQueueViewModel = () => {
           response.error); // bisa juga cek response.error
 
       if (response.status === 200 && !isError) {
-        notification.success({
-          message: "Absensi Berhasil",
-          description: response.message || "Absensi telah diperbarui.",
-        });
+        {
+          if (activity) {
+            notification.success({
+              message: "Berhasil Memulai Kelas",
+            });
+          } else {
+            notification.success({
+              message: "Berhasil Mengakhiri Kelas",
+            });
+          }
+        }
       } else {
         notification.error({
-          message: "Absensi Gagal",
+          message: "Gagal Memulai Kelas",
           description: response.message || "Terjadi kesalahan saat absensi.",
         });
       }
@@ -140,10 +145,48 @@ export const useQueueViewModel = () => {
       });
       console.error("Failed to update absent status:", error);
     } finally {
-      setLoadingState((prev) => ({
-        ...prev,
-        [meeting_id]: null,
-      }));
+      setLoadingState((prev) => ({ ...prev, [key]: null }));
+    }
+  };
+
+  const updateCancelled = async (
+    meeting_id: string,
+    student_id: string,
+    is_cancelled: boolean
+  ) => {
+    const payload = {
+      meeting_id,
+      student_id,
+      is_cancelled,
+    };
+
+    const key = `cancel-${meeting_id}`;
+
+    setLoadingState((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      await crudService.patch(
+        "/api/teacher/activity-class/changeStatus",
+        payload
+      );
+
+      notification.success({
+        message: "Berhasil Mengubah Status",
+      });
+
+      meetingMutate();
+      progressMutate();
+      mutateDataStudent();
+      mutateCountProgram();
+    } catch (error: any) {
+      notification.error({
+        message: "Status Gagal",
+        description:
+          error?.message || "Gagal terhubung ke server. Silakan coba lagi.",
+      });
+      console.error("Failed to update absent status:", error);
+    } finally {
+      setLoadingState((prev) => ({ ...prev, [key]: null }));
     }
   };
 
@@ -391,5 +434,6 @@ export const useQueueViewModel = () => {
     fileList,
     teacherAbsenceData,
     loadingState,
+    updateCancelled,
   };
 };

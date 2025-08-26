@@ -17,29 +17,36 @@ export default function CalendarTeacherComponent() {
 
   // Function to render event content with custom styles
   const renderEventContent = (eventInfo: any) => {
-    const { teacherName, startTime, endTime, region } = eventInfo.event.extendedProps;
-    const regionColor = regionColorMapping[region as keyof typeof regionColorMapping];
+    const { teacherName, startTime, endTime, region } =
+      eventInfo.event.extendedProps || {};
+
+    const regionColor =
+      regionColorMapping[region as keyof typeof regionColorMapping] || "#999";
 
     return (
       <div
         style={{
           backgroundColor: regionColor,
-          color: '#fff',
-          padding: '4px',
-          textAlign: 'center',
-          boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.1)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100%',
-          overflow: 'hidden',
-          whiteSpace: 'nowrap',
-          textOverflow: 'ellipsis',
+          color: "#fff",
+          padding: "4px",
+          textAlign: "center",
+          boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
         }}
       >
-        <strong style={{ fontSize: '14px' }}>{`${startTime} - ${endTime}`}</strong>
-        <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{teacherName}</div>
+        <strong style={{ fontSize: "14px" }}>
+          {startTime && endTime ? `${startTime} - ${endTime}` : "-"}
+        </strong>
+        <div style={{ fontSize: "14px", fontWeight: "bold" }}>
+          {teacherName || "Tanpa Nama"}
+        </div>
       </div>
     );
   };

@@ -11,15 +11,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const getMeetingById = await getData(
-      "meeting",
-      {
-        where: {
-          teacher_id: user.user_id,
+    const getMeetingById = await prisma.meeting.findMany({
+      where: {
+        teacher_id: user.user_id,
+      },
+      include: {
+        student: {
+          include: {
+            program: true,
+          },
         },
       },
-      "findMany"
-    );
+    });
 
     return NextResponse.json({
       status: 200,

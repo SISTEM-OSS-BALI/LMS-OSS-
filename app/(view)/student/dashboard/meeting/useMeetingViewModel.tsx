@@ -6,29 +6,25 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import utc from "dayjs/plugin/utc";
 import { Button, Form, message, notification } from "antd";
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { crudService } from "@/app/lib/services/crudServices";
 import { Teacher } from "@/app/model/course";
 import { Program } from "@/app/model/program";
-import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Meeting } from "@/app/model/meeting";
 import Cookies from "js-cookie";
-import { User } from "@/app/model/user";
-import { TeacherLeave } from "@prisma/client";
+import { ScheduleMonth, ShiftSchedule, TeacherLeave } from "@prisma/client";
+
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
 dayjs.extend(utc);
 
-const DAY_TRANSLATION: { [key: string]: string } = {
-  Senin: "MONDAY",
-  Selasa: "TUESDAY",
-  Rabu: "WEDNESDAY",
-  Kamis: "THURSDAY",
-  Jumat: "FRIDAY",
-  Sabtu: "SATURDAY",
-  Minggu: "SUNDAY",
-};
+interface User {
+  user_id: string;
+  color: string;
+  username: string;
+  imageUrl: string;
+  email: string;
+  ScheduleMonth: ScheduleMonth[];
+}
 
 interface UserResponse {
   data: User[];
@@ -38,13 +34,12 @@ interface MeetingResponse {
   data: Meeting[];
 }
 
-interface TimeSlot {
-  startTime: string;
-  endTime: string;
-}
-
 interface ProgramResponse {
   data: Program[];
+}
+
+interface ShiftResponse {
+  data: ShiftSchedule[];
 }
 
 interface ScheduleTeacherResponse {
@@ -108,20 +103,16 @@ interface UseMeetingViewModelReturn {
 }
 
 export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
-  const { data: dataTeacher, isLoading } = useSWR<UserResponse>(
+  const { data: dataTeacher } = useSWR<UserResponse>(
     "/api/admin/teacher/showByRegion",
     fetcher
   );
 
   const searchParams = useSearchParams();
   const date = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
-  // const { program_id } = useAuth();
 
-  const {
-    data: programData,
-    mutate: programDataMutate,
-    isLoading: isLoadingProgram,
-  } = useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
+  const { data: programData, isLoading: isLoadingProgram } =
+    useSWR<ProgramResponse>("/api/admin/program/show", fetcher);
 
   const { data: programDetail } = useSWR<ProgramDetailResponse>(
     `/api/student/programDetail`,
@@ -144,25 +135,29 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(
     null
   );
+  const [availableDays, setAvailableDays] = useState<string[]>([]);
   const [meetingId, setMeetingId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+
   const { data: showScheduleTeacher } = useSWR(
     selectedTeacher
       ? `/api/admin/schedule/${selectedTeacher.user_id}/showSchedule`
       : null,
     fetcher
   );
+
   const fetchUrl = useMemo(() => {
-    let url = "/api/student/meeting/showByDate";
     const params = new URLSearchParams();
     if (date) params.append("date", date);
-    return `${url}?${params.toString()}`;
+    return `/api/student/meeting/showByDate?${params.toString()}`;
   }, [date]);
+
   const {
     data: showMeeting,
     mutate: mutateShowMeeting,
     isLoading: isLoadingMeeting,
   } = useSWR<MeetingResponse>("/api/student/meeting/show", fetcher);
+
   const {
     data: showMeetingByDate,
     mutate: mutateShowMeetingByDate,
@@ -178,16 +173,18 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const { data: showScheduleAllTeacher, isLoading: isLoadingScheduleAll } =
     useSWR("/api/admin/schedule/showScheduleAll", fetcher);
 
-  const {
-    data: dayOffTeacher,
-    isLoading: isLoadingDayOff,
-    mutate: mutateDayOff,
-  } = useSWR<ScheduleTeacherResponse>(
-    selectedTeacher
-      ? `/api/student/showDayOffTeacher/${selectedTeacher?.user_id}`
-      : null,
+  const { data: shiftData } = useSWR<ShiftResponse>(
+    "/api/admin/shift",
     fetcher
   );
+
+  const { data: dayOffTeacher, isLoading: isLoadingDayOff } =
+    useSWR<ScheduleTeacherResponse>(
+      selectedTeacher
+        ? `/api/student/showDayOffTeacher/${selectedTeacher?.user_id}`
+        : null,
+      fetcher
+    );
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [fileList, setFileList] = useState<any[]>([]);
@@ -196,20 +193,94 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const [form] = Form.useForm();
   const filterProgram = programDetail?.data.program_id;
 
-
   const handleOpenModalDateClick = () => {
     setIsModalVisible(true);
     setCurrentStep(3);
   };
 
-  const handleOpenModalInfo = () => {
-    setIsModalInfoVisible(true);
+  const handleOpenModalInfo = () => setIsModalInfoVisible(true);
+  const handleCancelModalInfo = () => setIsModalInfoVisible(false);
+
+  /* ===================== SHIFT LOOKUP ===================== */
+  const shiftMap = useMemo(() => {
+    const map = new Map<
+      string,
+      { id: string; title: string; start_time: string; end_time: string }
+    >();
+    const list = Array.isArray(shiftData?.data) ? shiftData.data : [];
+    list.forEach((s: any) => map.set(s.id, s));
+    return map;
+  }, [shiftData]);
+
+  /** Ambil jam harian (HH:mm) dari array times yang berisi shift_id */
+  const getDailyTimesFromBlockTimes = (
+    blockTimes: Array<{ shift_id: string }>
+  ): { start: string; end: string }[] => {
+    const out: { start: string; end: string }[] = [];
+    for (const t of blockTimes || []) {
+      const sh = t?.shift_id ? shiftMap.get(t.shift_id) : null;
+      if (!sh) continue;
+      out.push({
+        start: dayjs.utc(sh.start_time).format("HH:mm"),
+        end: dayjs.utc(sh.end_time).format("HH:mm"),
+      });
+    }
+    return out;
   };
 
-  const handleCancelModalInfo = () => {
-    setIsModalInfoVisible(false);
+  /** Materialisasi rentang waktu UTC penuh pada tanggal tertentu dari jam "HH:mm" */
+  const materializeRangesForDate = (
+    selectedDateISO: string,
+    daily: { start: string; end: string }[]
+  ) => {
+    return daily.map(({ start, end }) => {
+      const s = dayjs.utc(`${selectedDateISO} ${start}`, "YYYY-MM-DD HH:mm");
+      let e = dayjs.utc(`${selectedDateISO} ${end}`, "YYYY-MM-DD HH:mm");
+      if (e.isBefore(s)) e = e.add(1, "day"); // cross-midnight
+      return { start: s, end: e };
+    });
   };
 
+  /** Generator slot berdasarkan shift_id */
+  // 1) ganti tipe meetings param
+  const generateAvailableSlotsFromShifts = (
+    dayScheduleTimes: Array<{ shift_id: string }>,
+    meetings: Array<{ dateTime: string | Date; duration?: number }>, // <- string | Date
+    selectedDateISO: string,
+    programDuration: number
+  ): string[] => {
+    const slots: string[] = [];
+
+    const daily = getDailyTimesFromBlockTimes(dayScheduleTimes);
+    if (daily.length === 0) return [];
+
+    const ranges = materializeRangesForDate(selectedDateISO, daily);
+
+    // 2) parsing aman utk string/Date
+    const busy = meetings.map((m) => {
+      const start = dayjs.utc(m.dateTime); // bisa terima string atau Date
+      const dur = typeof m.duration === "number" ? m.duration : programDuration;
+      const end = start.add(dur, "minute");
+      return { start, end };
+    });
+
+    for (const r of ranges) {
+      let cursor = r.start.clone();
+      while (cursor.add(programDuration, "minute").isSameOrBefore(r.end)) {
+        const s = cursor.clone();
+        const e = s.add(programDuration, "minute");
+        const overlaps = busy.some(
+          (b) => s.isBefore(b.end) && e.isAfter(b.start)
+        );
+        if (!overlaps) slots.push(s.format("HH:mm"));
+        cursor = cursor.add(programDuration, "minute");
+      }
+    }
+    slots.sort((a, b) => dayjs(a, "HH:mm").diff(dayjs(b, "HH:mm")));
+    return slots;
+  };
+
+  /* ===================== DATE CLICK ===================== */
   const handleDateClick = (arg: any) => {
     if (!selectedTeacher) {
       message.warning("Silakan pilih guru terlebih dahulu.");
@@ -222,8 +293,9 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     setSelectedDate(selectedDay);
 
     const selectedDateFormatted = dayjs(arg.date).format("YYYY-MM-DD");
+
     const dayOffDates = Array.isArray(dayOffTeacher?.data)
-      ? dayOffTeacher.data.map((item) => item.leave_date)
+      ? (dayOffTeacher.data as any[]).map((item: any) => item.leave_date)
       : [];
 
     if (dayOffDates.includes(selectedDateFormatted)) {
@@ -233,67 +305,59 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       return;
     }
 
-    // console.log(selectedDay);
-
     const selectedDateISO = dayjs(arg.date).format("YYYY-MM-DD");
-    const dayName = dayjs(arg.date).locale("id").format("dddd");
-    const translatedDayName = DAY_TRANSLATION[dayName];
 
-    // const teacherSchedule = showScheduleTeacher.data.find(
-    //   (schedule: any) => schedule.teacher_id === selectedTeacher?.user_id
-    // );
+    const teacherSchedule = (showScheduleTeacher as any)?.data;
+    const scheduleMonths = teacherSchedule?.ScheduleMonth ?? [];
 
-    const teacherSchedule = showScheduleTeacher.data[0];
+    // cari block yang mencakup tanggal
+    const matchingBlock = scheduleMonths
+      .flatMap((month: any) => month.blocks)
+      .find((block: any) => {
+        const start = dayjs(block.start_date).startOf("day");
+        const end = dayjs(block.end_date).startOf("day");
+        const selectedDayjs = dayjs(selectedDateISO);
+        return (
+          selectedDayjs.isSame(start, "day") ||
+          selectedDayjs.isSame(end, "day") ||
+          (selectedDayjs.isAfter(start, "day") &&
+            selectedDayjs.isBefore(end, "day"))
+        );
+      });
 
-    // console.log(teacherSchedule);
-
-    if (!teacherSchedule || !Array.isArray(teacherSchedule.days)) {
+    if (!matchingBlock || !Array.isArray(matchingBlock.times)) {
       setAvailableTimes([]);
       setCurrentStep(1);
-      message.warning("Tidak ada jadwal guru yang tersedia.");
+      message.warning("Tidak ada jadwal guru pada tanggal ini.");
       return;
     }
 
-    const daySchedule = teacherSchedule.days.find(
-      (d: any) => d.day === translatedDayName
-    );
-
-    if (!daySchedule || !Array.isArray(daySchedule.times)) {
-      setAvailableTimes([]);
-      setCurrentStep(1);
-      message.warning("Tidak ada jadwal guru pada hari ini.");
-      return;
-    }
-
-    const programDuration = programDetail?.data.duration ?? 0;
+    const programDuration = programDetail?.data?.duration ?? 0;
 
     const meetingsToday =
       showMeeting?.data?.filter(
-        (meeting) =>
+        (m) =>
           selectedTeacher &&
-          meeting.teacher_id === selectedTeacher.user_id &&
-          dayjs.utc(meeting.dateTime).format("YYYY-MM-DD") === selectedDateISO
+          m.teacher_id === selectedTeacher.user_id &&
+          dayjs.utc(m.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
-    // console.log("📆 Selected Date:", selectedDateISO);
-    // console.log("⏱ Program Duration:", programDuration);
-    // console.log("📚 Raw Meetings:", meetingsToday);
-
-    const availableTimes = generateAvailableSlots(
-      daySchedule.times,
+    // === PAKAI SHIFT LOOKUP ===
+    const slots = generateAvailableSlotsFromShifts(
+      matchingBlock.times, // berisi { shift_id }
       meetingsToday,
       selectedDateISO,
       programDuration
     );
 
-    if (availableTimes.length === 0) {
+    if (slots.length === 0) {
       setAvailableTimes([]);
       setCurrentStep(1);
       message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
       return;
     }
 
-    setAvailableTimes(availableTimes);
+    setAvailableTimes(slots);
     setCurrentStep(2);
     handleOpenModalDateClick();
   };
@@ -305,163 +369,78 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     setSelectedEvent(null);
   };
 
-  const handleChangeDateReschedule = (date: any) => {
-    if (!date || !selectedTeacher) return;
+  /* ===================== RESCHEDULE DATE CHANGE ===================== */
+  const handleChangeDateReschedule = (dateVal: any) => {
+    if (!dateVal || !selectedTeacher) return;
 
-    const selectedDateISO = dayjs(date).format("YYYY-MM-DD");
-    const selectedDayReschedule = dayjs(date)
+    const selectedDateISO = dayjs(dateVal).format("YYYY-MM-DD");
+    const formattedDate = dayjs(dateVal)
       .locale("id")
-      .format("dddd, DD MMMM YYYY")
-      .toUpperCase();
+      .format("dddd, DD MMMM YYYY");
 
-    const dayName = dayjs(date).locale("id").format("dddd");
-    const translatedDayName = DAY_TRANSLATION[dayName];
+    const teacherSchedule = (showScheduleTeacher as any)?.data;
+    const scheduleMonths = teacherSchedule?.ScheduleMonth ?? [];
 
-    if (!showScheduleAllTeacher?.data) {
-      console.warn("Jadwal guru tidak tersedia.");
-      return;
-    }
+    const matchingBlock = scheduleMonths
+      .flatMap((month: any) => month.blocks)
+      .find((block: any) => {
+        const start = dayjs(block.start_date).startOf("day");
+        const end = dayjs(block.end_date).startOf("day");
+        const selectedDayjs = dayjs(selectedDateISO);
+        return (
+          selectedDayjs.isSame(start, "day") ||
+          selectedDayjs.isSame(end, "day") ||
+          (selectedDayjs.isAfter(start, "day") &&
+            selectedDayjs.isBefore(end, "day"))
+        );
+      });
 
-    // const teacherSchedule = showScheduleAllTeacher.data.find(
-    //   (schedule: any) => schedule.teacher_id === selectedTeacherId
-    // );
-
-    const teacherSchedule = showScheduleTeacher.data[0];
-
-    // console.log(teacherSchedule);
-
-    if (!teacherSchedule) {
-      message.warning("Tidak ada jadwal guru pada tanggal ini.");
-      return;
-    }
-
-    const daySchedule = teacherSchedule.days.find(
-      (d: any) => d.day === translatedDayName
-    );
-
-    if (!daySchedule || !Array.isArray(daySchedule.times)) {
+    if (!matchingBlock || !Array.isArray(matchingBlock.times)) {
       setAvailableTimes([]);
       setCurrentStep(1);
-      message.warning("Tidak ada jadwal guru pada hari ini.");
+      message.warning(`Tidak ada jadwal guru pada ${formattedDate}.`);
       return;
     }
 
-    // if (availableDays.length === 0) {
-    //   message.warning("Guru tidak tersedia pada hari ini.");
-    //   return;
-    // }
+    const programDuration = programDetail?.data?.duration ?? 0;
 
-    // const teacherTimes = availableDays.flatMap((day: any) => day.times);
-
-    const programDuration = programDetail?.data.duration ?? 0;
-
-    // 🔍 Filter meetings pada tanggal & guru yang sama
     const meetingsToday =
       showMeeting?.data?.filter(
-        (meeting) =>
+        (m) =>
           selectedTeacher &&
-          meeting.teacher_id === selectedTeacher.user_id &&
-          dayjs.utc(meeting.dateTime).format("YYYY-MM-DD") === selectedDateISO
+          m.teacher_id === selectedTeacher.user_id &&
+          dayjs.utc(m.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
-    // console.log("📆 Reschedule Date:", selectedDateISO);
-    // console.log("⏱ Program Duration:", programDuration);
-    // console.log("📚 Meetings Today:", meetingsToday);
-
-    // ✅ Gunakan fungsi generateAvailableSlots
-    const availableTimes = generateAvailableSlots(
-      daySchedule.times,
+    const slots = generateAvailableSlotsFromShifts(
+      matchingBlock.times,
       meetingsToday,
       selectedDateISO,
       programDuration
     );
 
-    if (availableTimes.length > 0) {
+    if (slots.length > 0) {
       setAvailableTeachers([teacherSchedule]);
       setSelectedDate(selectedDateISO);
-      setAvailableTimes(availableTimes);
+      setAvailableTimes(slots);
     } else {
-      message.warning("Tidak ada waktu yang tersedia pada tanggal ini.");
+      setAvailableTimes([]);
+      setCurrentStep(1);
+      message.warning(`Tidak ada waktu yang tersedia pada ${formattedDate}.`);
     }
-
-    setAvailableTimes(availableTimes);
   };
 
-  const generateAvailableSlots = (
-    dayScheduleTimes: TimeSlot[],
-    meetings: any[],
-    selectedDateISO: string,
-    programDuration: number
-  ): string[] => {
-    const slots: string[] = [];
-
-    dayScheduleTimes.forEach(({ startTime, endTime }, index) => {
-      const scheduleStart = dayjs.utc(
-        `${selectedDateISO} ${dayjs.utc(startTime).format("HH:mm")}`
-      );
-      const scheduleEnd = dayjs.utc(
-        `${selectedDateISO} ${dayjs.utc(endTime).format("HH:mm")}`
-      );
-
-      let cursor = scheduleStart;
-
-      while (
-        cursor.add(programDuration, "minute").isSameOrBefore(scheduleEnd)
-      ) {
-        const slotStart = cursor;
-        const slotEnd = slotStart.add(programDuration, "minute");
-
-        const hasOverlap = meetings.some((meeting) => {
-          const meetingStart = dayjs.utc(meeting.startTime);
-          const meetingEnd = dayjs.utc(meeting.endTime);
-          const overlap =
-            slotStart.isBefore(meetingEnd) && slotEnd.isAfter(meetingStart);
-
-          if (overlap) {
-            // console.log(
-            //   `❌ Overlap: ${slotStart.format("HH:mm")}–${slotEnd.format(
-            //     "HH:mm"
-            //   )} with meeting ${meetingStart.format(
-            //     "HH:mm"
-            //   )}–${meetingEnd.format("HH:mm")}`
-            // );
-          }
-
-          return overlap;
-        });
-
-        if (!hasOverlap) {
-          slots.push(slotStart.format("HH:mm"));
-          // console.log(
-          //   `✅ Available Slot: ${slotStart.format("HH:mm")}–${slotEnd.format(
-          //     "HH:mm"
-          //   )}`
-          // );
-        }
-
-        cursor = cursor.add(programDuration, "minute"); // interval mengikuti durasi
-      }
-    });
-
-    // console.log("🧩 Final Available Slots:", slots);
-    return slots;
-  };
-
+  /* ===================== SUBMIT CREATE ===================== */
   const handleSubmit = async (values: any) => {
     setLoading(true);
     try {
-      let platform;
-      if (values.method === "OFFLINE") {
-        platform = null;
-      } else {
-        platform = "ZOOM";
-      }
+      const platform = values.method === "OFFLINE" ? null : "ZOOM";
       const payload = {
         teacher_id: selectedTeacher?.user_id,
         date: selectedDate,
         method: values.method,
         time: values.time,
-        platform: platform,
+        platform,
       };
 
       const response = await fetch(`/api/student/meeting/create`, {
@@ -473,7 +452,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         body: JSON.stringify(payload),
       });
 
-      if (response.status == 403) {
+      if (response.status === 403) {
         notification.error({
           message: "Gagal Menambahkan Jadwal",
           description: "Jatah Pertemuan Kamu Sudah Habis",
@@ -493,27 +472,25 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       setAvailableTimes([]);
       setSelectedDate("");
       handleCancel();
-    } catch (error) {
-      if (error instanceof Error) {
-        message.error(
-          error.message ||
-            "Terjadi kesalahan saat menambahkan jadwal, silahkan hubungi admin"
-        );
-      }
+    } catch (error: any) {
+      message.error(
+        error?.message ||
+          "Terjadi kesalahan saat menambahkan jadwal, silahkan hubungi admin"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  /* ===================== EVENTS (kalender kecil student) ===================== */
   const events =
     showMeetingById?.data.map((meeting: Meeting) => {
       const filteredData = dataTeacher?.data.find(
         (teacher) => teacher.user_id === meeting.teacher_id
       );
 
-      const formatDateTimeToUTC = (dateTime: any) => {
-        return dayjs.utc(dateTime).format("YYYY-MM-DD HH:mm:ss");
-      };
+      const formatDateTimeToUTC = (dateTime: any) =>
+        dayjs.utc(dateTime).format("YYYY-MM-DD HH:mm:ss");
 
       return {
         title: filteredData?.username,
@@ -528,15 +505,14 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       };
     }) || [];
 
-  const handleChangeDate = (date: any) => {
-    if (date) {
-      const formatedDate = dayjs(date).format("YYYY-MM-DD");
-      const scrollPosition = window.scrollY;
-      router.replace(`/student/dashboard/meeting?date=${formatedDate}`);
-      setTimeout(() => {
-        window.scrollTo(0, scrollPosition);
-      }, 100);
-    }
+  const handleChangeDate = (dateVal: any) => {
+    if (!dateVal) return;
+    const formatedDate = dayjs(dateVal).format("YYYY-MM-DD");
+    const scrollPosition = window.scrollY;
+    router.replace(`/student/dashboard/meeting?date=${formatedDate}`);
+    setTimeout(() => {
+      window.scrollTo(0, scrollPosition);
+    }, 100);
   };
 
   const handleRescheduleClick = (meeting: Meeting) => {
@@ -559,62 +535,74 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     const teacher = dataTeacher?.data.find(
       (t: Teacher) => t.user_id === value.value
     );
+
     if (teacher) {
       setSelectedTeacher(teacher);
+
+      const teacherSchedule = teacher?.ScheduleMonth ?? [];
+      const availableDates = teacherSchedule.flatMap((month: any) =>
+        month.blocks.map((block: any) => {
+          const start = dayjs(block.start_date);
+          const end = dayjs(block.end_date);
+          const days: string[] = [];
+
+          for (
+            let d = start.clone();
+            d.isSameOrBefore(end);
+            d = d.add(1, "day")
+          ) {
+            days.push(d.format("dddd").toUpperCase());
+          }
+
+          return days;
+        })
+      );
+
+      setAvailableDays(Array.from(new Set(availableDates.flat())));
     }
   };
 
   const showDate = useMemo(() => {
-    let uniqueDates = new Set<string>();
+    const availableDates = new Set<string>();
 
-    if (showScheduleAllTeacher && showScheduleAllTeacher.data) {
-      const teacherSchedule = showScheduleAllTeacher.data.find(
-        (schedule: any) =>
-          selectedTeacher && schedule.teacher_id === selectedTeacher.user_id
+    if (showScheduleAllTeacher?.data && selectedTeacher?.user_id) {
+      const teacherSchedules = showScheduleAllTeacher.data.filter(
+        (schedule: any) => schedule.teacher_id === selectedTeacher.user_id
       );
 
-      if (teacherSchedule) {
-        const availableDays = teacherSchedule.days
-          .filter((day: any) => day.isAvailable)
-          .map((day: any) => day.day); // Misalnya: ["SATURDAY", "THURSDAY"]
+      const allBlocks = teacherSchedules.flatMap(
+        (schedule: any) => schedule.blocks ?? []
+      );
 
-        // Loop dari hari ini ke depan (misal, 2 tahun ke depan)
-        const today = dayjs();
-        const futureDate = today.add(2, "year"); // Bisa diubah sesuai kebutuhan
+      allBlocks.forEach((block: any) => {
+        const start = dayjs(block.start_date);
+        const end = dayjs(block.end_date);
 
-        let currentDate = today;
+        if (!start.isValid() || !end.isValid()) return;
 
-        while (currentDate.isBefore(futureDate)) {
-          const dayName = currentDate.format("dddd").toUpperCase(); // "SATURDAY", "THURSDAY", etc.
-
-          if (availableDays.includes(dayName)) {
-            uniqueDates.add(currentDate.format("YYYY-MM-DD"));
-          }
-
-          currentDate = currentDate.add(1, "day"); // Pindah ke hari berikutnya
+        let current = start.clone();
+        while (current.isSameOrBefore(end, "day")) {
+          availableDates.add(current.format("YYYY-MM-DD"));
+          current = current.add(1, "day");
         }
-      }
+      });
     }
 
-    return Array.from(uniqueDates);
+    return Array.from(availableDates);
   }, [showScheduleAllTeacher, selectedTeacher]);
 
+  /* ===================== RESCHEDULE SUBMIT ===================== */
   const handleSubmitReschedule = async (values: any) => {
     setLoading(true);
     try {
-      let platform;
-      if (values.method === "OFFLINE") {
-        platform = null;
-      } else {
-        platform = "ZOOM";
-      }
+      const platform = values.method === "OFFLINE" ? null : "ZOOM";
 
       const payload = {
         teacher_id: selectedTeacher?.user_id,
         date: selectedDate,
         method: values.method,
         time: values.time,
-        platform: platform,
+        platform,
       };
 
       const response = await fetch(`/api/student/meeting/${meetingId}/update`, {
@@ -660,13 +648,11 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       setSelectedTeacher(null);
       setAvailableTimes([]);
       handleCancelReschedule();
-    } catch (error) {
-      if (error instanceof Error) {
-        message.error(
-          error.message ||
-            "Terjadi kesalahan saat menambahkan jadwal, silahkan hubungi admin"
-        );
-      }
+    } catch (error: any) {
+      message.error(
+        error?.message ||
+          "Terjadi kesalahan saat menambahkan jadwal, silahkan hubungi admin"
+      );
     } finally {
       setLoading(false);
     }
@@ -677,9 +663,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     setCurrentStep(1);
   };
 
-  const handleOpenModalEmergency = () => {
-    setIsModalVisibleEmergency(true);
-  };
+  const handleOpenModalEmergency = () => setIsModalVisibleEmergency(true);
 
   const handleCancelEmergency = () => {
     setIsModalVisibleEmergency(false);
@@ -688,14 +672,13 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     form.resetFields();
   };
 
-  const getBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
+  const getBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
     });
-  };
 
   const handleFileChange = async (info: any) => {
     if (info.file.status === "done") {
@@ -717,21 +700,15 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       return;
     }
 
-    let platform;
-    if (values.method === "OFFLINE") {
-      platform = null;
-    } else {
-      platform = "ZOOM";
-    }
+    const platform = values.method === "OFFLINE" ? null : "ZOOM";
 
-    // Buat payload sesuai skema `RescheduleMeeting`
     const payload = {
       teacher_id: selectedTeacher?.user_id,
       meeting_id: meetingId,
       date: selectedDate,
       method: values.method,
       time: values.time,
-      platform: platform,
+      platform,
       reason: values.reason,
       option_reason: values.option_reason,
       imageUrl: imageUrl,
@@ -766,7 +743,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       setAvailableTimes([]);
       setLoading(false);
       handleCancelEmergency();
-    } catch (error) {
+    } catch {
       notification.error({
         message: "Gagal Menambahkan Action",
         description:

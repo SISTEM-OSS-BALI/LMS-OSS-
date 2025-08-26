@@ -15,25 +15,32 @@ export async function GET(
   }
 
   try {
-    const getMaterialBase = await getData("material", {
-      where: {
-        base_id: base_id,
-      },
-      include: {
-        images: {
-          orderBy: { index: "asc" },
+    const getMaterialBase = await getData(
+      "material",
+      {
+        where: {
+          base_id: base_id,
         },
-        urls: {
-          orderBy: { index: "asc" },
+        include: {
+          images: {
+            orderBy: { index: "asc" },
+          },
+          urls: {
+            orderBy: { index: "asc" },
+          },
+          texts: {
+            orderBy: { index: "asc" },
+          },
+          pdf: {
+            orderBy: { index: "asc" },
+          },
         },
-        texts: {
-          orderBy: { index: "asc" },
+        orderBy: {
+          createdAt: "asc",
         },
       },
-      orderBy: {
-        createdAt: "asc",
-      },
-    }, "findFirst");
+      "findFirst"
+    );
 
     return NextResponse.json({
       status: 200,
