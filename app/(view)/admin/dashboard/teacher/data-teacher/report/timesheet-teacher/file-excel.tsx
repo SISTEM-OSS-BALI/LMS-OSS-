@@ -1,14 +1,16 @@
+// file-excel.ts
 import ExcelJS from "exceljs";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { Buffer } from "node:buffer"; // ⬅️ penting kalau dipakai di Node runtime
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-interface TimesheetTeacherItem {
+export interface TimesheetTeacherItem {
   meeting_id: string;
   method?: string | null;
   meetLink?: string | null;
@@ -28,8 +30,8 @@ interface TimesheetTeacherItem {
   status?: string | null;
   reminder_sent_at?: string | null;
   createdAt?: string | null;
-  student?: { username: string };
-  teacher?: { username: string };
+  student?: { username: string | null } | null;
+  teacher?: { username: string | null } | null;
 }
 
 export async function exportMeetingToExcel({
@@ -40,11 +42,11 @@ export async function exportMeetingToExcel({
   data: TimesheetTeacherItem[];
   columns: string[];
   dateRange: [string, string];
-}): Promise<ArrayBuffer> {
+}): Promise<Buffer> {
+  // ⬅️ ubah return type ke Buffer
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Laporan Meeting");
 
-  /** === Mapping kolom header === */
   const headerMap: Record<string, string> = {
     "student.username": "Nama Siswa",
     name_program: "Nama Program",
@@ -55,28 +57,22 @@ export async function exportMeetingToExcel({
     status: "Status",
     "teacher.username": "Pembuat",
   };
-
   worksheet.addRow(columns.map((col) => headerMap[col] || col));
 
-  /** === Helper umum === */
   const toUtc = (d?: string | null) => (d ? dayjs.utc(d) : null);
-
   const humanizeMs = (ms: number) => {
     const totalSeconds = Math.round(ms / 1000);
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
     const s = totalSeconds % 60;
     return `${h} jam ${m} menit ${s} detik`;
+    // optionally: return dayjs.duration(ms).format("H [jam] m [menit] s [detik]")
   };
-
-  /** Jadwal durasi */
   const scheduledMs = (r: TimesheetTeacherItem) => {
     const s = toUtc(r.startTime);
     const e = toUtc(r.endTime);
     return s && e ? e.diff(s) : null;
   };
-
-  /** Durasi aktual */
   const actualMs = (r: TimesheetTeacherItem) => {
     const s = toUtc(r.started_time);
     const e = toUtc(r.finished_time);
@@ -84,28 +80,20 @@ export async function exportMeetingToExcel({
     const diff = e.diff(s);
     return diff < 0 ? 0 : diff;
   };
-
-  /** Delta durasi (selisih aktual - jadwal) */
   const deltaMs = (r: TimesheetTeacherItem) => {
     const S = scheduledMs(r);
     const A = actualMs(r);
     return S != null && A != null ? A - S : null;
   };
-
-  /** Format waktu jadwal */
   const formatWaktu = (r: TimesheetTeacherItem) => {
     const s = toUtc(r.startTime);
     const e = toUtc(r.endTime);
     return s && e ? `${s.format("HH:mm")} - ${e.format("HH:mm")}` : "-";
   };
-
-  /** Format durasi */
   const formatDurasi = (r: TimesheetTeacherItem) => {
     const ms = actualMs(r);
     return ms != null ? humanizeMs(ms) : "-";
   };
-
-  /** Format selisih durasi (lateness) */
   const formatLateness = (r: TimesheetTeacherItem) => {
     const ms = deltaMs(r);
     if (ms == null) return "-";
@@ -114,7 +102,6 @@ export async function exportMeetingToExcel({
     return `${status} ${humanizeMs(Math.abs(ms))}`;
   };
 
-  /** === Filter data sesuai range tanggal === */
   const [start, end] = dateRange;
   const startDate = dayjs.utc(start);
   const endDate = dayjs.utc(end);
@@ -128,15 +115,14 @@ export async function exportMeetingToExcel({
     );
   });
 
-  /** === Isi baris Excel === */
   for (const item of filtered) {
     worksheet.addRow(
       columns.map((col) => {
         switch (col) {
           case "student.username":
-            return item.student?.username || "-";
+            return item.student?.username ?? "-";
           case "name_program":
-            return item.name_program || "-";
+            return item.name_program ?? "-";
           case "waktu":
             return formatWaktu(item);
           case "dateTime":
@@ -148,9 +134,9 @@ export async function exportMeetingToExcel({
           case "lateness":
             return formatLateness(item);
           case "status":
-            return item.status || "-";
+            return item.status ?? "-";
           case "teacher.username":
-            return item.teacher?.username || "-";
+            return item.teacher?.username ?? "-";
           default:
             return (item as any)[col] ?? "-";
         }
@@ -162,5 +148,7 @@ export async function exportMeetingToExcel({
     col.width = 20;
   });
 
-  return workbook.xlsx.writeBuffer();
+  // ⬅️ langsung kembalikan Buffer agar cocok dengan pengirim email
+  const arrayBuffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(arrayBuffer);
 }
