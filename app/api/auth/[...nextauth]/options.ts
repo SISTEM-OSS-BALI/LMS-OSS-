@@ -61,7 +61,6 @@ export const authOptions: NextAuthOptions = {
           role: user.role as Role,
           program_id: user.program_id,
           name_group: user.name_group,
-          imageUrl: user.imageUrl ?? null,
         } as any;
       },
     }),
