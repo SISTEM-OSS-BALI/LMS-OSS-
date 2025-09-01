@@ -110,6 +110,11 @@ export default function TimeSheetTableComponent() {
 
   const data = meetingData?.data || [];
 
+  const pickMs = (r: TimesheetTeacherItem) => {
+    // pakai actual jika ada, kalau tidak fallback ke scheduled, kalau tidak ada juga → 0
+    return actualMs(r) ?? scheduledMs(r) ?? 0;
+  };
+
   let totalDuration = dayjs.duration(0);
   const programSummary: Record<string, { count: number; duration: number }> =
     {};
@@ -117,21 +122,34 @@ export default function TimeSheetTableComponent() {
   const [allChecked, setAllChecked] = useState(false);
   const [formatType, setFormatType] = useState("Lengkap");
 
+  // data.forEach((item: TimesheetTeacherItem) => {
+  //   if (item.started_time && item.finished_time) {
+  //     const start = dayjs.utc(item.started_time);
+  //     const end = dayjs.utc(item.finished_time);
+  //     const durMs = end.diff(start);
+
+  //     totalDuration = totalDuration.add(durMs, "milliseconds");
+
+  //     if (item.name_program) {
+  //       if (!programSummary[item.name_program]) {
+  //         programSummary[item.name_program] = { count: 0, duration: 0 };
+  //       }
+  //       programSummary[item.name_program].count += 1;
+  //       programSummary[item.name_program].duration += durMs;
+  //     }
+  //   }
+  // });
+
   data.forEach((item: TimesheetTeacherItem) => {
-    if (item.started_time && item.finished_time) {
-      const start = dayjs.utc(item.started_time);
-      const end = dayjs.utc(item.finished_time);
-      const durMs = end.diff(start);
+    // total keseluruhan: kalau mau hanya actual, pakai actualMs(item) ?? 0
+    totalDuration = totalDuration.add(pickMs(item), "milliseconds");
 
-      totalDuration = totalDuration.add(durMs, "milliseconds");
-
-      if (item.name_program) {
-        if (!programSummary[item.name_program]) {
-          programSummary[item.name_program] = { count: 0, duration: 0 };
-        }
-        programSummary[item.name_program].count += 1;
-        programSummary[item.name_program].duration += durMs;
+    if (item.name_program) {
+      if (!programSummary[item.name_program]) {
+        programSummary[item.name_program] = { count: 0, duration: 0 };
       }
+      programSummary[item.name_program].count += 1; // selalu bertambah
+      programSummary[item.name_program].duration += pickMs(item); // durasi aman
     }
   });
 

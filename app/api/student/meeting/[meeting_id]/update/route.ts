@@ -177,7 +177,9 @@ export async function PUT(
     const formattedStudentPhone = formatPhoneNumber(
       existingMeeting.student.no_phone ?? ""
     );
-    const studentName = existingMeeting.student.username ? existingMeeting.student.username : existingMeeting.student.name_group;
+    const studentName = existingMeeting.student.username
+      ? existingMeeting.student.username
+      : existingMeeting.student.name_group;
     const teacherName = existingMeeting.teacher.username;
     const formattedDate = dayjs(dateTime).format("dddd, DD MMMM YYYY HH:mm");
 
@@ -199,7 +201,7 @@ export async function PUT(
         }\n🔗 *Link:* ${meetLink || "-"}\n\nHarap periksa jadwal terbaru.`,
       },
     ];
-let waError = false;
+    let waError = false;
 
     try {
       await Promise.all(
@@ -223,7 +225,10 @@ let waError = false;
       {
         status: 500,
         error: true,
-        message: "Terjadi kesalahan saat membuat jadwal.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat membuat jadwal",
       },
       { status: 500 }
     );

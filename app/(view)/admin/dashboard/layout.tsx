@@ -12,7 +12,7 @@ import {
   ScheduleFilled,
   TableOutlined,
   UserOutlined,
-  MenuOutlined, // <-- Import icon hamburger
+  MenuOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import {
