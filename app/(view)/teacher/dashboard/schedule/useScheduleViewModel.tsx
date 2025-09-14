@@ -3,7 +3,7 @@ import useSWR from "swr";
 import { useState } from "react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { Room, ShiftSchedule } from "@prisma/client";
+import {  ShiftSchedule } from "@prisma/client";
 
 dayjs.extend(utc);
 
@@ -45,6 +45,11 @@ interface ScheduleResponse {
 
 interface ShiftResponse {
   data: ShiftSchedule[];
+}
+
+interface Room {
+  room_id: string;
+  name: string;
 }
 
 interface RoomResponse {

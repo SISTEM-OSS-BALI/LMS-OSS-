@@ -1,6 +1,5 @@
 import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { Room } from "@prisma/client";
 import { Form, message, notification } from "antd";
 import { useState } from "react";
 import useSWR from "swr";
@@ -17,6 +16,11 @@ export type RoomFormValues = {
 export type RoomCreatePayload = {
   name: string;
 };
+
+interface Room {
+  room_id: string;
+  name: string;
+}
 
 interface RoomResponse {
   data: Room[];
