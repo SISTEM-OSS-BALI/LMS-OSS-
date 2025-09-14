@@ -100,7 +100,7 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
         end_date: endInc,
       },
       include: {
-        times: { include: { shift: true } }, // tampilkan daftar shift yang ada
+        times: { include: { shift: true, room: true } }, // tampilkan daftar shift + room yang ada
       },
     });
 
@@ -134,7 +134,7 @@ export async function PUT(req: NextRequest, ctx: { params: { id: string } }) {
     if (!id) return bad("Missing block id");
 
     const body = await req.json().catch(() => ({} as any));
-    const { start, endExclusive, shift_ids } = body || {};
+    const { start, endExclusive, shift_ids, room_id } = body || {};
 
     if (!isYmd(start)) return bad("start must be valid YYYY-MM-DD");
     if (!isYmd(endExclusive))
@@ -145,6 +145,9 @@ export async function PUT(req: NextRequest, ctx: { params: { id: string } }) {
       !shift_ids.every((x) => typeof x === "string")
     ) {
       return bad("shift_ids must be a non-empty array of string");
+    }
+    if (typeof room_id !== "string" || room_id.trim().length === 0) {
+      return bad("room_id is required");
     }
 
     const startInc = toUtcMidnight(start);
@@ -195,19 +198,77 @@ export async function PUT(req: NextRequest, ctx: { params: { id: string } }) {
       scheduleMonthId = sm.id;
     }
 
-    // Update block + replace semua relasi shift
-    const updated = await prisma.scheduleBlock.update({
-      where: { id },
-      data: {
-        schedule_month_id: scheduleMonthId,
-        start_date: startInc,
-        end_date: endInc,
-        times: {
-          deleteMany: {}, // hapus semua ScheduleBlockShift lama
-          create: shift_ids.map((sid: string) => ({ shift_id: sid })), // buat relasi baru
+    // Validasi referensi: room & shifts
+    const [room, shiftsCount] = await Promise.all([
+      prisma.room.findUnique({ where: { room_id } }),
+      prisma.shiftSchedule.count({ where: { id: { in: shift_ids } } }),
+    ]);
+    if (!room) return bad("Room not found");
+    if (shiftsCount !== shift_ids.length) {
+      return bad("One or more shift_ids do not exist");
+    }
+
+    // Cek konflik ketersediaan room untuk rentang & shifts baru (kecualikan block ini)
+    const conflicts = await prisma.scheduleBlockShift.findMany({
+      where: {
+        room_id,
+        shift_id: { in: shift_ids },
+        block: {
+          id: { not: id },
+          start_date: { lte: endInc },
+          end_date: { gte: startInc },
         },
       },
-      include: { times: { include: { shift: true } } },
+      select: {
+        id: true,
+        shift_id: true,
+        room_id: true,
+        block: {
+          select: { id: true, start_date: true, end_date: true, schedule_month_id: true },
+        },
+        shift: { select: { id: true, title: true, start_time: true, end_time: true } },
+        room: { select: { room_id: true, name: true } },
+      },
+    });
+    if (conflicts.length > 0) {
+      return NextResponse.json(
+        {
+          error: true,
+          message:
+            "Room is not available for one or more shifts in the requested date range",
+          details: { conflicts },
+        },
+        { status: 409 }
+      );
+    }
+
+    // Update block + replace semua relasi shift (gunakan transaksi untuk konsistensi)
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.scheduleBlock.update({
+        where: { id },
+        data: {
+          schedule_month_id: scheduleMonthId,
+          start_date: startInc,
+          end_date: endInc,
+        },
+      });
+
+      await tx.scheduleBlockShift.deleteMany({ where: { block_id: id } });
+      if (shift_ids.length > 0) {
+        await tx.scheduleBlockShift.createMany({
+          data: shift_ids.map((sid: string) => ({
+            block_id: id,
+            shift_id: sid,
+            room_id,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      return tx.scheduleBlock.findUnique({
+        where: { id },
+        include: { times: { include: { shift: true, room: true } } },
+      });
     });
 
     return ok(updated);
