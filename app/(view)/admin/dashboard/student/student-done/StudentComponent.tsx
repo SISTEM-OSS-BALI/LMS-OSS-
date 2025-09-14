@@ -327,7 +327,7 @@ export default function StudentComponent() {
             danger
             onClick={() => showConfirmDelete(student.user_id)}
           />
-          {/* {student.is_active === true ? (
+          {student.is_active === true ? (
             <Button
               icon={<PoweroffOutlined />}
               onClick={() => showConfirmFrezeAccount(student.user_id, false)}
@@ -346,21 +346,21 @@ export default function StudentComponent() {
             <Button onClick={() => openModal(student.user_id)}>
               Perbaharui Program
             </Button>
-          )} */}
+          )}
         </Space>
       ),
     },
-    // {
-    //   title: "Detail",
-    //   key: "detail",
-    //   render: (_: any, student: Student) =>
-    //     student.renew_program === true ? (
-    //       <Button
-    //         onClick={() => handleOpenModalDetail(student.user_id)}
-    //         icon={<InfoCircleFilled />}
-    //       />
-    //     ) : null,
-    // },
+    {
+      title: "Detail",
+      key: "detail",
+      render: (_: any, student: Student) =>
+        student.renew_program === true ? (
+          <Button
+            onClick={() => handleOpenModalDetail(student.user_id)}
+            icon={<InfoCircleFilled />}
+          />
+        ) : null,
+    },
   ];
 
   return (

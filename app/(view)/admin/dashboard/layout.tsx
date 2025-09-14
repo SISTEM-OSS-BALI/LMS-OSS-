@@ -13,6 +13,7 @@ import {
   TableOutlined,
   UserOutlined,
   MenuOutlined,
+  HomeOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import {
@@ -36,6 +37,7 @@ import { crudService } from "@/app/lib/services/crudServices";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/lib/auth/authServices";
 import { signOut } from "next-auth/react";
+import { getToken } from "next-auth/jwt";
 
 const { Content, Footer, Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -78,6 +80,7 @@ const menuMap: { [key: string]: string } = {
   "/admin/dashboard/student/student-done":
     "/admin/dashboard/student/student-done",
   "/admin/dashboard/teacher/data-shift": "/admin/dashboard/teacher/data-shift",
+  "/admin/dashboard/teacher/room": "/admin/dashboard/teacher/room",
 };
 
 const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
@@ -231,6 +234,11 @@ const DashboardStudent: React.FC<{ children: React.ReactNode }> = ({
         <Link href="/admin/dashboard/teacher/data-shift">Data Shift</Link>,
         "/admin/dashboard/teacher/data-shift",
         <FileTextOutlined />
+      ),
+      getItem(
+        <Link href="/admin/dashboard/teacher/room">Ruang Kelas</Link>,
+        "/admin/dashboard/teacher/room",
+        <HomeOutlined />
       ),
       getItem(
         <Link href="/admin/dashboard/teacher/calendar">Kalender</Link>,

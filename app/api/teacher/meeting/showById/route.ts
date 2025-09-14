@@ -22,6 +22,9 @@ export async function GET(request: NextRequest) {
           },
         },
       },
+      orderBy: {
+        dateTime: "asc",
+      },
     });
 
     return NextResponse.json({

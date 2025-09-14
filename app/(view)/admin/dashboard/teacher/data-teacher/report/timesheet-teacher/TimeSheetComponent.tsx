@@ -2,8 +2,6 @@ import {
   Table,
   Tag,
   Button,
-  Space,
-  Tooltip,
   Card,
   Divider,
   Flex,
@@ -17,17 +15,12 @@ import {
   Col,
   Checkbox,
 } from "antd";
-import {
-  EditOutlined,
-  DeleteOutlined,
-  RollbackOutlined,
-  DownloadOutlined,
-} from "@ant-design/icons";
+import { DownloadOutlined } from "@ant-design/icons";
 import useTimeSheetTeacherViewModel from "./useTimeSheetTeacherViewModel";
 import { MethodType } from "@/app/model/enums";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import duration from "dayjs/plugin/duration";
+import duration, { Duration } from "dayjs/plugin/duration";
 import Title from "antd/es/typography/Title";
 import { useState } from "react";
 dayjs.extend(utc);
@@ -52,23 +45,20 @@ interface TimesheetTeacherItem {
   endTime?: string | null;
   name_program?: string | null;
   is_cancelled?: boolean | null;
-  status?: string | null;
+  status?: string | null; // "PENDING" | "PROGRES" | "FINISHED" | "CANCEL"
   reminder_sent_at?: string | null;
   createdAt?: string | null;
-  student?: {
-    username: string;
-  };
-  teacher?: {
-    username: string;
-  };
+  student?: { username: string };
+  teacher?: { username: string };
 }
 
-function formatDuration(dur: any) {
+function formatDuration(dur: Duration) {
   const hours = Math.floor(dur.asHours());
   const minutes = dur.minutes();
   const seconds = dur.seconds();
   return `${hours} jam ${minutes} menit ${seconds} detik`;
 }
+
 const MONTH_NAMES = [
   "Januari",
   "Februari",
@@ -108,51 +98,89 @@ export default function TimeSheetTableComponent() {
     handleFinish,
   } = useTimeSheetTeacherViewModel();
 
-  const data = meetingData?.data || [];
+  const data = (meetingData?.data || []) as TimesheetTeacherItem[];
 
-  const pickMs = (r: TimesheetTeacherItem) => {
-    // pakai actual jika ada, kalau tidak fallback ke scheduled, kalau tidak ada juga → 0
-    return actualMs(r) ?? scheduledMs(r) ?? 0;
+  // Helpers
+  const humanizeMs = (ms: number) => {
+    const totalSeconds = Math.round(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours} jam ${minutes} menit ${seconds} detik`;
   };
 
+  const toUtc = (d?: string | null) => (d ? dayjs.utc(d) : null);
+
+  const scheduledMs = (r: TimesheetTeacherItem) => {
+    const s = toUtc(r.startTime);
+    const e = toUtc(r.endTime);
+    if (!s || !e) return null;
+    return e.diff(s);
+  };
+
+  const actualMs = (r: TimesheetTeacherItem) => {
+    const s = toUtc(r.started_time);
+    const e = toUtc(r.finished_time);
+    if (!s || !e) return null;
+    const ms = e.diff(s);
+    return ms < 0 ? 0 : ms;
+  };
+
+  const deltaMs = (r: TimesheetTeacherItem) => {
+    const S = scheduledMs(r);
+    const A = actualMs(r);
+    if (S == null || A == null) return null;
+    return A - S;
+  };
+
+  // ====== AGREGASI ======
+  // Hanya FINISHED untuk durasi & total durasi
+  const finishedRows = data.filter((r) => r.status === "FINISHED");
+
   let totalDuration = dayjs.duration(0);
-  const programSummary: Record<string, { count: number; duration: number }> =
-    {};
 
-  const [allChecked, setAllChecked] = useState(false);
-  const [formatType, setFormatType] = useState("Lengkap");
+  // Program stats: tampilkan FINISHED (count & duration) + CANCEL (count)
+  type ProgramStats = {
+    finishedCount: number;
+    finishedDuration: number;
+    cancelCount: number;
+  };
+  const programStats: Record<string, ProgramStats> = {};
 
-  // data.forEach((item: TimesheetTeacherItem) => {
-  //   if (item.started_time && item.finished_time) {
-  //     const start = dayjs.utc(item.started_time);
-  //     const end = dayjs.utc(item.finished_time);
-  //     const durMs = end.diff(start);
-
-  //     totalDuration = totalDuration.add(durMs, "milliseconds");
-
-  //     if (item.name_program) {
-  //       if (!programSummary[item.name_program]) {
-  //         programSummary[item.name_program] = { count: 0, duration: 0 };
-  //       }
-  //       programSummary[item.name_program].count += 1;
-  //       programSummary[item.name_program].duration += durMs;
-  //     }
-  //   }
-  // });
-
-  data.forEach((item: TimesheetTeacherItem) => {
-    // total keseluruhan: kalau mau hanya actual, pakai actualMs(item) ?? 0
-    totalDuration = totalDuration.add(pickMs(item), "milliseconds");
-
-    if (item.name_program) {
-      if (!programSummary[item.name_program]) {
-        programSummary[item.name_program] = { count: 0, duration: 0 };
+  // Kumpulkan FINISHED
+  finishedRows.forEach((item) => {
+    const ms = actualMs(item);
+    if (ms != null) {
+      totalDuration = totalDuration.add(ms, "milliseconds");
+      const key = item.name_program ?? "Tidak ada program";
+      if (!programStats[key]) {
+        programStats[key] = {
+          finishedCount: 0,
+          finishedDuration: 0,
+          cancelCount: 0,
+        };
       }
-      programSummary[item.name_program].count += 1; // selalu bertambah
-      programSummary[item.name_program].duration += pickMs(item); // durasi aman
+      programStats[key].finishedCount += 1;
+      programStats[key].finishedDuration += ms;
     }
   });
 
+  // Kumpulkan CANCEL (hanya menambah count; durasi tidak dihitung)
+  const cancelRows = data.filter((r) => r.status === "CANCEL");
+  cancelRows.forEach((item) => {
+    const key = item.name_program ?? "Tidak ada program";
+    if (!programStats[key]) {
+      programStats[key] = {
+        finishedCount: 0,
+        finishedDuration: 0,
+        cancelCount: 0,
+      };
+    }
+    programStats[key].cancelCount += 1;
+  });
+  // =======================
+
+  // Range default
   const monthNum = Number(month ?? "1");
   const yearNum = Number(year ?? new Date().getFullYear());
   const startDate = dayjs(
@@ -161,43 +189,22 @@ export default function TimeSheetTableComponent() {
   const endDate = startDate.endOf("month");
   const defaultRange = [startDate, endDate];
 
-  function humanizeMs(ms: number) {
-    const totalSeconds = Math.round(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${hours} jam ${minutes} menit ${seconds} detik`;
-  }
-
-  function toUtc(d?: string | null) {
-    return d ? dayjs.utc(d) : null;
-  }
-
-  function scheduledMs(r: TimesheetTeacherItem) {
-    const s = toUtc(r.startTime);
-    const e = toUtc(r.endTime);
-    if (!s || !e) return null;
-    let ms = e.diff(s);
-    return ms;
-  }
-
-  function actualMs(r: TimesheetTeacherItem) {
-    const s = toUtc(r.started_time);
-    const e = toUtc(r.finished_time);
-    if (!s || !e) return null;
-    const ms = e.diff(s);
-    return ms < 0 ? 0 : ms;
-  }
-
-  function deltaMs(r: TimesheetTeacherItem) {
-    const S = scheduledMs(r);
-    const A = actualMs(r);
-    if (S == null || A == null) return null;
-    return A - S;
-  }
-
+  const [allChecked, setAllChecked] = useState(false);
+  const [formatType, setFormatType] = useState("Lengkap");
   const onColumnsChange = (checkedValues: string[]) => {
     setAllChecked(checkedValues.length === MEETING_COLUMNS.length);
+  };
+
+  const safeTimeRange = (r: TimesheetTeacherItem) => {
+    const s = toUtc(r.startTime);
+    const e = toUtc(r.endTime);
+    if (!s || !e || !s.isValid() || !e.isValid()) return "-";
+    return `${s.format("HH:mm")} - ${e.format("HH:mm")}`;
+  };
+
+  const safeDate = (r: TimesheetTeacherItem) => {
+    const d = toUtc(r.dateTime);
+    return d && d.isValid() ? d.format("YYYY-MM-DD") : "-";
   };
 
   const columns = [
@@ -209,7 +216,6 @@ export default function TimeSheetTableComponent() {
     },
     {
       title: "Nama Program",
-      dataIndex: "program,name",
       key: "program_name",
       render: (_: any, record: TimesheetTeacherItem) =>
         record.name_program || "-",
@@ -217,31 +223,29 @@ export default function TimeSheetTableComponent() {
     {
       title: "Waktu",
       key: "time",
-      render: (record: TimesheetTeacherItem) =>
-        `${dayjs.utc(record.startTime).format("HH:mm")} - ${dayjs
-          .utc(record.endTime)
-          .format("HH:mm")}`,
+      render: (record: TimesheetTeacherItem) => safeTimeRange(record),
     },
     {
       title: "Tanggal",
       key: "dateTime",
-      dataIndex: "dateTime",
-      render: (_: any, record: TimesheetTeacherItem) =>
-        dayjs.utc(record.dateTime).format("YYYY-MM-DD"),
+      render: (_: any, record: TimesheetTeacherItem) => safeDate(record),
     },
     {
       title: "Durasi",
       key: "duration",
       render: (_: any, r: TimesheetTeacherItem) => {
+        // Hanya untuk FINISHED (pakai actual). Selain itu: "-"
+        if (r.status !== "FINISHED") return "-";
         const ms = actualMs(r);
-        if (ms == null) return "-";
-        return humanizeMs(ms);
+        return ms == null ? "-" : humanizeMs(ms);
       },
     },
     {
       title: "Selisih Durasi",
       key: "lateness",
       render: (_: any, r: TimesheetTeacherItem) => {
+        // Selisih hanya relevan jika ada actual (FINISHED)
+        if (r.status !== "FINISHED") return "-";
         const d = deltaMs(r);
         if (d == null) return "-";
         const sign = d >= 0 ? "+" : "-";
@@ -253,14 +257,12 @@ export default function TimeSheetTableComponent() {
         );
       },
     },
-
     {
       title: "Status",
-      dataIndex: "status",
       key: "status",
       render: (_: any, record: TimesheetTeacherItem) => {
-        let color = "default";
-        let text = "";
+        let color: any = "default";
+        let text = "Belum Dimulai";
 
         switch (record.status) {
           case "PROGRES":
@@ -275,9 +277,9 @@ export default function TimeSheetTableComponent() {
             color = "green";
             text = "Selesai";
             break;
-          default:
-            color = "default";
-            text = "Belum Dimulai";
+          case "CANCEL":
+            color = "red";
+            text = "Absent";
             break;
         }
 
@@ -290,7 +292,6 @@ export default function TimeSheetTableComponent() {
     },
     {
       title: "Pembuat",
-      dataIndex: "teacher",
       key: "teacher",
       render: (_: any, record: TimesheetTeacherItem) =>
         record.teacher?.username
@@ -300,19 +301,8 @@ export default function TimeSheetTableComponent() {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "32px 0",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1500,
-          margin: "0 auto",
-          padding: "0 20px",
-        }}
-      >
+    <div style={{ minHeight: "100vh", padding: "32px 0" }}>
+      <div style={{ maxWidth: 1500, margin: "0 auto", padding: "0 20px" }}>
         <div
           style={{
             marginBottom: 24,
@@ -323,7 +313,6 @@ export default function TimeSheetTableComponent() {
             width: "100%",
           }}
         >
-          {/* Line 1: Judul dan tombol sejajar */}
           <Flex
             justify="space-between"
             align="center"
@@ -345,12 +334,12 @@ export default function TimeSheetTableComponent() {
             <Button
               type="primary"
               icon={<DownloadOutlined />}
-              onClick={() => modalOpen()}
+              onClick={modalOpen}
             >
               Download
             </Button>
           </Flex>
-          {/* Line 2: Subjudul, full kiri */}
+
           <div style={{ marginTop: 4 }}>
             <Title
               level={5}
@@ -367,6 +356,7 @@ export default function TimeSheetTableComponent() {
             </Title>
           </div>
         </div>
+
         <Card
           style={{
             borderRadius: 16,
@@ -385,7 +375,7 @@ export default function TimeSheetTableComponent() {
               fontSize: 16,
             }}
           >
-            {/* Card Total Durasi */}
+            {/* Total Durasi: hanya FINISHED (actual) */}
             <div
               style={{
                 flex: "1 1 260px",
@@ -411,18 +401,12 @@ export default function TimeSheetTableComponent() {
               >
                 Total Durasi
               </div>
-              <div
-                style={{
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: "#1f2937",
-                }}
-              >
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#1f2937" }}>
                 {formatDuration(totalDuration)}
               </div>
             </div>
 
-            {/* Card Jumlah Program */}
+            {/* Jumlah Program: FINISHED (count+durasi) + CANCEL (count) */}
             <div
               style={{
                 flex: "2 1 320px",
@@ -446,8 +430,11 @@ export default function TimeSheetTableComponent() {
                 Jumlah Program
               </div>
               <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
-                {Object.entries(programSummary).map(
-                  ([program, { count, duration }]) => (
+                {Object.entries(programStats).map(
+                  ([
+                    program,
+                    { finishedCount, finishedDuration, cancelCount },
+                  ]) => (
                     <li
                       key={program}
                       style={{
@@ -465,15 +452,24 @@ export default function TimeSheetTableComponent() {
                         <span
                           style={{
                             fontWeight: 700,
-                            color: "#3b82f6",
+                            color: "#16a34a",
                             marginRight: 8,
                           }}
+                          title="Jumlah pertemuan selesai"
                         >
-                          {count} kali
+                          {finishedCount} kali
                         </span>
-                        <span style={{ color: "#6b7280" }}>
-                          – total {humanizeMs(duration)}
+                        <span style={{ color: "#6b7280", marginRight: 8 }}>
+                          – total {humanizeMs(finishedDuration)}
                         </span>
+                        {cancelCount > 0 && (
+                          <span
+                            style={{ color: "#ef4444", fontWeight: 600 }}
+                            title="Jumlah pertemuan cancel/absent"
+                          >
+                            (+ {cancelCount} absent)
+                          </span>
+                        )}
                       </span>
                     </li>
                   )
@@ -481,13 +477,13 @@ export default function TimeSheetTableComponent() {
               </ul>
             </div>
           </div>
+
           <Divider style={{ margin: "32px 0 24px 0" }} />
+
+          {/* Tabel: semua baris; Durasi hanya untuk FINISHED */}
           <Table<TimesheetTeacherItem>
             columns={columns}
-            dataSource={data.map((item: TimesheetTeacherItem, idx: number) => ({
-              ...item,
-              key: idx,
-            }))}
+            dataSource={data.map((item, idx) => ({ ...item, key: idx }))}
             pagination={{
               pageSize: 10,
               showSizeChanger: true,
@@ -506,10 +502,10 @@ export default function TimeSheetTableComponent() {
               overflow: "hidden",
             }}
           />
-
-          {/* Professional Summary Section */}
         </Card>
       </div>
+
+      {/* Modal Export */}
       <Modal
         open={isOpen}
         onCancel={modalClose}
@@ -535,19 +531,18 @@ export default function TimeSheetTableComponent() {
               defaultPickerValue={[defaultRange[0], defaultRange[1]]}
             />
           </Form.Item>
+
           <Form.Item
             name="email"
             label="Kirimkan File ke Email"
             rules={[
               { required: true, message: "Email wajib diisi!" },
-              {
-                type: "email",
-                message: "Format email tidak valid!",
-              },
+              { type: "email", message: "Format email tidak valid!" },
             ]}
           >
             <Input placeholder="Email" autoComplete="off" allowClear />
           </Form.Item>
+
           <Form.Item
             name="format"
             label="Pilih Format Laporan"
@@ -581,7 +576,9 @@ export default function TimeSheetTableComponent() {
             >
               <Checkbox.Group
                 style={{ width: "100%" }}
-                onChange={onColumnsChange}
+                onChange={(vals) =>
+                  setAllChecked(vals.length === MEETING_COLUMNS.length)
+                }
               >
                 <div style={{ marginBottom: 8 }}>
                   <Checkbox
@@ -620,6 +617,7 @@ export default function TimeSheetTableComponent() {
               </Checkbox.Group>
             </Form.Item>
           )}
+
           <Alert
             type="info"
             style={{
@@ -638,6 +636,7 @@ export default function TimeSheetTableComponent() {
               </>
             }
           />
+
           <Form.Item style={{ marginTop: 24, textAlign: "right" }}>
             <Button onClick={modalClose} style={{ marginRight: 12 }}>
               Batal

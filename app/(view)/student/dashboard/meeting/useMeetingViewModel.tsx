@@ -228,7 +228,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     return out;
   };
 
-  /** Materialisasi rentang waktu UTC penuh pada tanggal tertentu dari jam "HH:mm" */
   const materializeRangesForDate = (
     selectedDateISO: string,
     daily: { start: string; end: string }[]
@@ -241,8 +240,6 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     });
   };
 
-  /** Generator slot berdasarkan shift_id */
-  // 1) ganti tipe meetings param
   const generateAvailableSlotsFromShifts = (
     dayScheduleTimes: Array<{ shift_id: string }>,
     meetings: Array<{ dateTime: string | Date; duration?: number }>, // <- string | Date

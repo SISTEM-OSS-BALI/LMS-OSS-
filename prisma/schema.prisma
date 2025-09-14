@@ -230,6 +230,8 @@ model ScheduleBlockShift {
   block_id String
 
   shift    ShiftSchedule @relation(fields: [shift_id], references: [id], onDelete: Cascade)
+  room     Room          @relation(fields: [room_id], references: [room_id])
+  room_id  String
   shift_id String
 
   createdAt DateTime @default(now())
@@ -440,6 +442,12 @@ model AssignmentProgress {
   assignment_id String
 
   @@unique([user_id, base_id])
+}
+
+model Room {
+  room_id            String               @id @default(uuid())
+  name               String
+  ScheduleBlockShift ScheduleBlockShift[]
 }
 
 model Assignment {

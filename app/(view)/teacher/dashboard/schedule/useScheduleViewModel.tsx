@@ -1,13 +1,9 @@
-import { crudService } from "@/app/lib/services/crudServices";
 import { fetcher } from "@/app/lib/utils/fetcher";
-import { Form, Modal, notification } from "antd";
-import { useState } from "react";
 import useSWR from "swr";
-import { EventInput } from "@fullcalendar/core";
-import dayjs, { Dayjs } from "dayjs";
+import { useState } from "react";
+import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import Cookies from "js-cookie";
-import { ShiftSchedule } from "@prisma/client";
+import { Room, ShiftSchedule } from "@prisma/client";
 
 dayjs.extend(utc);
 
@@ -51,6 +47,10 @@ interface ShiftResponse {
   data: ShiftSchedule[];
 }
 
+interface RoomResponse {
+  data: Room[];
+}
+
 export const useScheduleViewModel = () => {
   const {
     data: scheduleTeacher,
@@ -58,15 +58,20 @@ export const useScheduleViewModel = () => {
     mutate: mutateSchedule,
   } = useSWR<ScheduleTeacherResponse>("/api/teacher/schedule/detail", fetcher);
 
-  const { data: shiftData, } = useSWR<ShiftResponse>(
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+
+  const { data: shiftData } = useSWR<ShiftResponse>(
     "/api/admin/shift",
     fetcher
   );
+
 
   return {
     scheduleTeacher,
     isLoadingSchedule,
     mutateSchedule,
     shiftData,
+    selectedDate,
+    setSelectedDate,
   };
 };

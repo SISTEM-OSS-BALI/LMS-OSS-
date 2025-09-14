@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
               orderBy: { start_date: "asc" },
               include: {
                 times: {
-                  include: { shift: true },
+                  include: { shift: true, room: true },
                 }, // <<< WAJIB supaya jam ikut terkirim
               },
             },

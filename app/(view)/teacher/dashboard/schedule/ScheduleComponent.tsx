@@ -29,7 +29,8 @@ import { useScheduleViewModel } from "./useScheduleViewModel";
 dayjs.extend(utc);
 
 /* ============== Types ============== */
-type DailyTime = { start: string; end: string }; // "HH:mm"
+type DailyTime = { start: string; end: string };
+
 type FCEvent = {
   id: string;
   start: string; // YYYY-MM-DD (allDay)
@@ -38,24 +39,24 @@ type FCEvent = {
   color?: string;
   extendedProps?: {
     dailyTimes?: DailyTime[];
-    shiftIds?: string[]; // simpan agar duplikasi/edit akurat tanpa tebak jam
+    shiftIds?: string[];
+    room_id?: string;
+    room_name?: string;
   };
 };
 
-// GANTI tipe ini
 type ApiBlock = {
   id: string;
   color?: string | null;
   start_date: string; // ISO 00:00Z
-  end_date: string;   // ISO 00:00Z
-  // times bisa datang dalam 2 bentuk:
-  // - legacy: { start_time, end_time }
-  // - baru:   { shift_id, shift: { id, start_time, end_time } }
+  end_date: string; // ISO 00:00Z
   times?: Array<{
     start_time?: string;
     end_time?: string;
     shift_id?: string;
     shift?: { id?: string; start_time: string; end_time: string };
+    room_id?: string;
+    room?: { room_id?: string; name?: string };
   }>;
 };
 
@@ -66,7 +67,8 @@ type SaveBlockPayload = {
     color?: string | null;
     start_date: string; // UTC midnight ISO
     end_date: string; // UTC midnight ISO
-    shift_ids: string[]; // referensi shift
+    shift_ids: string[];
+    room_id: string;
   };
 };
 
@@ -85,13 +87,12 @@ const palette = [
 ];
 const randomColor = () => palette[Math.floor(Math.random() * palette.length)];
 
-const timeFormat = "HH:mm";
+const HHmm = "HH:mm";
+const fmtUtc = (iso?: string) => (iso ? dayjs.utc(iso).format(HHmm) : "-");
+
 const ymd = (d: string | Dayjs | Date) => dayjs(d).format("YYYY-MM-DD");
 const addDaysYMD = (d: string | Dayjs | Date, n: number) =>
   dayjs(d).add(n, "day").format("YYYY-MM-DD");
-
-const fmtUtc = (iso?: string) =>
-  iso ? dayjs.utc(iso).format(timeFormat) : "-";
 
 /** ISO string UTC midnight dari tanggal lokal */
 const toUtcMidnight = (d: Dayjs | Date) => {
@@ -103,7 +104,6 @@ const toUtcMidnight = (d: Dayjs | Date) => {
 
 /* ============== API create ============== */
 async function saveScheduleBlock(payload: SaveBlockPayload) {
-  // konsisten dengan API baru
   const res = await crudService.post("/api/teacher/schedule/create", payload);
   if (!res || !res.data?.block?.id) throw new Error("Gagal menyimpan jadwal");
   return res.data.block.id as string;
@@ -112,10 +112,32 @@ async function saveScheduleBlock(payload: SaveBlockPayload) {
 export default function Schedule() {
   const { scheduleTeacher, isLoadingSchedule, shiftData } =
     useScheduleViewModel();
+
   const [events, setEvents] = useState<FCEvent[]>([]);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  /* ============== Data dari VM ============== */
+  // rooms by date range
+  const [availableRooms, setAvailableRooms] = useState<any[]>([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
+  // modal state & forms
+  const [open, setOpen] = useState(false);
+  const [modalMonthOpen, setModalMonthOpen] = useState(false);
+
+  const [form] = Form.useForm<{
+    range: [Dayjs, Dayjs];
+    shifts: { shift_id: string }[];
+    room_id: string;
+  }>();
+  const [formMonth] = Form.useForm<{
+    sourceMonth: Dayjs;
+    targetMonth: Dayjs;
+  }>();
+
+  // range watcher (ambil start & end langsung dari form)
+  const watchedRange = Form.useWatch("range", form);
+
+  // data blocks dari VM
   const apiBlocks: ApiBlock[] = useMemo(() => {
     const months = scheduleTeacher?.data?.ScheduleMonth;
     if (!Array.isArray(months)) return [];
@@ -154,9 +176,9 @@ export default function Schedule() {
         const key = `${t.start}|${t.end}`;
         const pool = shiftIndex.get(key);
         if (pool?.length) {
-          out.push(pool[0]); // jika perlu, bisa round-robin
+          out.push(pool[0]);
         } else {
-          console.warn("[duplicate] Tidak menemukan shift untuk", key);
+          console.warn("[resolve] Tidak menemukan shift untuk", key);
         }
       }
       return out;
@@ -164,33 +186,38 @@ export default function Schedule() {
     [shiftIndex]
   );
 
-  // GANTI fungsi ini agar kalau API kirim shift_id langsung, kita pakai itu
-const resolveShiftIdsFromIsoTimes = useCallback(
-  (times: Array<{ start_time?: string; end_time?: string; shift_id?: string; shift?: { id?: string; start_time: string; end_time: string } }>): string[] => {
-    // Prioritas: jika sudah ada shift_id di setiap item, pakai itu
-    const direct = times.map((t) => t.shift_id ?? t.shift?.id).filter(Boolean) as string[];
-    if (direct.length) return direct;
+  const resolveShiftIdsFromIsoTimes = useCallback(
+    (
+      times: Array<{
+        start_time?: string;
+        end_time?: string;
+        shift_id?: string;
+        shift?: { id?: string; start_time: string; end_time: string };
+      }>
+    ): string[] => {
+      const direct = times
+        .map((t) => t.shift_id ?? t.shift?.id)
+        .filter(Boolean) as string[];
+      if (direct.length) return direct;
 
-    // Fallback: cocokkan dari jam
-    const dailyLike = times
-      .map((t) => {
-        const st = t.start_time ?? t.shift?.start_time;
-        const en = t.end_time ?? t.shift?.end_time;
-        if (!st || !en) return null;
-        return {
-          start: dayjs.utc(st).format("HH:mm"),
-          end: dayjs.utc(en).format("HH:mm"),
-        };
-      })
-      .filter(Boolean) as DailyTime[];
+      const dailyLike = times
+        .map((t) => {
+          const st = t.start_time ?? t.shift?.start_time;
+          const en = t.end_time ?? t.shift?.end_time;
+          if (!st || !en) return null;
+          return {
+            start: dayjs.utc(st).format(HHmm),
+            end: dayjs.utc(en).format(HHmm),
+          };
+        })
+        .filter(Boolean) as DailyTime[];
 
-    return resolveShiftIdsFromDailyTimes(dailyLike);
-  },
-  [resolveShiftIdsFromDailyTimes]
-);
+      return resolveShiftIdsFromDailyTimes(dailyLike);
+    },
+    [resolveShiftIdsFromDailyTimes]
+  );
 
   /* ============== Render event dari API ============== */
-  // GANTI seluruh useMemo mappedEvents dengan versi ini
   const mappedEvents = useMemo<FCEvent[]>(() => {
     return apiBlocks.map((b) => {
       const startYMD = dayjs.utc(b.start_date).format("YYYY-MM-DD");
@@ -201,12 +228,20 @@ const resolveShiftIdsFromIsoTimes = useCallback(
 
       const src = Array.isArray(b.times) ? b.times : [];
 
-      // Ambil shiftIds langsung dari API jika tersedia
       const shiftIdsFromApi = src
         .map((t) => t.shift_id ?? t.shift?.id)
         .filter(Boolean) as string[];
 
-      // Bentuk jam harian dari shift/legacy times
+      // ⬇️ AMBIL ROOM ID & NAME dari times[0] (atau item pertama yang punya room)
+      const firstWithRoom =
+        src.find((t: any) => t?.room_id || t?.room?.room_id) || null;
+      const roomIdFromApi: string | undefined =
+        (firstWithRoom?.room_id as string | undefined) ??
+        (firstWithRoom?.room?.room_id as string | undefined);
+      const roomNameFromApi: string | undefined = firstWithRoom?.room?.name as
+        | string
+        | undefined;
+
       const dailyTimes: DailyTime[] = src
         .map((t) => {
           const st = t.start_time ?? t.shift?.start_time;
@@ -225,10 +260,11 @@ const resolveShiftIdsFromIsoTimes = useCallback(
         end: endExclusiveYMD,
         allDay: true,
         color: b.color ?? randomColor(),
-        // simpan shiftIds agar edit/duplicate akurat tanpa tebak jam
         extendedProps: {
           dailyTimes,
           shiftIds: shiftIdsFromApi.length ? shiftIdsFromApi : undefined,
+          room_id: roomIdFromApi, // ⬅️ simpan
+          room_name: roomNameFromApi, // ⬅️ simpan
         },
       };
     });
@@ -236,39 +272,65 @@ const resolveShiftIdsFromIsoTimes = useCallback(
 
   useEffect(() => setEvents(mappedEvents), [mappedEvents]);
 
+  const fetchRoomAvailableRange = useCallback(
+    async (start: Dayjs, end: Dayjs) => {
+      try {
+        setLoadingRooms(true);
+        const res = await crudService.get(
+          `/api/teacher/room/find-available-room?start=${start.format(
+            "YYYY-MM-DD"
+          )}&end=${end.format("YYYY-MM-DD")}`
+        );
+        setAvailableRooms(res?.data || []); // [{ room_id, name }]
+      } catch (err) {
+        message.error("Gagal mengambil room available");
+        console.error(err);
+      } finally {
+        setLoadingRooms(false);
+      }
+    },
+    []
+  );
+
+  // Trigger fetch ketika user memilih range di form
+  useEffect(() => {
+    const start = watchedRange?.[0];
+    const end = watchedRange?.[1];
+    if (start && end) {
+      fetchRoomAvailableRange(start, end);
+    } else {
+      setAvailableRooms([]); // kosongkan jika belum ada range
+    }
+  }, [watchedRange, fetchRoomAvailableRange]);
+
   /* ============== Modal Create/Edit ============== */
-  const [open, setOpen] = useState(false);
-  const [form] = Form.useForm<{
-    range: [Dayjs, Dayjs];
-    shifts: { shift_id: string }[];
-  }>();
-  const [prefillRange, setPrefillRange] = useState<[Dayjs, Dayjs] | null>(null);
-  const [modalMonthOpen, setModalMonthOpen] = useState(false);
-  const [formMonth] = Form.useForm<{
-    sourceMonth: Dayjs;
-    targetMonth: Dayjs;
-  }>();
   const [editData, setEditData] = useState<{
     id: string;
     range: [Dayjs, Dayjs];
   } | null>(null);
 
   const openCreate = useCallback(() => {
-    setPrefillRange(null);
+    setEditData(null);
     form.resetFields();
-    form.setFieldsValue({ shifts: [{ shift_id: undefined as any }] });
+    form.setFieldsValue({
+      shifts: [{ shift_id: undefined as any }],
+      room_id: undefined as any,
+      range: undefined,
+    });
     setOpen(true);
   }, [form]);
 
   const handleSelect = useCallback(
     (info: { start: Date; end: Date }) => {
+      // FC end exclusive -> form inclusive
       const s = dayjs(info.start);
-      const e = dayjs(info.end).subtract(1, "day"); // FC end exclusive → form inclusive
-      setPrefillRange([s, e]);
+      const e = dayjs(info.end).subtract(1, "day");
+      setEditData(null);
       form.resetFields();
       form.setFieldsValue({
         range: [s, e],
         shifts: [{ shift_id: undefined as any }],
+        room_id: undefined as any,
       });
       setOpen(true);
     },
@@ -279,14 +341,20 @@ const resolveShiftIdsFromIsoTimes = useCallback(
   const eventContent = (arg: any) => {
     const e = arg.event;
     const times = (e.extendedProps?.dailyTimes || []) as DailyTime[];
-    const full = times.map((t) => `${t.start}–${t.end}`).join(" • ");
+    const roomName: string | undefined = e.extendedProps?.room_name;
+
+    const fullTimes = times.map((t) => `${t.start}–${t.end}`).join(" • ");
     const MAX = 3;
     const shown = times.slice(0, MAX).map((t) => `${t.start}–${t.end}`);
     const more = Math.max(0, times.length - MAX);
     const bg = e.backgroundColor || e.extendedProps?.color || "#2a2b2f";
 
+    const tooltipText = [fullTimes, roomName ? `Room: ${roomName}` : null]
+      .filter(Boolean)
+      .join(" • ");
+
     return (
-      <Tooltip title={full} mouseEnterDelay={0.15}>
+      <Tooltip title={tooltipText} mouseEnterDelay={0.15}>
         <div
           className="ev-pill"
           style={{ ["--ev-bg" as any]: bg } as React.CSSProperties}
@@ -306,6 +374,7 @@ const resolveShiftIdsFromIsoTimes = useCallback(
     async (values: {
       range: [Dayjs, Dayjs];
       shifts: { shift_id: string }[];
+      room_id: string;
     }) => {
       const [s, e] = values.range || [];
       if (!s || !e) {
@@ -320,14 +389,19 @@ const resolveShiftIdsFromIsoTimes = useCallback(
         message.warning("Minimal pilih satu shift.");
         return;
       }
+      if (!values.room_id) {
+        message.warning("Pilih room terlebih dahulu.");
+        return;
+      }
 
       try {
         if (editData) {
-          // ====== PUT (EDIT) ======
+          // ====== PUT (EDIT: tanggal + shift + room) ======
           const payload = {
             start: s.format("YYYY-MM-DD"),
             endExclusive: dayjs(e).add(1, "day").format("YYYY-MM-DD"),
             shift_ids,
+            room_id: values.room_id,
           };
 
           await crudService.put(
@@ -340,8 +414,8 @@ const resolveShiftIdsFromIsoTimes = useCallback(
             .map((id) => shiftMap.get(id))
             .filter(Boolean)
             .map((sh: any) => ({
-              start: dayjs.utc(sh.start_time).format("HH:mm"),
-              end: dayjs.utc(sh.end_time).format("HH:mm"),
+              start: dayjs.utc(sh.start_time).format(HHmm),
+              end: dayjs.utc(sh.end_time).format(HHmm),
             }));
 
           setEvents((prev) =>
@@ -351,13 +425,17 @@ const resolveShiftIdsFromIsoTimes = useCallback(
                     ...ev,
                     start: payload.start,
                     end: payload.endExclusive,
-                    extendedProps: { dailyTimes, shiftIds: shift_ids },
+                    extendedProps: {
+                      dailyTimes,
+                      shiftIds: shift_ids,
+                      room_id: values.room_id,
+                    },
                   }
                 : ev
             )
           );
 
-          message.success("Jadwal berhasil diperbarui.");
+          notification.success({ message: "Jadwal diperbarui" });
           setEditData(null);
         } else {
           // ====== POST (CREATE) ======
@@ -369,6 +447,7 @@ const resolveShiftIdsFromIsoTimes = useCallback(
               start_date: toUtcMidnight(s),
               end_date: toUtcMidnight(e),
               shift_ids,
+              room_id: values.room_id,
             },
           };
 
@@ -378,8 +457,8 @@ const resolveShiftIdsFromIsoTimes = useCallback(
             .map((id) => shiftMap.get(id))
             .filter(Boolean)
             .map((sh: any) => ({
-              start: dayjs.utc(sh.start_time).format("HH:mm"),
-              end: dayjs.utc(sh.end_time).format("HH:mm"),
+              start: dayjs.utc(sh.start_time).format(HHmm),
+              end: dayjs.utc(sh.end_time).format(HHmm),
             }));
 
           setEvents((prev) => [
@@ -390,7 +469,11 @@ const resolveShiftIdsFromIsoTimes = useCallback(
               end: addDaysYMD(e, 1),
               allDay: true,
               color: payload.block.color || randomColor(),
-              extendedProps: { dailyTimes, shiftIds: shift_ids },
+              extendedProps: {
+                dailyTimes,
+                shiftIds: shift_ids,
+                room_id: values.room_id,
+              },
             },
           ]);
 
@@ -521,11 +604,18 @@ const resolveShiftIdsFromIsoTimes = useCallback(
     const s = dayjs(block.start);
     const e = dayjs(block.end).subtract(1, "day"); // end exclusive -> inclusive
 
-    // pakai shiftIds jika tersedia; fallback resolve dari jam
     const dailyTimes = (block.extendedProps?.dailyTimes || []) as DailyTime[];
     const shift_ids =
       (block.extendedProps?.shiftIds as string[] | undefined) ??
       resolveShiftIdsFromDailyTimes(dailyTimes);
+
+    const room_id = block.extendedProps?.room_id;
+    if (!room_id) {
+      message.warning(
+        "Event ini belum memiliki room. Edit terlebih dahulu untuk memilih room."
+      );
+      return;
+    }
 
     if (shift_ids.length === 0) {
       message.warning("Tidak ada shift yang cocok untuk diduplikasi.");
@@ -540,6 +630,7 @@ const resolveShiftIdsFromIsoTimes = useCallback(
         start_date: toUtcMidnight(s),
         end_date: toUtcMidnight(e),
         shift_ids,
+        room_id,
       },
     };
 
@@ -554,7 +645,7 @@ const resolveShiftIdsFromIsoTimes = useCallback(
           end: addDaysYMD(e, 1),
           allDay: true,
           color: payload.block.color || randomColor(),
-          extendedProps: { dailyTimes, shiftIds: shift_ids },
+          extendedProps: { dailyTimes, shiftIds: shift_ids, room_id },
         },
       ]);
     } catch (err: any) {
@@ -596,11 +687,25 @@ const resolveShiftIdsFromIsoTimes = useCallback(
         const newStart = targetMonth.date(dayjs.utc(block.start_date).date());
         const newEnd = newStart.clone().add(offsetDays, "day");
 
-        // Map ISO times dari API -> shift_ids
         const shift_ids = resolveShiftIdsFromIsoTimes(block.times || []);
         if (shift_ids.length === 0) {
           console.warn(
             "[duplicate month] Lewati block karena tidak ada shift yang cocok:",
+            block.id
+          );
+          continue;
+        }
+
+        // Ambil room dari event yang sudah dirender (lebih akurat)
+        const existingEv = events.find((ev) => ev.id === block.id);
+        const room_id =
+          existingEv?.extendedProps?.room_id ??
+          (block.times?.find((t) => t.room_id)?.room_id ||
+            block.times?.find((t) => t.room?.room_id)?.room?.room_id);
+
+        if (!room_id) {
+          console.warn(
+            "[duplicate month] Lewati block tanpa room_id:",
             block.id
           );
           continue;
@@ -614,18 +719,18 @@ const resolveShiftIdsFromIsoTimes = useCallback(
             start_date: toUtcMidnight(newStart),
             end_date: toUtcMidnight(newEnd),
             shift_ids,
+            room_id,
           },
         };
 
         const newId = await saveScheduleBlock(payload);
 
-        // Build dailyTimes dari shift terpilih
         const dailyTimes = shift_ids
           .map((sid) => shiftMap.get(sid))
           .filter(Boolean)
           .map((sh: any) => ({
-            start: dayjs.utc(sh.start_time).format("HH:mm"),
-            end: dayjs.utc(sh.end_time).format("HH:mm"),
+            start: dayjs.utc(sh.start_time).format(HHmm),
+            end: dayjs.utc(sh.end_time).format(HHmm),
           }));
 
         setEvents((prev) => [
@@ -636,7 +741,7 @@ const resolveShiftIdsFromIsoTimes = useCallback(
             end: addDaysYMD(newEnd, 1),
             allDay: true,
             color: block.color ?? randomColor(),
-            extendedProps: { dailyTimes, shiftIds: shift_ids },
+            extendedProps: { dailyTimes, shiftIds: shift_ids, room_id },
           },
         ]);
       }
@@ -719,10 +824,12 @@ const resolveShiftIdsFromIsoTimes = useCallback(
             const dailyTimes: DailyTime[] = (arg.event.extendedProps
               ?.dailyTimes || []) as DailyTime[];
 
-            // Jika shiftIds ada, pakai itu; jika tidak ada, resolve dari jam
             const prefillShiftIds = shiftIds?.length
               ? shiftIds
               : resolveShiftIdsFromDailyTimes(dailyTimes);
+
+            // Prefill room:
+            const room_id = (arg.event.extendedProps as any)?.room_id;
 
             form.setFieldsValue({
               range: [start, end],
@@ -730,6 +837,7 @@ const resolveShiftIdsFromIsoTimes = useCallback(
                 prefillShiftIds.length > 0
                   ? prefillShiftIds.map((sid) => ({ shift_id: sid }))
                   : [{ shift_id: undefined as any }],
+              room_id: room_id || undefined,
             });
 
             setOpen(true);
@@ -785,13 +893,15 @@ const resolveShiftIdsFromIsoTimes = useCallback(
           layout="vertical"
           form={form}
           onFinish={onFinish}
-          initialValues={{ shifts: [{ shift_id: undefined as any }] }}
+          initialValues={{
+            shifts: [{ shift_id: undefined as any }],
+            room_id: undefined as any,
+          }}
         >
           <Form.Item
             name="range"
             label="Range Date"
             rules={[{ required: true, message: "Pilih rentang tanggal" }]}
-            initialValue={prefillRange || undefined}
           >
             <DatePicker.RangePicker style={{ width: "100%" }} />
           </Form.Item>
@@ -874,15 +984,40 @@ const resolveShiftIdsFromIsoTimes = useCallback(
             )}
           </Form.List>
 
+          <Form.Item
+            name="room_id"
+            label="Choose Room"
+            rules={[{ required: true, message: "Pilih room" }]}
+          >
+            <Select
+              placeholder="Choose Room"
+              showSearch
+              optionFilterProp="children"
+              loading={loadingRooms}
+              // bersihkan pilihan room jika list berubah dan id sebelumnya tak tersedia
+              onDropdownVisibleChange={(open) => {
+                if (open && watchedRange?.[0] && watchedRange?.[1]) {
+                  // opsional: re-fetch saat dropdown dibuka
+                  fetchRoomAvailableRange(watchedRange[0], watchedRange[1]);
+                }
+              }}
+            >
+              {availableRooms.map((r: any) => (
+                <Select.Option key={r.room_id} value={r.room_id}>
+                  {r.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
           <Divider style={{ margin: "8px 0 0" }} />
           <div style={{ fontSize: 12, color: "#888" }}>
-            Tip: drag & select tanggal di kalender untuk auto‑fill range. Klik
-            kanan event untuk delete/duplicate.
+            Tip: Drag and select dates on the calendar to auto-fill the range.
+            Right-click an event to delete or duplicate it.
           </div>
         </Form>
       </Modal>
 
-      {/* Modal Duplicate Month */}
       <Modal
         title="Duplicate Schedule Month"
         open={modalMonthOpen}

@@ -133,28 +133,43 @@ export async function PATCH(request: NextRequest) {
       );
     } else {
 
-      if (!progressData.length) {
-          return NextResponse.json({
+      const progress = await prisma.progressMeeting.findFirst({
+        where: {
+          meeting_id,
+        },
+        select: {
+          progress_student: true,
+          abilityScale: true,
+          studentPerformance: true,
+        },
+      });
+
+      if (!progress) {
+        return NextResponse.json(
+          {
             status: 422,
             error: true,
             message:
               "Silakan isi progress student terlebih dahulu sebelum absen.",
-          });
-        }
+          },
+          { status: 422 }
+        );
+      }
 
-      const isProgressIncomplete = progressData.some(
-        (progress) =>
-          !progress.progress_student ||
-          !progress.abilityScale ||
-          !progress.studentPerformance
-      );
-      if (isProgressIncomplete) {
-        return NextResponse.json({
-          status: 422,
-          error: true,
-          message:
-            "Silakan isi progress student terlebih dahulu sebelum absen.",
-        });
+      const incomplete =
+        !progress.progress_student ||
+        !progress.abilityScale ||
+        !progress.studentPerformance;
+      if (incomplete) {
+        return NextResponse.json(
+          {
+            status: 422,
+            error: true,
+            message:
+              "Silakan isi progress student terlebih dahulu sebelum absen.",
+          },
+          { status: 422 }
+        );
       }
 
       await prisma.meeting.update({

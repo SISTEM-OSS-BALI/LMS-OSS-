@@ -9,7 +9,16 @@ dayjs.extend(utc);
 
 /* ─────────── Helpers ─────────── */
 function badRequest(msg: string, details?: unknown) {
-  return NextResponse.json({ error: msg, details }, { status: 400 });
+  return NextResponse.json(
+    { error: true, message: msg, details },
+    { status: 400 }
+  );
+}
+function conflict(msg: string, details?: unknown) {
+  return NextResponse.json(
+    { error: true, message: msg, details },
+    { status: 409 }
+  );
 }
 function isIsoDate(value: unknown): value is string {
   return typeof value === "string" && dayjs(value).isValid();
@@ -22,6 +31,7 @@ function normalizeUTCDateMidnight(dateStr: string): Date {
 /* ─────────── POST /api/schedule/month/block ─────────── */
 export async function POST(request: NextRequest) {
   let userRes: NextResponse | undefined;
+
   try {
     const body = await request.json();
 
@@ -31,10 +41,10 @@ export async function POST(request: NextRequest) {
       userRes = user;
       return user;
     }
-    const teacher_id = user.user_id as string | undefined;
+    const teacher_id = (user as any)?.user_id as string | undefined;
     if (!teacher_id) return badRequest("teacher_id (from session) is required");
 
-    // Validasi payload
+    // Validasi payload dasar
     if (typeof body !== "object" || body === null) {
       return badRequest("Body must be a JSON object");
     }
@@ -66,13 +76,16 @@ export async function POST(request: NextRequest) {
       start_date,
       end_date,
       shift_ids,
+      room_id,
     } = block as {
       color?: string | null;
       start_date: string;
       end_date: string;
       shift_ids: string[];
+      room_id: string;
     };
 
+    // Validasi field block
     if (!isIsoDate(start_date)) {
       return badRequest("block.start_date must be an ISO datetime string");
     }
@@ -84,6 +97,9 @@ export async function POST(request: NextRequest) {
     }
     if (!shift_ids.every((id) => typeof id === "string" && id.trim().length)) {
       return badRequest("block.shift_ids contains invalid id");
+    }
+    if (typeof room_id !== "string" || room_id.trim().length === 0) {
+      return badRequest("block.room_id is required");
     }
 
     // Normalisasi tanggal (UTC 00:00)
@@ -102,7 +118,58 @@ export async function POST(request: NextRequest) {
       console.warn(
         "[ScheduleBlock] Range not strictly within (year, month). Proceeding."
       );
-      // Jika mau strict, kembalikan badRequest di sini.
+      // Jika ingin strict, return badRequest di sini.
+    }
+
+    // Validasi referensi: room & shifts
+    const [room, shiftsCount] = await Promise.all([
+      prisma.room.findUnique({ where: { room_id } }),
+      prisma.shiftSchedule.count({ where: { id: { in: shift_ids } } }),
+    ]);
+    if (!room) return badRequest("Room not found");
+    if (shiftsCount !== shift_ids.length) {
+      return badRequest("One or more shift_ids do not exist");
+    }
+
+    // Cek konflik ketersediaan room:
+    // - Cari ScheduleBlockShift lain dengan room yang sama
+    // - block overlap (start_date <= endDate && end_date >= startDate)
+    // - shift overlap (shift_id ∈ shift_ids yang diajukan)
+    const conflicts = await prisma.scheduleBlockShift.findMany({
+      where: {
+        room_id,
+        shift_id: { in: shift_ids },
+        block: {
+          start_date: { lte: endDate },
+          end_date: { gte: startDate },
+        },
+      },
+      select: {
+        id: true,
+        shift_id: true,
+        room_id: true,
+        block: {
+          select: {
+            id: true,
+            start_date: true,
+            end_date: true,
+            schedule_month_id: true,
+          },
+        },
+        shift: {
+          select: { id: true, title: true, start_time: true, end_time: true },
+        },
+        room: { select: { room_id: true, name: true } },
+      },
+    });
+
+    if (conflicts.length > 0) {
+      return conflict(
+        "Room is not available for one or more shifts in the requested date range",
+        {
+          conflicts,
+        }
+      );
     }
 
     // Upsert ScheduleMonth
@@ -115,37 +182,39 @@ export async function POST(request: NextRequest) {
       select: { id: true },
     });
 
-    // Buat block dulu
-    const blockRow = await prisma.scheduleBlock.create({
-      data: {
-        schedule_month_id: monthRecord.id,
-        color,
-        start_date: startDate,
-        end_date: endDate,
-      },
-      select: { id: true },
-    });
+    // Transaction: buat block + relasi times (dengan room_id)
+    const created = await prisma.$transaction(async (tx) => {
+      const blockRow = await tx.scheduleBlock.create({
+        data: {
+          schedule_month_id: monthRecord.id,
+          color,
+          start_date: startDate,
+          end_date: endDate,
+        },
+        select: { id: true },
+      });
 
-    // CreateMany untuk relasi shifts
-    if (shift_ids.length > 0) {
-      await prisma.scheduleBlockShift.createMany({
+      await tx.scheduleBlockShift.createMany({
         data: shift_ids.map((sid) => ({
           block_id: blockRow.id,
           shift_id: sid,
+          room_id, // <-- WAJIB: simpan room_id di relasi
         })),
         skipDuplicates: true,
       });
-    }
 
-    // Ambil kembali block dengan shifts + detail shift schedule
-    const created = await prisma.scheduleBlock.findUnique({
-      where: { id: blockRow.id },
-      include: {
-        times: {
-          // 'times' di modelmu sekarang adalah ScheduleBlockShift[]
-          include: { shift: true }, // join ke ShiftSchedule biar dapat title/start/end
+      // kembalikan block lengkap
+      return tx.scheduleBlock.findUnique({
+        where: { id: blockRow.id },
+        include: {
+          times: {
+            include: {
+              shift: true,
+              room: true,
+            },
+          },
         },
-      },
+      });
     });
 
     return NextResponse.json(
@@ -160,10 +229,9 @@ export async function POST(request: NextRequest) {
     );
   } catch (err: any) {
     console.error("[ScheduleBlock POST] error:", err);
-    // Kalau error dari Prisma karena FK shift_id tidak valid:
-    // kamu bisa cek err.code === 'P2003' untuk foreign key violation
+    // Prisma P2003 = FK violation; P2002 = unique constraint
     return NextResponse.json(
-      { error: err?.message || "Internal Server Error" },
+      { error: true, message: err?.message || "Internal Server Error" },
       { status: 500 }
     );
   } finally {
