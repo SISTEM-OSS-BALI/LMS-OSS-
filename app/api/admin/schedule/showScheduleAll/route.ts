@@ -29,7 +29,12 @@ export async function GET(request: NextRequest) {
             start_date: "asc",
           },
           include: {
-            times: true,
+            times: {
+              include: {
+                shift: true,
+                room: true,
+              }
+            }
           },
         },
       },

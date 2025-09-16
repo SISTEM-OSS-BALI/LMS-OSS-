@@ -47,30 +47,49 @@ const mapScheduleToEvents = (scheduleData: any) => {
   if (!scheduleData || !Array.isArray(scheduleData.data)) return [];
 
   const events = scheduleData.data.flatMap((schedule: any) => {
-    const teacher: { region?: keyof typeof regionColorMapping; username?: string } = schedule.teacher;
-    const teacherColor = regionColorMapping[teacher?.region as keyof typeof regionColorMapping] || "#3b82f6";
+    const teacher = schedule.teacher as
+      | { region?: keyof typeof regionColorMapping; username?: string }
+      | undefined;
 
-    return schedule.blocks.flatMap((block: any) =>
-      block.times.map((time: any) => {
-        const startDate = dayjs(block.start_date);
-        const endDate = dayjs(block.end_date);
+    const teacherColor =
+      regionColorMapping[teacher?.region as keyof typeof regionColorMapping] ||
+      "#3b82f6";
 
-        const startTime = dayjs(time.start_time).utc().format("HH:mm");
-        const endTime = dayjs(time.end_time).utc().format("HH:mm");
+    return (schedule.blocks ?? []).flatMap((block: any) =>
+      (block.times ?? []).map((time: any) => {
+        // Ambil jam dari SHIFT
+        const shiftStart = dayjs(time?.shift?.start_time).utc().format("HH:mm");
+        const shiftEnd = dayjs(time?.shift?.end_time).utc().format("HH:mm");
+
+        // Range tanggal inklusif (FullCalendar pakai endRecur eksklusif → +1 hari)
+        const startDate = dayjs(block.start_date).utc();
+        const endDate = dayjs(block.end_date).utc().add(1, "day");
+
+        // Nama room (aman kalau null)
+        const roomName = time?.room?.name ?? "-";
 
         return {
           id: time.id,
-          title: `${teacher?.username || "Guru"} (${startTime} - ${endTime})`,
+          // Recurring harian sepanjang rentang block, pada jam shift
           startRecur: startDate.format("YYYY-MM-DD"),
-          endRecur: endDate.add(1, "day").format("YYYY-MM-DD"),
+          endRecur: endDate.format("YYYY-MM-DD"),
+          startTime: shiftStart, // <— penting: taruh di level event
+          endTime: shiftEnd, // <— penting: taruh di level event
+
+          // Warna per region
           backgroundColor: teacherColor,
+          borderColor: teacherColor,
+
+          // Simpan detail di extendedProps untuk renderer
           extendedProps: {
-            teacherName: teacher?.username,
+            teacherName: teacher?.username ?? "Teacher",
             region: teacher?.region,
             blockId: block.id,
             scheduleMonthId: schedule.id,
-            startTime, 
-            endTime, 
+            roomName,
+            shiftStart,
+            shiftEnd,
+            color: teacherColor,
           },
         };
       })

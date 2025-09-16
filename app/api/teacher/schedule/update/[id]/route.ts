@@ -120,7 +120,8 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
  * {
  *   "start": "YYYY-MM-DD",
  *   "endExclusive": "YYYY-MM-DD",
- *   "shift_ids": string[]          // daftar ShiftSchedule.id
+ *   "shift_ids": string[],         // daftar ShiftSchedule.id (wajib >= 1)
+ *   "room_id": string              // Room.room_id (wajib)
  * }
  * - Update tanggal & ganti seluruh relasi shift (ScheduleBlockShift).
  */

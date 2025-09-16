@@ -26,6 +26,7 @@ import Icon, {
   DeleteFilled,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  PoweroffOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -323,7 +324,7 @@ export default function StudentComponent() {
             danger
             onClick={() => showConfirmDelete(student.user_id)}
           />
-          {/* {student.is_active === true ? (
+           {student.is_active === true ? (
             <Button
               icon={<PoweroffOutlined />}
               onClick={() => showConfirmFrezeAccount(student.user_id, false)}
@@ -338,11 +339,6 @@ export default function StudentComponent() {
               Buka Akun
             </Button>
           )}
-          {student.program_name !== "Group Class" && (
-            <Button onClick={() => openModal(student.user_id)}>
-              Perbaharui Program
-            </Button>
-          )} */}
         </Space>
       ),
     },

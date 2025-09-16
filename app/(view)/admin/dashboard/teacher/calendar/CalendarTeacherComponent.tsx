@@ -1,97 +1,131 @@
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import Title from 'antd/es/typography/Title';
-import { Card, Divider, Skeleton, Grid } from 'antd';
-import { useCalendarViewModel } from './useCalendarViewModel';
+"use client";
 
-dayjs.extend(utc);
+import React, { useMemo } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import type { EventContentArg } from "@fullcalendar/core";
+import Title from "antd/es/typography/Title";
+import { Card, Divider, Skeleton, Grid } from "antd";
+import { useCalendarViewModel } from "./useCalendarViewModel";
+
+type RegionKey = "Singaraja" | "Denpasar" | "Karangasem" | (string & {});
 
 export default function CalendarTeacherComponent() {
-  const { events, isLoading, regionColorMapping, showScheduleTeacherAll, dataTeacher, isLoadingSchedule } = useCalendarViewModel();
+  const { events, isLoading, isLoadingSchedule, regionColorMapping } =
+    useCalendarViewModel();
 
   const { useBreakpoint } = Grid;
+  const screens = useBreakpoint();
 
-  // Function to render event content with custom styles
-  const renderEventContent = (eventInfo: any) => {
-    const { teacherName, startTime, endTime, region } =
-      eventInfo.event.extendedProps || {};
+  // Hindari re-render berat: memoize events
+  const safeEvents = useMemo(() => events ?? [], [events]);
 
-    const regionColor =
-      regionColorMapping[region as keyof typeof regionColorMapping] || "#999";
+  // Renderer kartu event (month view)
+  const renderEventContent = (arg: EventContentArg) => {
+    const ext = arg.event.extendedProps as {
+      teacherName?: string;
+      roomName?: string;
+      shiftStart?: string;
+      shiftEnd?: string;
+      region?: RegionKey;
+    };
+
+    const bg =
+      regionColorMapping[ext?.region as keyof typeof regionColorMapping] ??
+      "#999";
 
     return (
       <div
         style={{
-          backgroundColor: regionColor,
+          backgroundColor: bg,
           color: "#fff",
-          padding: "4px",
-          textAlign: "center",
-          boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
+          padding: 6,
+          borderRadius: 6,
+          lineHeight: 1.2,
+          boxShadow: "0 3px 6px rgba(0,0,0,0.08)",
           overflow: "hidden",
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
         }}
       >
-        <strong style={{ fontSize: "14px" }}>
-          {startTime && endTime ? `${startTime} - ${endTime}` : "-"}
-        </strong>
-        <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-          {teacherName || "Tanpa Nama"}
+        {/* Room */}
+        <div style={{ fontSize: 12, fontWeight: 700 }}>
+          {ext?.roomName ?? "-"}
+        </div>
+
+        {/* Guru */}
+        <div style={{ fontSize: 12, fontWeight: 600 }}>
+          {ext?.teacherName ?? "Teacher"}
+        </div>
+
+        {/* Jam */}
+        <div style={{ fontSize: 12 }}>
+          {ext?.shiftStart && ext?.shiftEnd
+            ? `${ext.shiftStart} – ${ext.shiftEnd}`
+            : "-"}
         </div>
       </div>
     );
   };
 
-  const screens = useBreakpoint();
-
   return (
-    <div style={{ padding: screens.xs ? '12px' : '24px' }}>
-      <Title level={3}>Kalender Guru</Title>
-      <Divider />
+    <div style={{ padding: screens.xs ? 12 : 24 }}>
+      <Title level={3} style={{ marginBottom: 8 }}>
+        Kalender Guru
+      </Title>
+      <Divider style={{ margin: "8px 0 16px" }} />
       <Card
         style={{
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          padding: '20px',
+          borderRadius: 8,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+          padding: 16,
         }}
+        bodyStyle={{ padding: 0 }}
       >
         {isLoading || isLoadingSchedule ? (
-          <Skeleton
-            active
-            paragraph={{ rows: 8 }}
-          />
+          <div style={{ padding: 16 }}>
+            <Skeleton active paragraph={{ rows: 8 }} />
+          </div>
         ) : (
           <div
             style={{
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              minWidth: '100%',
-              touchAction: 'pan-x', // Ensures only horizontal scroll is active
-              WebkitOverflowScrolling: 'touch', // Helps smooth scrolling on iOS
-              display: 'flex',
+              overflowX: "auto",
+              overflowY: "hidden",
+              minWidth: "100%",
+              WebkitOverflowScrolling: "touch",
             }}
           >
-            {/* Adjust the calendar width for horizontal scrolling */}
-            <div style={{ minWidth: '1200px', pointerEvents: 'auto' }}>
+            {/* Lebar minimum agar bisa discroll horizontal di layar kecil */}
+            <div style={{ minWidth: 1100 }}>
               <FullCalendar
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView='dayGridMonth'
-                editable
-                selectable
-                showNonCurrentDates={false}
-                events={events}
-                contentHeight='auto'
+                initialView="dayGridMonth"
+                // timezone lokal agar tanggal tidak mundur/maju
+                timeZone="local"
+                // kita render jam sendiri
+                displayEventTime={false}
+                eventDisplay="block"
+                // height otomatis mengikuti konten
+                contentHeight="auto"
+                // Supaya block terlihat clickable nantinya
+                editable={false}
+                selectable={false}
+                // Data
+                events={safeEvents}
+                // Renderer custom: Room, Guru, Jam
                 eventContent={renderEventContent}
-                locale='id'
+                // Tata letak kalender
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: screens.md
+                    ? "dayGridMonth,timeGridWeek,timeGridDay"
+                    : "",
+                }}
+                // Estetika kecil
+                dayMaxEventRows={3}
+                showNonCurrentDates={false}
+                locale="id"
               />
             </div>
           </div>

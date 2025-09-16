@@ -77,7 +77,9 @@ export const useStudentViewModel = () => {
         const meetings =
           meetingDataAll?.data?.filter(
             (meeting) =>
-              meeting.student_id === student.user_id && meeting.absent !== null
+              meeting.student_id === student.user_id &&
+              meeting.is_cancelled === true &&
+              meeting.absent === true
           ) ?? [];
 
         const program = programDataAll?.data?.find(
