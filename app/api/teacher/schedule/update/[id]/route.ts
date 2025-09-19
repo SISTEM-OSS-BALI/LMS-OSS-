@@ -27,6 +27,7 @@ const toUtcMidnight = (ymd: string) =>
  * }
  * - Hanya update tanggal & relokasi ScheduleMonth bila pindah bulan/tahun.
  */
+ // PATCH /api/schedule/month/block/:id
 export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
   try {
     const user = await authenticateRequest(req);
@@ -38,26 +39,28 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 
     const body = await req.json().catch(() => ({} as any));
     const { start, endExclusive } = body || {};
-
     if (!isYmd(start)) return bad("start must be YYYY-MM-DD string");
     if (!isYmd(endExclusive))
       return bad("endExclusive must be YYYY-MM-DD string");
 
-    const startInc = toUtcMidnight(start);
+    const startInc = toUtcMidnight(start); // inclusive start (UTC midnight)
     const endInc = dayjs
       .utc(endExclusive, "YYYY-MM-DD")
       .subtract(1, "day")
       .startOf("day")
-      .toDate();
+      .toDate(); // inclusive end
 
     if (dayjs.utc(endInc).isBefore(dayjs.utc(startInc))) {
       return bad("end date must be the same or after start date");
     }
 
-    // Ambil block + month untuk cek kepemilikan
+    // Ambil block + month + RELASI times (shift+room) untuk cek konflik
     const block = await prisma.scheduleBlock.findUnique({
       where: { id },
-      include: { scheduleMonth: true },
+      include: {
+        scheduleMonth: true,
+        times: { select: { shift_id: true, room_id: true } }, // scheduleBlockShift
+      },
     });
     if (!block) return bad("Block not found", { id });
 
@@ -68,7 +71,54 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
       );
     }
 
-    // Target ScheduleMonth
+    // Kumpulkan pasangan (shift_id, room_id) aktif pada block ini
+    const pairs = (block.times ?? [])
+      .filter((t) => t.shift_id && t.room_id)
+      .map((t) => ({ shift_id: t.shift_id as string, room_id: t.room_id as string }));
+
+    // Jika ada pasangan, cek konflik untuk masing-masing
+    if (pairs.length > 0) {
+      const conflicts = await prisma.scheduleBlockShift.findMany({
+        where: {
+          // pasangan room + shift yang sama
+          OR: pairs.map((p) => ({
+            room_id: p.room_id,
+            shift_id: p.shift_id,
+          })),
+          // exclude block saat ini
+          block: {
+            id: { not: id },
+            // overlap rentang tanggal baru
+            start_date: { lte: endInc },
+            end_date: { gte: startInc },
+          },
+        },
+        select: {
+          id: true,
+          shift_id: true,
+          room_id: true,
+          block: {
+            select: { id: true, start_date: true, end_date: true, schedule_month_id: true },
+          },
+          shift: { select: { id: true, title: true, start_time: true, end_time: true } },
+          room: { select: { room_id: true, name: true } },
+        },
+      });
+
+      if (conflicts.length > 0) {
+        return NextResponse.json(
+          {
+            error: true,
+            message:
+              "Room is not available for one or more shifts in the requested date range",
+            details: { conflicts },
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Relokasi ScheduleMonth bila pindah bulan/tahun (mengacu start baru)
     const targetYear = dayjs.utc(startInc).year();
     const targetMonth = dayjs.utc(startInc).month() + 1;
 
@@ -99,9 +149,7 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
         start_date: startInc,
         end_date: endInc,
       },
-      include: {
-        times: { include: { shift: true, room: true } }, // tampilkan daftar shift + room yang ada
-      },
+      include: { times: { include: { shift: true, room: true } } },
     });
 
     return ok(updated);

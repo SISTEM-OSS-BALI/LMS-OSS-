@@ -272,14 +272,27 @@ export default function Schedule() {
 
   useEffect(() => setEvents(mappedEvents), [mappedEvents]);
 
+  const watchedShifts = Form.useWatch("shifts", form);
+
+  // helper: ambil array of string dari nilai Form.List
+  const getSelectedShiftIds = (shifts?: { shift_id?: string }[]) =>
+    (shifts ?? [])
+      .map((s) => s?.shift_id)
+      .filter((v): v is string => Boolean(v));
+
   const fetchRoomAvailableRange = useCallback(
-    async (start: Dayjs, end: Dayjs) => {
+    async (start: Dayjs, end: Dayjs, shiftIds: string[]) => {
       try {
         setLoadingRooms(true);
+        // kirim semua shiftId sebagai query (?shiftId=a&shiftId=b)
+        const q = new URLSearchParams({
+          start: start.format("YYYY-MM-DD"),
+          end: end.format("YYYY-MM-DD"),
+        });
+        shiftIds.forEach((id) => q.append("shiftId", id));
+
         const res = await crudService.get(
-          `/api/teacher/room/find-available-room?start=${start.format(
-            "YYYY-MM-DD"
-          )}&end=${end.format("YYYY-MM-DD")}`
+          `/api/teacher/room/find-available-room?${q.toString()}`
         );
         setAvailableRooms(res?.data || []); // [{ room_id, name }]
       } catch (err) {
@@ -296,12 +309,14 @@ export default function Schedule() {
   useEffect(() => {
     const start = watchedRange?.[0];
     const end = watchedRange?.[1];
-    if (start && end) {
-      fetchRoomAvailableRange(start, end);
+    const shiftIds = getSelectedShiftIds(watchedShifts);
+
+    if (start && end && shiftIds.length > 0) {
+      fetchRoomAvailableRange(start, end, shiftIds);
     } else {
-      setAvailableRooms([]); // kosongkan jika belum ada range
+      setAvailableRooms([]);
     }
-  }, [watchedRange, fetchRoomAvailableRange]);
+  }, [watchedRange, watchedShifts, fetchRoomAvailableRange]);
 
   /* ============== Modal Create/Edit ============== */
   const [editData, setEditData] = useState<{
@@ -811,37 +826,37 @@ export default function Schedule() {
           eventResize={handleEventResize}
           eventContent={eventContent}
           eventDidMount={eventDidMount}
-          eventClick={(arg) => {
-            const id = arg.event.id;
-            const start = dayjs(arg.event.startStr);
-            const end = dayjs(arg.event.endStr).subtract(1, "day"); // FC end exclusive
+          // eventClick={(arg) => {
+          //   const id = arg.event.id;
+          //   const start = dayjs(arg.event.startStr);
+          //   const end = dayjs(arg.event.endStr).subtract(1, "day"); // FC end exclusive
 
-            setEditData({ id, range: [start, end] });
+          //   setEditData({ id, range: [start, end] });
 
-            // Prefill shifts saat edit:
-            const shiftIds: string[] | undefined =
-              arg.event.extendedProps?.shiftIds;
-            const dailyTimes: DailyTime[] = (arg.event.extendedProps
-              ?.dailyTimes || []) as DailyTime[];
+          //   // Prefill shifts saat edit:
+          //   const shiftIds: string[] | undefined =
+          //     arg.event.extendedProps?.shiftIds;
+          //   const dailyTimes: DailyTime[] = (arg.event.extendedProps
+          //     ?.dailyTimes || []) as DailyTime[];
 
-            const prefillShiftIds = shiftIds?.length
-              ? shiftIds
-              : resolveShiftIdsFromDailyTimes(dailyTimes);
+          //   const prefillShiftIds = shiftIds?.length
+          //     ? shiftIds
+          //     : resolveShiftIdsFromDailyTimes(dailyTimes);
 
-            // Prefill room:
-            const room_id = (arg.event.extendedProps as any)?.room_id;
+          //   // Prefill room:
+          //   const room_id = (arg.event.extendedProps as any)?.room_id;
 
-            form.setFieldsValue({
-              range: [start, end],
-              shifts:
-                prefillShiftIds.length > 0
-                  ? prefillShiftIds.map((sid) => ({ shift_id: sid }))
-                  : [{ shift_id: undefined as any }],
-              room_id: room_id || undefined,
-            });
+          //   form.setFieldsValue({
+          //     range: [start, end],
+          //     shifts:
+          //       prefillShiftIds.length > 0
+          //         ? prefillShiftIds.map((sid) => ({ shift_id: sid }))
+          //         : [{ shift_id: undefined as any }],
+          //     room_id: room_id || undefined,
+          //   });
 
-            setOpen(true);
-          }}
+          //   setOpen(true);
+          // }}
         />
       </Card>
 
@@ -870,12 +885,12 @@ export default function Schedule() {
           >
             Delete
           </div>
-          <div
+          {/* <div
             style={{ padding: "8px 10px", cursor: "pointer", borderRadius: 6 }}
             onClick={() => ctx.eventId && duplicateBlock(ctx.eventId)}
           >
             Duplicate
-          </div>
+          </div> */}
         </div>
       )}
 
@@ -996,9 +1011,15 @@ export default function Schedule() {
               loading={loadingRooms}
               // bersihkan pilihan room jika list berubah dan id sebelumnya tak tersedia
               onDropdownVisibleChange={(open) => {
-                if (open && watchedRange?.[0] && watchedRange?.[1]) {
-                  // opsional: re-fetch saat dropdown dibuka
-                  fetchRoomAvailableRange(watchedRange[0], watchedRange[1]);
+                const ids = getSelectedShiftIds(watchedShifts);
+                if (ids.length) {
+                  fetchRoomAvailableRange(
+                    watchedRange[0],
+                    watchedRange[1],
+                    ids
+                  );
+                } else {
+                  setAvailableRooms([]);
                 }
               }}
             >
