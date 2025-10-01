@@ -13,6 +13,21 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 
+const monthTranslation = {
+  Januari: "January",
+  Februari: "February",
+  Maret: "March",
+  April: "April",
+  Mei: "May",
+  Juni: "June",
+  Juli: "July",
+  Agustus: "August",
+  September: "September",
+  Oktober: "October",
+  November: "November",
+  Desember: "December",
+};
+
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
 
@@ -44,14 +59,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const dayjsDate = dayjs(date, "DD MMMM YYYY", true);
-    if (!dayjsDate.isValid()) {
+    const monthRegex = new RegExp(Object.keys(monthTranslation).join("|"), "gi");
+    const normalizedDateString = (() => {
+      if (typeof date !== "string") {
+        return date;
+      }
+
+      if (date.includes(",")) {
+        const [, datePortion = date] = date.split(", ");
+        return datePortion.replace(
+          monthRegex,
+          (m: string) => monthTranslation[m as keyof typeof monthTranslation]
+        );
+      }
+
+      return date.replace(
+        monthRegex,
+        (m: string) => monthTranslation[m as keyof typeof monthTranslation]
+      );
+    })();
+
+    const possibleFormats = [
+      "DD MMMM YYYY",
+      "DD MMM YYYY",
+      "YYYY-MM-DD",
+      "YYYY/MM/DD",
+    ];
+
+    let baseDate =
+      typeof normalizedDateString === "string"
+        ? dayjs(normalizedDateString, possibleFormats, true)
+        : dayjs(normalizedDateString);
+
+    if (!baseDate.isValid()) {
+      baseDate = dayjs(normalizedDateString);
+    }
+
+    if (!baseDate.isValid()) {
       throw new Error("Format tanggal tidak valid");
     }
 
     const [hours, minutes] = time.split(":").map(Number);
     const dateTime = dayjs
-      .utc(dayjsDate)
+      .utc(baseDate)
       .set("hour", hours)
       .set("minute", minutes);
 
