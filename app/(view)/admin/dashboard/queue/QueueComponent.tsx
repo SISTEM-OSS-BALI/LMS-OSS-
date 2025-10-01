@@ -16,7 +16,7 @@ import { EventClickArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { UserOutlined, BookOutlined } from "@ant-design/icons";
+import { BookOutlined } from "@ant-design/icons";
 const { Title, Text } = Typography;
 
 interface QueueEvent {

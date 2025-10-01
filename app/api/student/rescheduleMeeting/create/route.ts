@@ -8,6 +8,9 @@ import {
 } from "@/app/lib/utils/notificationHelper";
 import prisma from "@/lib/prisma";
 import { uploadBase64Image } from "@/app/lib/utils/uploadHelper";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 
 export async function POST(request: NextRequest) {

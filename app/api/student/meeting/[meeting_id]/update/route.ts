@@ -14,8 +14,10 @@ import {
   sendWhatsAppMessage,
 } from "@/app/lib/utils/notificationHelper";
 import { get } from "http";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
 dayjs.extend(utc);
+dayjs.extend(customParseFormat);
 
 export async function PUT(
   request: NextRequest,

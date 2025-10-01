@@ -3,6 +3,7 @@ import { authenticateRequest } from "@/app/lib/auth/authUtils";
 import prisma from "@/lib/prisma";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import {
   createGoogleMeetEvent,
@@ -15,6 +16,7 @@ import {
 } from "@/app/lib/utils/notificationHelper";
 
 dayjs.extend(utc);
+dayjs.extend(customParseFormat);
 
 const monthTranslation = {
   Januari: "January",

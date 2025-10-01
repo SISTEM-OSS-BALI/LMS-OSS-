@@ -212,6 +212,20 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     return map;
   }, [shiftData]);
 
+  const getMeetingDuration = (m: any, programs?: Program[]) => {
+    // 1) kalau meeting sudah punya field duration (menit), pakai itu
+    if (typeof m?.duration === "number" && m.duration > 0) return m.duration;
+
+    // 2) kalau meeting punya program_id, lookup ke daftar program untuk ambil durasinya
+    const prog = Array.isArray(programData?.data)
+      ? programData.data.find((p: any) => p.program_id === m.program_id)
+      : null;
+    if (prog?.duration) return prog.duration;
+
+    // 3) terakhir: kalau benar-benar tidak ada, barulah jatuh ke default aman (mis. 60)
+    return 60;
+  };
+
   /** Ambil jam harian (HH:mm) dari array times yang berisi shift_id */
   const getDailyTimesFromBlockTimes = (
     blockTimes: Array<{ shift_id: string }>
@@ -242,21 +256,24 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
   const generateAvailableSlotsFromShifts = (
     dayScheduleTimes: Array<{ shift_id: string }>,
-    meetings: Array<{ dateTime: string | Date; duration?: number }>, // <- string | Date
+    meetings: Array<{
+      dateTime: string | Date;
+      duration?: number;
+      program_id?: string;
+    }>,
     selectedDateISO: string,
     programDuration: number
   ): string[] => {
     const slots: string[] = [];
-
     const daily = getDailyTimesFromBlockTimes(dayScheduleTimes);
     if (daily.length === 0) return [];
 
     const ranges = materializeRangesForDate(selectedDateISO, daily);
 
-    // 2) parsing aman utk string/Date
+    // gunakan durasi meeting yang benar
     const busy = meetings.map((m) => {
-      const start = dayjs.utc(m.dateTime); // bisa terima string atau Date
-      const dur = typeof m.duration === "number" ? m.duration : programDuration;
+      const start = dayjs.utc(m.dateTime);
+      const dur = getMeetingDuration(m, programData?.data); // <<— kunci perbaikan
       const end = start.add(dur, "minute");
       return { start, end };
     });
@@ -273,6 +290,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
         cursor = cursor.add(programDuration, "minute");
       }
     }
+
     slots.sort((a, b) => dayjs(a, "HH:mm").diff(dayjs(b, "HH:mm")));
     return slots;
   };
