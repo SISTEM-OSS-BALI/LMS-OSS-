@@ -45,16 +45,46 @@ export async function POST(request: NextRequest) {
   try {
     const { teacher_id, date, time, method, platform } = await request.json();
 
-    // --- parsing tanggal "Senin, 25 Agustus 2025" -> Date ---
-    const dateParts = date.split(", ");
-    const dateStrIndo = dateParts[1];
+    // --- parsing tanggal bahasa Indonesia / ISO -> Date ---
     const monthRegex = new RegExp(Object.keys(monthTranslation).join("|"), "gi");
-    const dateStrEn = dateStrIndo.replace(
-      monthRegex,
-      (m: string) => monthTranslation[m as keyof typeof monthTranslation]
-    );
-    const baseDate = dayjs(dateStrEn, "DD MMMM YYYY");
-    if (!baseDate.isValid()) throw new Error("Format tanggal tidak valid");
+    const normalizedDateString = (() => {
+      if (typeof date !== "string") {
+        return date;
+      }
+
+      if (date.includes(",")) {
+        const [, datePortion = date] = date.split(", ");
+        return datePortion.replace(
+          monthRegex,
+          (m: string) => monthTranslation[m as keyof typeof monthTranslation]
+        );
+      }
+
+      return date.replace(
+        monthRegex,
+        (m: string) => monthTranslation[m as keyof typeof monthTranslation]
+      );
+    })();
+
+    const possibleFormats = [
+      "DD MMMM YYYY",
+      "DD MMM YYYY",
+      "YYYY-MM-DD",
+      "YYYY/MM/DD",
+    ];
+
+    let baseDate =
+      typeof normalizedDateString === "string"
+        ? dayjs(normalizedDateString, possibleFormats, true)
+        : dayjs(normalizedDateString);
+
+    if (!baseDate.isValid()) {
+      baseDate = dayjs(normalizedDateString);
+    }
+
+    if (!baseDate.isValid()) {
+      throw new Error("Format tanggal tidak valid");
+    }
 
     const [h, mm] = time.split(":").map(Number);
     const startUtc = dayjs
