@@ -191,7 +191,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   const [isModalInfoVisible, setIsModalInfoVisible] = useState(false);
   const [isModalVisibleEmergency, setIsModalVisibleEmergency] = useState(false);
   const [form] = Form.useForm();
-  const filterProgram = programDetail?.data.program_id;
+  const filterProgram = programDetail?.data?.program_id;
 
   const handleOpenModalDateClick = () => {
     setIsModalVisible(true);
@@ -213,16 +213,11 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
   }, [shiftData]);
 
   const getMeetingDuration = (m: any, programs?: Program[]) => {
-    // 1) kalau meeting sudah punya field duration (menit), pakai itu
     if (typeof m?.duration === "number" && m.duration > 0) return m.duration;
-
-    // 2) kalau meeting punya program_id, lookup ke daftar program untuk ambil durasinya
     const prog = Array.isArray(programData?.data)
       ? programData.data.find((p: any) => p.program_id === m.program_id)
       : null;
     if (prog?.duration) return prog.duration;
-
-    // 3) terakhir: kalau benar-benar tidak ada, barulah jatuh ke default aman (mis. 60)
     return 60;
   };
 
@@ -270,10 +265,9 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
     const ranges = materializeRangesForDate(selectedDateISO, daily);
 
-    // gunakan durasi meeting yang benar
     const busy = meetings.map((m) => {
       const start = dayjs.utc(m.dateTime);
-      const dur = getMeetingDuration(m, programData?.data); // <<— kunci perbaikan
+      const dur = getMeetingDuration(m, programData?.data);
       const end = start.add(dur, "minute");
       return { start, end };
     });
@@ -295,6 +289,32 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     return slots;
   };
 
+  /* ========= HELPERS: gabung semua block pada tanggal terpilih ========= */
+  const getBlocksCoveringDate = (scheduleMonths: any[], selectedDateISO: string) => {
+    const selected = dayjs(selectedDateISO).startOf("day");
+    return (scheduleMonths ?? [])
+      .flatMap((m: any) => m.blocks ?? [])
+      .filter((block: any) => {
+        const start = dayjs(block.start_date).startOf("day");
+        const end = dayjs(block.end_date).startOf("day");
+        return (
+          selected.isSame(start, "day") ||
+          selected.isSame(end, "day") ||
+          (selected.isAfter(start, "day") && selected.isBefore(end, "day"))
+        );
+      });
+  };
+
+  const mergeTimesFromBlocks = (blocks: any[]) => {
+    const byShift = new Map<string, { shift_id: string }>();
+    blocks.forEach((b: any) => (b?.times ?? []).forEach((t: any) => {
+      if (t?.shift_id && !byShift.has(t.shift_id)) {
+        byShift.set(t.shift_id, { shift_id: t.shift_id });
+      }
+    }));
+    return Array.from(byShift.values());
+  };
+
   /* ===================== DATE CLICK ===================== */
   const handleDateClick = (arg: any) => {
     if (!selectedTeacher) {
@@ -314,33 +334,19 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       : [];
 
     if (dayOffDates.includes(selectedDateFormatted)) {
-      message.warning(
-        `Tanggal ${selectedDateFormatted} adalah hari libur guru.`
-      );
+      message.warning(`Tanggal ${selectedDateFormatted} adalah hari libur guru.`);
       return;
     }
 
     const selectedDateISO = dayjs(arg.date).format("YYYY-MM-DD");
-
     const teacherSchedule = (showScheduleTeacher as any)?.data;
     const scheduleMonths = teacherSchedule?.ScheduleMonth ?? [];
 
-    // cari block yang mencakup tanggal
-    const matchingBlock = scheduleMonths
-      .flatMap((month: any) => month.blocks)
-      .find((block: any) => {
-        const start = dayjs(block.start_date).startOf("day");
-        const end = dayjs(block.end_date).startOf("day");
-        const selectedDayjs = dayjs(selectedDateISO);
-        return (
-          selectedDayjs.isSame(start, "day") ||
-          selectedDayjs.isSame(end, "day") ||
-          (selectedDayjs.isAfter(start, "day") &&
-            selectedDayjs.isBefore(end, "day"))
-        );
-      });
+    // Ambil SEMUA block yang meliputi tanggal tsb, lalu gabungkan times (dedup)
+    const blocksToday = getBlocksCoveringDate(scheduleMonths, selectedDateISO);
+    const mergedTimes = mergeTimesFromBlocks(blocksToday);
 
-    if (!matchingBlock || !Array.isArray(matchingBlock.times)) {
+    if (mergedTimes.length === 0) {
       setAvailableTimes([]);
       setCurrentStep(1);
       message.warning("Tidak ada jadwal guru pada tanggal ini.");
@@ -357,9 +363,8 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
           dayjs.utc(m.dateTime).format("YYYY-MM-DD") === selectedDateISO
       ) || [];
 
-    // === PAKAI SHIFT LOOKUP ===
     const slots = generateAvailableSlotsFromShifts(
-      matchingBlock.times, // berisi { shift_id }
+      mergedTimes,
       meetingsToday,
       selectedDateISO,
       programDuration
@@ -389,28 +394,16 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     if (!dateVal || !selectedTeacher) return;
 
     const selectedDateISO = dayjs(dateVal).format("YYYY-MM-DD");
-    const formattedDate = dayjs(dateVal)
-      .locale("id")
-      .format("dddd, DD MMMM YYYY");
+    const formattedDate = dayjs(dateVal).locale("id").format("dddd, DD MMMM YYYY");
 
     const teacherSchedule = (showScheduleTeacher as any)?.data;
     const scheduleMonths = teacherSchedule?.ScheduleMonth ?? [];
 
-    const matchingBlock = scheduleMonths
-      .flatMap((month: any) => month.blocks)
-      .find((block: any) => {
-        const start = dayjs(block.start_date).startOf("day");
-        const end = dayjs(block.end_date).startOf("day");
-        const selectedDayjs = dayjs(selectedDateISO);
-        return (
-          selectedDayjs.isSame(start, "day") ||
-          selectedDayjs.isSame(end, "day") ||
-          (selectedDayjs.isAfter(start, "day") &&
-            selectedDayjs.isBefore(end, "day"))
-        );
-      });
+    // Ambil SEMUA block di tanggal itu & gabungkan times
+    const blocksToday = getBlocksCoveringDate(scheduleMonths, selectedDateISO);
+    const mergedTimes = mergeTimesFromBlocks(blocksToday);
 
-    if (!matchingBlock || !Array.isArray(matchingBlock.times)) {
+    if (mergedTimes.length === 0) {
       setAvailableTimes([]);
       setCurrentStep(1);
       message.warning(`Tidak ada jadwal guru pada ${formattedDate}.`);
@@ -428,7 +421,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
       ) || [];
 
     const slots = generateAvailableSlotsFromShifts(
-      matchingBlock.times,
+      mergedTimes,
       meetingsToday,
       selectedDateISO,
       programDuration
