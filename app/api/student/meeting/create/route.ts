@@ -127,17 +127,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 403, error: true, message: "User tidak aktif" }, { status: 403 });
     }
 
+    const meetingDuration = programData.duration;
+
+    if (!meetingDuration || Number.isNaN(meetingDuration)) {
+      throw new Error("Durasi program tidak ditemukan");
+    }
+
+    const newMeetingStart = startUtc.toDate();
+    const newMeetingEnd = startUtc.add(meetingDuration, "minute").toDate();
+
+    // --- validasi bentrok jadwal guru ---
+    const candidateMeetings = await prisma.meeting.findMany({
+      where: {
+        teacher_id,
+        is_cancelled: false,
+        OR: [
+          { startTime: { lt: newMeetingEnd } },
+          { dateTime: { lt: newMeetingEnd } },
+        ],
+      },
+      select: {
+        meeting_id: true,
+        startTime: true,
+        endTime: true,
+        dateTime: true,
+      },
+    });
+
+    const isOverlapping = candidateMeetings.some((meeting) => {
+      const start = dayjs.utc(meeting.startTime ?? meeting.dateTime);
+      const end = meeting.endTime
+        ? dayjs.utc(meeting.endTime)
+        : start.add(meetingDuration, "minute");
+      return start.isBefore(dayjs.utc(newMeetingEnd)) && end.isAfter(dayjs.utc(newMeetingStart));
+    });
+
+    if (isOverlapping) {
+      return NextResponse.json(
+        {
+          status: 409,
+          error: true,
+          message:
+            "Guru sudah memiliki jadwal lain pada rentang waktu tersebut.",
+        },
+        { status: 409 }
+      );
+    }
+
     // --- siapkan meet link bila ONLINE ---
     let meetLink: string | null = null;
     if (method === "ONLINE") {
       if (platform === "GOOGLE_MEET") {
         const auth = await getOAuthClient();
-        meetLink = (await createGoogleMeetEvent(
-          auth,
-          "Meeting dengan guru",
-          startUtc.toDate(),
-          startUtc.add(1, "hour").toDate()
-        )) ?? null;
+        meetLink =
+          (await createGoogleMeetEvent(
+            auth,
+            "Meeting dengan guru",
+            newMeetingStart,
+            newMeetingEnd
+          )) ?? null;
       } else if (platform === "ZOOM") {
         meetLink = await createZoomMeeting("Meeting dengan guru", startUtc.toDate());
       }
@@ -150,9 +198,9 @@ export async function POST(request: NextRequest) {
           teacher_id,
           student_id: user.user_id,
           method,
-          dateTime: startUtc.toDate(),
-          startTime: startUtc.toDate(),
-          endTime: startUtc.add(programData.duration, "minute").toDate(),
+          dateTime: newMeetingStart,
+          startTime: newMeetingStart,
+          endTime: newMeetingEnd,
           name_program: programData.name,
           ...(method === "ONLINE" && { meetLink, platform }),
         },

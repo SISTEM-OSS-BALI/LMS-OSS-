@@ -212,12 +212,41 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
     return map;
   }, [shiftData]);
 
-  const getMeetingDuration = (m: any, programs?: Program[]) => {
+  type MeetingSchedule = {
+    dateTime: string | Date;
+    startTime?: string | Date | null;
+    endTime?: string | Date | null;
+    duration?: number;
+    program_id?: string;
+  };
+
+  const resolveMeetingDuration = (
+    m: MeetingSchedule,
+    fallbackDuration?: number
+  ) => {
+    const startRaw = m?.startTime ?? m?.dateTime;
+    const endRaw = m?.endTime;
+
+    if (startRaw && endRaw) {
+      const start = dayjs.utc(startRaw);
+      const end = dayjs.utc(endRaw);
+      const diff = end.diff(start, "minute");
+      if (diff > 0) return diff;
+    }
+
     if (typeof m?.duration === "number" && m.duration > 0) return m.duration;
-    const prog = Array.isArray(programData?.data)
-      ? programData.data.find((p: any) => p.program_id === m.program_id)
-      : null;
-    if (prog?.duration) return prog.duration;
+
+    const programList = Array.isArray(programData?.data)
+      ? programData.data
+      : [];
+    const matchedProgram = programList.find(
+      (p: Program) => p.program_id === m?.program_id
+    );
+
+    if (matchedProgram?.duration) return matchedProgram.duration;
+    if (typeof fallbackDuration === "number" && fallbackDuration > 0) {
+      return fallbackDuration;
+    }
     return 60;
   };
 
@@ -251,11 +280,7 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
   const generateAvailableSlotsFromShifts = (
     dayScheduleTimes: Array<{ shift_id: string }>,
-    meetings: Array<{
-      dateTime: string | Date;
-      duration?: number;
-      program_id?: string;
-    }>,
+    meetings: MeetingSchedule[],
     selectedDateISO: string,
     programDuration: number
   ): string[] => {
@@ -265,12 +290,22 @@ export const useMeetingViewModel = (): UseMeetingViewModelReturn => {
 
     const ranges = materializeRangesForDate(selectedDateISO, daily);
 
-    const busy = meetings.map((m) => {
-      const start = dayjs.utc(m.dateTime);
-      const dur = getMeetingDuration(m, programData?.data);
-      const end = start.add(dur, "minute");
-      return { start, end };
-    });
+    const busy = meetings
+      .map<{ start: dayjs.Dayjs; end: dayjs.Dayjs } | null>((m) => {
+        const start = m?.startTime ?? m?.dateTime;
+        if (!start) return null;
+
+        const startUtc = dayjs.utc(start);
+        const duration = resolveMeetingDuration(m, programDuration);
+        const end = m?.endTime
+          ? dayjs.utc(m.endTime)
+          : startUtc.add(duration, "minute");
+
+        return { start: startUtc, end };
+      })
+      .filter(
+        (slot): slot is { start: dayjs.Dayjs; end: dayjs.Dayjs } => slot !== null
+      );
 
     for (const r of ranges) {
       let cursor = r.start.clone();

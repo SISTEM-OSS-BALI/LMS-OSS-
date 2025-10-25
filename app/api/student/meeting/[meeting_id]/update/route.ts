@@ -157,26 +157,6 @@ export async function PUT(
       );
     }
 
-    let meetLink = null;
-    if (method === "ONLINE") {
-      if (platform === "GOOGLE_MEET") {
-        const auth = await getOAuthClient();
-        meetLink = await createGoogleMeetEvent(
-          auth,
-          "Meeting dengan guru",
-          dateTime.toDate(),
-          dateTime.add(1, "hour").toDate()
-        );
-      } else if (platform === "ZOOM") {
-        meetLink = await createZoomMeeting(
-          "Meeting dengan guru",
-          dateTime.toDate()
-        );
-      } else {
-        throw new Error("Platform tidak valid");
-      }
-    }
-
     const getProgramIdStudent = await getData(
       "user",
       {
@@ -204,6 +184,72 @@ export async function PUT(
       "findFirst"
     );
 
+    const meetingDuration = getProgramStudent?.duration;
+    if (!meetingDuration || Number.isNaN(meetingDuration)) {
+      throw new Error("Durasi program tidak ditemukan");
+    }
+
+    const newMeetingStart = dateTime.toDate();
+    const newMeetingEnd = dateTime.add(meetingDuration, "minute").toDate();
+
+    const candidateMeetings = await prisma.meeting.findMany({
+      where: {
+        teacher_id,
+        is_cancelled: false,
+        meeting_id: { not: meetingId },
+        OR: [
+          { startTime: { lt: newMeetingEnd } },
+          { dateTime: { lt: newMeetingEnd } },
+        ],
+      },
+      select: {
+        meeting_id: true,
+        startTime: true,
+        endTime: true,
+        dateTime: true,
+      },
+    });
+
+    const isOverlapping = candidateMeetings.some((meeting) => {
+      const start = dayjs.utc(meeting.startTime ?? meeting.dateTime);
+      const end = meeting.endTime
+        ? dayjs.utc(meeting.endTime)
+        : start.add(meetingDuration, "minute");
+      return start.isBefore(dayjs.utc(newMeetingEnd)) && end.isAfter(dayjs.utc(newMeetingStart));
+    });
+
+    if (isOverlapping) {
+      return NextResponse.json(
+        {
+          status: 409,
+          error: true,
+          message:
+            "Guru sudah memiliki jadwal lain pada rentang waktu tersebut.",
+        },
+        { status: 409 }
+      );
+    }
+
+    let meetLink = null;
+    if (method === "ONLINE") {
+      if (platform === "GOOGLE_MEET") {
+        const auth = await getOAuthClient();
+        meetLink = await createGoogleMeetEvent(
+          auth,
+          "Meeting dengan guru",
+          newMeetingStart,
+          newMeetingEnd
+        );
+      } else if (platform === "ZOOM") {
+        meetLink = await createZoomMeeting(
+          "Meeting dengan guru",
+          dateTime.toDate()
+        );
+      } else {
+        throw new Error("Platform tidak valid");
+      }
+    }
+
     // Update meeting
     const updatedMeeting = await prisma.meeting.update({
       where: { meeting_id: meetingId },
@@ -211,9 +257,9 @@ export async function PUT(
         teacher_id,
         student_id: user.user_id,
         method,
-        dateTime: dateTime.toDate(),
-        startTime: dateTime.toDate(),
-        endTime: dateTime.add(getProgramStudent?.duration!, "minute").toDate(),
+        dateTime: newMeetingStart,
+        startTime: newMeetingStart,
+        endTime: newMeetingEnd,
         name_program: getProgramStudent?.name,
         ...(method === "ONLINE" && { meetLink, platform }),
       },
