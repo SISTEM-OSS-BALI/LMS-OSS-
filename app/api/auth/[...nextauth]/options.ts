@@ -25,7 +25,11 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = await prisma.user.findFirst({
-          where: { email }, 
+          where: { email },
+          orderBy: [
+            { is_active: "desc" },
+            { createdAt: "desc" },
+          ],
         });
 
         // 2) Kalau tidak ada → error login umum
